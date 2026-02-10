@@ -74,6 +74,19 @@ Examples:
     parser.add_argument("--execution-mode", choices=["sim", "real", "dual"], default="sim",
                         help="Execution mode: sim (NASim only), real (PenGym only), dual (both)")
     
+    # Continual Learning parameters
+    parser.add_argument("--cl_method", type=str, default=None,
+                        choices=["script", "finetune", "ft"],
+                        help="Continual learning method (default: None = standard training)")
+    parser.add_argument("--cl_train_num", type=int, default=None,
+                        help="Number of tasks for CL training (default: all targets)")
+    parser.add_argument("--config_file", type=str, default=None,
+                        help="YAML config file for CL hyperparameters (in config/ dir)")
+    parser.add_argument("--save-cl-agent", action="store_true",
+                        help="Save CL agent after each task")
+    parser.add_argument("--eval-all-task", action="store_true",
+                        help="Evaluate on all previous tasks during CL training")
+    
     return parser.parse_args()
 
 
@@ -265,16 +278,158 @@ def main():
         )
         
         if args.mode == "train":
+            import time as time_module
+            train_start = time_module.time()
+            
+            # ============================================================
+            # Continual Learning Mode
+            # ============================================================
+            if args.cl_method:
+                from src.agent.agent_continual import Agent_CL
+                import datetime
+                
+                time_flag = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                
+                # Optionally limit the number of CL tasks
+                cl_task_list = target_list
+                if args.cl_train_num and args.cl_train_num < len(target_list):
+                    cl_task_list = target_list[:args.cl_train_num]
+                
+                print(f"\n{'='*60}")
+                print(f"Continual Learning Mode: {args.cl_method}")
+                print(f"Tasks: {len(cl_task_list)}, Episodes/task: {args.episodes}")
+                print(f"{'='*60}\n")
+                
+                cl_agent = Agent_CL(
+                    time_flag=time_flag,
+                    logger=tb_logger,
+                    use_wandb=False,
+                    method=args.cl_method,
+                    policy_name="PPO",
+                    seed=args.seed,
+                    config=config,
+                    config_file=args.config_file,
+                )
+                
+                cl_train_matrix = cl_agent.train_continually(
+                    task_list=cl_task_list,
+                    eval_freq=5,
+                    eval_all_task=args.eval_all_task,
+                    save_agent=args.save_cl_agent,
+                    verbose=True,
+                )
+                
+                train_end = time_module.time()
+                total_train_time = train_end - train_start
+                
+                # Save model
+                model_dir = MODELS_DIR / args.scenario.replace('.json', '').replace('.yml', '') / f"cl_{args.cl_method}"
+                cl_agent.save(model_dir)
+                print(f"\nCL Model saved to: {model_dir}")
+                
+                # Save CL experiment summary
+                summary = {
+                    "experiment": {
+                        "scenario": str(scenario_path),
+                        "cl_method": args.cl_method,
+                        "state_format": "SBERT",
+                        "state_dim": StateEncoder.state_space,
+                        "action_dim": Action.action_space,
+                        "num_tasks": len(cl_task_list),
+                        "episodes_per_task": args.episodes,
+                        "max_steps": args.max_steps,
+                        "seed": args.seed,
+                    },
+                    "continual_training": {
+                        "total_time_seconds": round(total_train_time, 2),
+                        "last_task": cl_train_matrix.last_task,
+                        "rewards_initial_task": cl_train_matrix.Rewards_initial_task,
+                        "sr_previous_tasks": cl_train_matrix.SR_previous_tasks,
+                        "rewards_current_task": cl_train_matrix.Rewards_current_task,
+                        "final_eval_rewards": cl_agent.eval_rewards,
+                        "final_eval_success_rate": cl_agent.eval_success_rate,
+                    },
+                    "paths": {
+                        "model_dir": str(model_dir),
+                        "log_dir": str(log_dir),
+                    }
+                }
+                
+                summary_path = log_dir / "experiment_summary.json"
+                with open(summary_path, 'w', encoding='utf-8') as f:
+                    json.dump(summary, f, indent=2, default=str)
+                print(f"CL Experiment summary saved to: {summary_path}")
+                
+                # Close TensorBoard writer
+                tb_logger.close()
+                print("\nDone!")
+                return
+            
+            # ============================================================
+            # Standard Training Mode
+            # ============================================================
             print(f"\n{'='*60}")
             print(f"Training: {args.episodes} episodes, {args.max_steps} step limit")
             print(f"{'='*60}\n")
             
             train_matrix = agent.train_with_tqdm(task_list=target_list)
             
+            train_end = time_module.time()
+            total_train_time = train_end - train_start
+            
             # Save model
             model_dir = MODELS_DIR / args.scenario.replace('.json', '').replace('.yml', '')
             agent.save(model_dir)
             print(f"\nModel saved to: {model_dir}")
+            
+            # ============================================================
+            # Save experiment summary JSON
+            # ============================================================
+            summary = {
+                "experiment": {
+                    "scenario": str(scenario_path),
+                    "state_format": "SBERT",  # Change to "NASim" for shared format
+                    "state_dim": StateEncoder.state_space,
+                    "action_dim": Action.action_space,
+                    "num_targets": len(target_list),
+                    "episodes": args.episodes,
+                    "max_steps": args.max_steps,
+                    "seed": args.seed,
+                    "device": args.device,
+                },
+                "convergence": {
+                    "first_hit_episode": agent.first_hit_eps,
+                    "first_hit_step": agent.first_hit_step,
+                    "converged_episode": agent.convergence_eps,
+                    "hit_to_convergence_gap": agent.hit_convergence_gap_eps,
+                },
+                "training": {
+                    "total_time_seconds": round(total_train_time, 2),
+                    "total_steps": agent.total_training_step,
+                    "best_return": agent.best_return,
+                    "best_episode": agent.best_episode,
+                    "final_train_rewards": train_matrix.Train_Episode_Rewards[-10:] if train_matrix.Train_Episode_Rewards else [],
+                    "final_train_success_rate": train_matrix.Train_Success_Rate[-10:] if train_matrix.Train_Success_Rate else [],
+                    "avg_episode_time": round(sum(train_matrix.Train_Episode_Time) / max(len(train_matrix.Train_Episode_Time), 1), 4),
+                },
+                "evaluation": {
+                    "final_eval_rewards": agent.eval_rewards,
+                    "final_eval_success_rate": agent.eval_success_rate,
+                    "avg_inference_time_ms": round(sum(agent.last_eval_inference_times) / max(len(agent.last_eval_inference_times), 1) * 1000, 3) if hasattr(agent, 'last_eval_inference_times') and agent.last_eval_inference_times else None,
+                },
+                "paths": {
+                    "model_dir": str(model_dir),
+                    "log_dir": str(log_dir),
+                }
+            }
+            
+            summary_path = log_dir / "experiment_summary.json"
+            with open(summary_path, 'w', encoding='utf-8') as f:
+                json.dump(summary, f, indent=2, default=str)
+            print(f"Experiment summary saved to: {summary_path}")
+            
+            # Close TensorBoard writer
+            tb_logger.close()
             
         elif args.mode == "eval":
             model_dir = Path(args.model_path) if args.model_path else MODELS_DIR / args.scenario.replace('.json', '').replace('.yml', '')

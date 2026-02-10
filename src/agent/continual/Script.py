@@ -29,7 +29,7 @@ from src.agent.policy.config import config, Script_Config
 from src.agent.policy.common import Memory
 from src.agent.host import HOST
 from collections import namedtuple, defaultdict
-from cl_method import ParamData, zerolike_params_dict, copy_params_dict
+from src.agent.continual.cl_method import ParamData, zerolike_params_dict, copy_params_dict
 from src.agent.policy.PPO import Actor, Critic, PPO_agent
 from src.agent.policy.config import *
 
@@ -921,8 +921,11 @@ class ScriptAgent():
                 self.explorer.set_guide_policy(guide_policy=self.keeper.Policy)
         return self.explorer
 
-    # def save(self, path):
-    #     self.keeper.save(path)
+    def save(self, path):
+        self.keeper.save(path)
+
+    def load(self, path):
+        self.keeper.load(path)
 
     def policy_preservation(self, all_task, verbose=False):
         task = all_task[self.task_id]

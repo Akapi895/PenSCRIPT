@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 from loguru import logger as logging
 import time
 from tqdm import tqdm, trange
@@ -266,14 +267,26 @@ class Agent(BaseAgent):
                 Train_matrix.Train_Success_Rate.append(success_rate)
                 Train_matrix.Train_Episode_Time.append(run_time)
                 if self.tf_logger:
-                    self.tf_logger.add_scalar("Train_Episode_Rewards",
+                    self.tf_logger.add_scalar("Train/Episode_Rewards",
                                               ep_return, self.num_episodes)
-                    self.tf_logger.add_scalar("Train_Episode_Steps", ep_steps,
+                    self.tf_logger.add_scalar("Train/Episode_Steps", ep_steps,
                                               self.num_episodes)
-                    self.tf_logger.add_scalar("Train_Success_Rate",
+                    self.tf_logger.add_scalar("Train/Success_Rate",
                                               success_rate, self.num_episodes)
-                    self.tf_logger.add_scalar("Train_Episode_Time", run_time,
+                    self.tf_logger.add_scalar("Train/Episode_Time", run_time,
                                               self.num_episodes)
+                    self.tf_logger.add_scalar("Train/Total_Steps",
+                                              self.total_training_step,
+                                              self.num_episodes)
+                    # Log convergence milestones
+                    if self.first_hit_eps > 0:
+                        self.tf_logger.add_scalar("Convergence/First_Hit_Episode",
+                                                  self.first_hit_eps,
+                                                  self.num_episodes)
+                    if self.convergence_eps > 0:
+                        self.tf_logger.add_scalar("Convergence/Converged_Episode",
+                                                  self.convergence_eps,
+                                                  self.num_episodes)
                     if self.use_state_norm:
                         self.tf_logger.add_scalar(
                             "Auxillary/state_norm_mean",
@@ -290,9 +303,10 @@ class Agent(BaseAgent):
                     })
 
                 if self.num_episodes % eval_freq == 0:
-                    self.Evaluate(target_list=task_list,
-                                  verbose=False,
-                                  step_limit=self.config.eval_step_limit)
+                    eval_attack_path, eval_rewards, eval_sr = self.Evaluate(
+                        target_list=task_list,
+                        verbose=False,
+                        step_limit=self.config.eval_step_limit)
                     Train_matrix.Eval_Episode_Rewards.append(self.eval_rewards)
                     Train_matrix.Eval_Success_Rate.append(
                         self.eval_success_rate)
@@ -303,6 +317,17 @@ class Agent(BaseAgent):
                         self.tf_logger.add_scalar("Eval/Success_Rate",
                                                   self.eval_success_rate,
                                                   self.num_episodes)
+                        # Per-target eval metrics
+                        if eval_attack_path:
+                            eval_steps_list = [len(t.get('path', [])) for t in eval_attack_path]
+                            eval_success_count = sum(1 for t in eval_attack_path if t.get('success'))
+                            avg_eval_steps = sum(eval_steps_list) / max(len(eval_steps_list), 1)
+                            self.tf_logger.add_scalar("Eval/Avg_Steps_Per_Target",
+                                                      avg_eval_steps,
+                                                      self.num_episodes)
+                            self.tf_logger.add_scalar("Eval/Targets_Succeeded",
+                                                      eval_success_count,
+                                                      self.num_episodes)
                     if self.use_wandb:
                         wandb.log({
                             "Eval/Episode_Rewards": self.eval_rewards,
@@ -445,6 +470,7 @@ class Agent(BaseAgent):
         sucess_list = []
         faild_list = []
         attack_path = []
+        inference_times = []
         attack_path_key = ["target", "step", "action", "result", "reward"]
 
         # random.shuffle(target_list)
@@ -468,13 +494,18 @@ class Agent(BaseAgent):
             while not done and steps < step_limit:
                 # process = dict.fromkeys(attack_path_key, None)
                 if not manual:
+                    inf_start = time.time()
                     with torch.no_grad():
                         a = self.Policy.evaluate(o)
+                    inf_end = time.time()
+                    inference_times.append(inf_end - inf_start)
                 else:
                     a = input(
                         "Please select action number, input '-1' to exit: ")
                     a = int(a)
+                action_start = time.time()
                 next_o, r, done, result = host.perform_action(a)
+                action_end = time.time()
                 if self.use_state_norm:
                     next_o = self.state_norm(next_o, update=False)
                 o = next_o
@@ -516,7 +547,18 @@ class Agent(BaseAgent):
         sucess_rate = float(format(len(sucess_list) / len(target_list), '.3f'))
         self.eval_rewards = total_rewards
         self.eval_success_rate = sucess_rate
-        # logging.info(f"FAILE HOSTS: {faild_list}")
+        # Store inference timing stats
+        self.last_eval_inference_times = inference_times
+        self.last_eval_attack_path = attack_path
+        if inference_times:
+            avg_inf = sum(inference_times) / len(inference_times)
+            if self.tf_logger:
+                self.tf_logger.add_scalar("Eval/Avg_Inference_Time_ms",
+                                          avg_inf * 1000,
+                                          self.eval_times)
+            if verbose:
+                logging.info(f"Avg inference time: {avg_inf*1000:.2f} ms/action")
+        self.eval_times += 1
         return attack_path, total_rewards, self.eval_success_rate
 
     def save(self, path):

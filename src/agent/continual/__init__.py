@@ -1,4 +1,5 @@
 """
 Continual Learning Package - Script and other CL agents
 """
-# Will be populated with actual exports after import modification
+from .finetune import FinetuneAgent
+from .Script import ScriptAgent
