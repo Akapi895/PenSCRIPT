@@ -1,0 +1,73 @@
+# ===========================
+# Python
+# ===========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# ===========================
+# Virtual Environment
+# ===========================
+venv/
+.venv/
+env/
+
+# ===========================
+# IDE / Editor
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+
+# ===========================
+# OS Files
+# ===========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===========================
+# Model Outputs & Logs
+# ===========================
+outputs/models/
+outputs/logs/
+outputs/tensorboard/
+runs/
+
+# ===========================
+# Pretrained / Downloaded Models
+# ===========================
+src/agent/nlp/Embedding_models/
+
+# ===========================
+# Data (large scenario files)
+# Keep small samples, ignore large ones
+# ===========================
+# Uncomment below to ignore all scenarios:
+# data/scenarios/
+
+# ===========================
+# Jupyter / Notebooks
+# ===========================
+.ipynb_checkpoints/
+*.ipynb
+
+# ===========================
+# Misc
+# ===========================
+*.log
+*.bak
+*.tmp
+*.cache
+.env
+wandb/
