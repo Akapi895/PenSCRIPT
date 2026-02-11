@@ -111,7 +111,9 @@ class PPO_agent(BasePolicy):
     def __init__(self,
                  cfg: PPO_Config,
                  logger: SummaryWriter,
-                 use_wandb=False):
+                 use_wandb=False,
+                 state_dim=None,
+                 action_dim=None):
         super().__init__(logger, use_wandb)
         self.name = "PPO"
         self.config = cfg
@@ -120,17 +122,21 @@ class PPO_agent(BasePolicy):
         self.ppo_update_time = self.config.ppo_update_time
         self.gae_lambda = self.config.gae_lambda
         
+        # Allow custom state/action dimensions (for service-level action space)
+        _state_dim = state_dim if state_dim is not None else StateEncoder.state_space
+        _action_dim = action_dim if action_dim is not None else Action.action_space
+
         # self.device=torch.device("cpu")
         self.activate_func = self.config.activate_func
-        self.actor = Actor(StateEncoder.state_space,
-                           Action.action_space,
+        self.actor = Actor(_state_dim,
+                           _action_dim,
                            self.config.hidden_sizes,
                            use_orthogonal_init=self.config.use_orthogonal_init,
                         #    use_layer_norm=self.config.use_layer_norm,
                            activate_func=self.activate_func).to(self.device)
 
         self.critic = Critic(
-            StateEncoder.state_space,
+            _state_dim,
             self.config.hidden_sizes,
             use_orthogonal_init=self.config.use_orthogonal_init,
             # use_layer_norm=self.config.use_layer_norm,
@@ -147,7 +153,7 @@ class PPO_agent(BasePolicy):
             lr=self.config.critic_lr,
             eps=self.config.Adam_Optimizer_Epsilon)
         self.memory = ReplayBuffer_PPO(self.config.batch_size,
-                                       StateEncoder.state_space)
+                                       _state_dim)
         self.loss = 0
         self.batch_size = self.config.batch_size
         self.mini_batch_size = self.config.mini_batch_size
@@ -235,14 +241,14 @@ class PPO_agent(BasePolicy):
         actor_checkpoint = os.path.join(path, f"{self.name}-actor.pt")
         critic_checkpoint = os.path.join(path, f"{self.name}-critic.pt")
         if torch.cuda.is_available():
-            self.actor.load_state_dict(torch.load(actor_checkpoint))
-            self.critic.load_state_dict(torch.load(critic_checkpoint))
+            self.actor.load_state_dict(torch.load(actor_checkpoint, weights_only=True))
+            self.critic.load_state_dict(torch.load(critic_checkpoint, weights_only=True))
         else:
             self.actor.load_state_dict(
-                torch.load(actor_checkpoint, map_location=torch.device('cpu')))
+                torch.load(actor_checkpoint, map_location=torch.device('cpu'), weights_only=True))
             self.critic.load_state_dict(
                 torch.load(critic_checkpoint,
-                           map_location=torch.device('cpu')))
+                           map_location=torch.device('cpu'), weights_only=True))
 
     '''
     ######################################################################################

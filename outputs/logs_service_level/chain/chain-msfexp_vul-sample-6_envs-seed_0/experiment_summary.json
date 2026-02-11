@@ -1,0 +1,151 @@
+{
+  "experiment": {
+    "type": "service_level_training",
+    "scenario": "D:\\NCKH\\fusion\\pentest\\data\\scenarios\\chain\\chain-msfexp_vul-sample-6_envs-seed_0.json",
+    "action_space": "service_level",
+    "action_dim": 16,
+    "original_cve_action_dim": 2064,
+    "state_dim": 1538,
+    "num_targets": 6,
+    "episodes": 200,
+    "max_steps": 50,
+    "seed": 42,
+    "cve_strategy": "match"
+  },
+  "convergence": {
+    "first_hit_episode": 1,
+    "first_hit_step": 33,
+    "converged_episode": 33
+  },
+  "training": {
+    "total_time_seconds": 59.52,
+    "total_steps": 6527,
+    "best_return": 6310,
+    "best_episode": 180,
+    "final_success_rate": 1.0,
+    "final_eval_reward": 6040
+  },
+  "service_action_space": {
+    "action_dim": 16,
+    "actions": [
+      {
+        "idx": 0,
+        "name": "port_scan",
+        "category": "scan",
+        "pengym_name": "subnet_scan",
+        "num_cves": 1
+      },
+      {
+        "idx": 1,
+        "name": "service_scan",
+        "category": "scan",
+        "pengym_name": "service_scan",
+        "num_cves": 1
+      },
+      {
+        "idx": 2,
+        "name": "os_scan",
+        "category": "scan",
+        "pengym_name": "os_scan",
+        "num_cves": 1
+      },
+      {
+        "idx": 3,
+        "name": "web_scan",
+        "category": "scan",
+        "pengym_name": "process_scan",
+        "num_cves": 1
+      },
+      {
+        "idx": 4,
+        "name": "exploit_ssh",
+        "category": "exploit",
+        "pengym_name": "e_ssh",
+        "num_cves": 35
+      },
+      {
+        "idx": 5,
+        "name": "exploit_ftp",
+        "category": "exploit",
+        "pengym_name": "e_ftp",
+        "num_cves": 70
+      },
+      {
+        "idx": 6,
+        "name": "exploit_http",
+        "category": "exploit",
+        "pengym_name": "e_http",
+        "num_cves": 1313
+      },
+      {
+        "idx": 7,
+        "name": "exploit_smb",
+        "category": "exploit",
+        "pengym_name": "e_samba",
+        "num_cves": 40
+      },
+      {
+        "idx": 8,
+        "name": "exploit_smtp",
+        "category": "exploit",
+        "pengym_name": "e_smtp",
+        "num_cves": 46
+      },
+      {
+        "idx": 9,
+        "name": "exploit_rdp",
+        "category": "exploit",
+        "pengym_name": null,
+        "num_cves": 4
+      },
+      {
+        "idx": 10,
+        "name": "exploit_sql",
+        "category": "exploit",
+        "pengym_name": null,
+        "num_cves": 19
+      },
+      {
+        "idx": 11,
+        "name": "exploit_java_rmi",
+        "category": "exploit",
+        "pengym_name": null,
+        "num_cves": 25
+      },
+      {
+        "idx": 12,
+        "name": "exploit_misc",
+        "category": "exploit",
+        "pengym_name": null,
+        "num_cves": 456
+      },
+      {
+        "idx": 13,
+        "name": "privesc_tomcat",
+        "category": "privesc",
+        "pengym_name": "pe_tomcat",
+        "num_cves": 31
+      },
+      {
+        "idx": 14,
+        "name": "privesc_schtask",
+        "category": "privesc",
+        "pengym_name": "pe_schtask",
+        "num_cves": 17
+      },
+      {
+        "idx": 15,
+        "name": "privesc_daclsvc",
+        "category": "privesc",
+        "pengym_name": "pe_daclsvc",
+        "num_cves": 4
+      }
+    ],
+    "total_cves_grouped": 2060
+  },
+  "paths": {
+    "model_dir": "D:\\NCKH\\fusion\\pentest\\outputs\\models_service_level\\chain\\chain-msfexp_vul-sample-6_envs-seed_0",
+    "log_dir": "D:\\NCKH\\fusion\\pentest\\outputs\\logs_service_level\\chain\\chain-msfexp_vul-sample-6_envs-seed_0",
+    "tensorboard_dir": "D:\\NCKH\\fusion\\pentest\\outputs\\tensorboard_service_level\\chain\\chain-msfexp_vul-sample-6_envs-seed_0"
+  }
+}

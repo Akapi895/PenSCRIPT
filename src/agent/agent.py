@@ -578,8 +578,8 @@ class Agent(BaseAgent):
         if self.use_state_norm:
             mean_checkpoint = path / f"{self.policy_name}-norm_mean.pt"
             std_checkpoint = path / f"{self.policy_name}-norm_std.pt"
-            mean = torch.load(mean_checkpoint)
-            std = torch.load(std_checkpoint)
+            mean = torch.load(mean_checkpoint, weights_only=False)
+            std = torch.load(std_checkpoint, weights_only=False)
             self.state_norm.running_ms.mean = mean
             self.state_norm.running_ms.std = std
         self.Policy.load(path)
