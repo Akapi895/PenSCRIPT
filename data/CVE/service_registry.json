@@ -1,0 +1,142 @@
+{
+  "services": [
+    {
+      "name": "ssh",
+      "exploit_name": "e_ssh",
+      "cve_keywords": [
+        "ssh",
+        "openssh",
+        "sshd"
+      ],
+      "default_port": 22,
+      "category": "network",
+      "description": "Secure Shell"
+    },
+    {
+      "name": "ftp",
+      "exploit_name": "e_ftp",
+      "cve_keywords": [
+        "ftp",
+        "proftpd",
+        "vsftpd",
+        "pureftpd"
+      ],
+      "default_port": 21,
+      "category": "network",
+      "description": "File Transfer Protocol"
+    },
+    {
+      "name": "http",
+      "exploit_name": "e_http",
+      "cve_keywords": [
+        "http",
+        "https",
+        "apache",
+        "nginx",
+        "iis",
+        "webapp",
+        "tomcat",
+        "httpd",
+        "webrick",
+        "lighttpd",
+        "php",
+        "webapps",
+        "cgi",
+        "brightstor"
+      ],
+      "default_port": 80,
+      "category": "web",
+      "description": "HTTP Web Service"
+    },
+    {
+      "name": "samba",
+      "exploit_name": "e_samba",
+      "cve_keywords": [
+        "samba",
+        "smb",
+        "cifs",
+        "windows",
+        "netbios"
+      ],
+      "default_port": 445,
+      "category": "network",
+      "description": "Samba/SMB File Sharing"
+    },
+    {
+      "name": "smtp",
+      "exploit_name": "e_smtp",
+      "cve_keywords": [
+        "smtp",
+        "sendmail",
+        "postfix",
+        "exim"
+      ],
+      "default_port": 25,
+      "category": "network",
+      "description": "Simple Mail Transfer Protocol"
+    },
+    {
+      "name": "mssql",
+      "exploit_name": "e_mssql",
+      "cve_keywords": [
+        "mssql",
+        "sql_server",
+        "sqlserver",
+        "ms_sql"
+      ],
+      "default_port": 1433,
+      "category": "database",
+      "description": "Microsoft SQL Server"
+    },
+    {
+      "name": "rdp",
+      "exploit_name": "e_rdp",
+      "cve_keywords": [
+        "rdp",
+        "remote_desktop",
+        "terminal_services"
+      ],
+      "default_port": 3389,
+      "category": "network",
+      "description": "Remote Desktop Protocol"
+    }
+  ],
+  "processes": [
+    {
+      "name": "tomcat",
+      "privesc_name": "pe_tomcat",
+      "cve_keywords": [
+        "tomcat",
+        "java",
+        "jboss",
+        "wildfly"
+      ],
+      "category": "privesc",
+      "description": "Apache Tomcat / Java server"
+    },
+    {
+      "name": "schtask",
+      "privesc_name": "pe_schtask",
+      "cve_keywords": [
+        "schtask",
+        "scheduled_task",
+        "cron",
+        "at"
+      ],
+      "category": "privesc",
+      "description": "Scheduled Tasks"
+    },
+    {
+      "name": "daclsvc",
+      "privesc_name": "pe_daclsvc",
+      "cve_keywords": [
+        "daclsvc",
+        "dacl",
+        "service_permissions",
+        "proftpd"
+      ],
+      "category": "privesc",
+      "description": "Weak Service DACL"
+    }
+  ]
+}

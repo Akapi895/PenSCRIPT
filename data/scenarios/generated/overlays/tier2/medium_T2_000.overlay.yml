@@ -1,0 +1,297 @@
+meta:
+  overlay_id: medium_T2_000
+  difficulty_tier: 2
+  avg_difficulty_score: 0.1606
+  cve_list:
+  - CVE-2016-4997
+  - CVE-2024-37081
+  - CVE-2017-16995
+  - CVE-2021-22555
+  - CVE-2021-3490
+  - CVE-2016-4998
+  - CVE-2015-1328
+  - CVE-2024-21626
+  - CVE-2022-41800
+  - CVE-2006-0441
+  - CVE-2009-4769
+  - CVE-2012-6066
+  - CVE-2012-3579
+  - CVE-2012-5975
+  - CVE-2018-18556
+  - CVE-2004-0695
+  - CVE-2017-6416
+  - CVE-2006-2407
+  - CVE-2006-2961
+  - CVE-2012-10060
+  - CVE-2007-2446
+  - CVE-2002-1059
+  - CVE-2025-61678
+  - CVE-2002-1359
+  - CVE-2020-9015
+  - CVE-2011-10005
+  - CVE-2010-2620
+  - CVE-2020-28328
+  - CVE-2004-1626
+slot_assignments:
+  P11:
+    process: netfilter_priv_esc_ipv4
+    privesc:
+      name: pe_netfilter_priv_esc_ipv4
+      cve_id: CVE-2016-4997
+      prob: 0.8
+      cost: 2
+      access: root
+  P13:
+    process: vcenter_sudo_lpe
+    privesc:
+      name: pe_vcenter_sudo_lpe
+      cve_id: CVE-2024-37081
+      prob: 0.8
+      cost: 2
+      access: root
+  P19:
+    process: bpf_sign_extension_priv_esc
+    privesc:
+      name: pe_bpf_sign_extension_priv_esc
+      cve_id: CVE-2017-16995
+      prob: 0.8
+      cost: 2
+      access: root
+  P22:
+    process: netfilter_xtables_heap_oob_write_priv_esc
+    privesc:
+      name: pe_netfilter_xtables_heap_oob_write_priv_esc
+      cve_id: CVE-2021-22555
+      prob: 0.8
+      cost: 2
+      access: root
+  P27:
+    process: cve_2021_3490_ebpf_alu32_bounds_check_lpe
+    privesc:
+      name: pe_cve_2021_3490_ebpf_alu32_bounds_check_lpe
+      cve_id: CVE-2021-3490
+      prob: 0.8
+      cost: 2
+      access: root
+  P3:
+    process: netfilter_priv_esc_ipv4
+    privesc:
+      name: pe_netfilter_priv_esc_ipv4
+      cve_id: CVE-2016-4998
+      prob: 0.8
+      cost: 2
+      access: root
+  P5:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-1328
+      prob: 0.8
+      cost: 2
+      access: root
+  P8:
+    process: runc_cwd_priv_esc
+    privesc:
+      name: pe_runc_cwd_priv_esc
+      cve_id: CVE-2024-21626
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2022-41800
+      prob: 0.99
+      cost: 1
+      access: root
+  S10:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-0441
+      prob: 0.6
+      cost: 3
+      access: user
+  S12:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-4769
+      prob: 0.8
+      cost: 2
+      access: user
+  S14:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-6066
+      prob: 0.99
+      cost: 1
+      access: user
+  S15:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-3579
+      prob: 0.99
+      cost: 1
+      access: user
+  S16:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-5975
+      prob: 0.99
+      cost: 1
+      access: root
+  S17:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S18:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-0695
+      prob: 0.6
+      cost: 3
+      access: user
+  S2:
+    service: smtp
+    exploit:
+      name: e_smtp
+      cve_id: CVE-2017-6416
+      prob: 0.6
+      cost: 3
+      access: user
+  S20:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S21:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-2961
+      prob: 0.6
+      cost: 3
+      access: user
+  S23:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-10060
+      prob: 0.6
+      cost: 3
+      access: root
+  S24:
+    service: samba
+    exploit:
+      name: e_samba
+      cve_id: CVE-2007-2446
+      prob: 0.6
+      cost: 3
+      access: root
+  S25:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1059
+      prob: 0.6
+      cost: 3
+      access: root
+  S26:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2025-61678
+      prob: 0.99
+      cost: 1
+      access: root
+  S28:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S29:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-9015
+      prob: 0.8
+      cost: 2
+      access: user
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-10005
+      prob: 0.8
+      cost: 2
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-2620
+      prob: 0.99
+      cost: 1
+      access: user
+  S7:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2020-28328
+      prob: 0.8
+      cost: 2
+      access: root
+  S9:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-1626
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P11: linux
+  P13: linux
+  P19: linux
+  P22: linux
+  P27: linux
+  P3: linux
+  P5: linux
+  P8: linux
+  S1: linux
+  S10: windows
+  S12: windows
+  S14: windows
+  S15: linux
+  S16: unix
+  S17: linux
+  S18: osx
+  S2: windows
+  S20: windows
+  S21: windows
+  S23: windows
+  S24: osx
+  S25: windows
+  S26: unix
+  S28: windows
+  S29: unix
+  S4: windows
+  S6: windows
+  S7: linux
+  S9: windows

@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T3_000
+  difficulty_tier: 3
+  avg_difficulty_score: 0.209
+  cve_list:
+  - CVE-2025-32463
+  - CVE-2022-34918
+  - CVE-2015-8660
+  - CVE-2018-0296
+  - CVE-2002-1359
+  - CVE-2004-0695
+  - CVE-2006-2407
+  - CVE-2018-7573
+  - CVE-2013-4730
+  - CVE-2010-20122
+  - CVE-2007-5003
+slot_assignments:
+  P2:
+    process: sudo_chroot_cve_2025_32463
+    privesc:
+      name: pe_sudo_chroot_cve_2025_32463
+      cve_id: CVE-2025-32463
+      prob: 0.6
+      cost: 3
+      access: root
+  P5:
+    process: netfilter_nft_set_elem_init_privesc
+    privesc:
+      name: pe_netfilter_nft_set_elem_init_privesc
+      cve_id: CVE-2022-34918
+      prob: 0.6
+      cost: 3
+      access: root
+  P9:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-8660
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2018-0296
+      prob: 0.6
+      cost: 3
+      access: root
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-0695
+      prob: 0.6
+      cost: 3
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2018-7573
+      prob: 0.6
+      cost: 3
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2013-4730
+      prob: 0.6
+      cost: 3
+      access: user
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20122
+      prob: 0.6
+      cost: 3
+      access: root
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2007-5003
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P2: linux
+  P5: linux
+  P9: linux
+  S1: cisco
+  S10: windows
+  S11: osx
+  S3: windows
+  S4: windows
+  S6: windows
+  S7: windows
+  S8: windows

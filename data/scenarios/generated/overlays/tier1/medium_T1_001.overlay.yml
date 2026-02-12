@@ -1,0 +1,297 @@
+meta:
+  overlay_id: medium_T1_001
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0449
+  cve_list:
+  - CVE-2023-22809
+  - CVE-2019-13272
+  - CVE-2022-0847
+  - CVE-2021-4034
+  - CVE-2021-3156
+  - CVE-2023-0386
+  - CVE-2024-2389
+  - CVE-2019-10149
+  - CVE-2020-15920
+  - CVE-2010-20007
+  - CVE-2004-2074
+  - CVE-2016-1560
+  - CVE-2017-9462
+  - CVE-2014-125121
+  - CVE-2020-4429
+  - CVE-2010-20115
+  - CVE-2007-4440
+  - CVE-2017-7722
+  - CVE-2003-0727
+  - CVE-2020-11857
+  - CVE-2007-2446
+  - CVE-2016-7456
+  - CVE-2005-0511
+  - CVE-2019-1935
+  - CVE-2025-32433
+  - CVE-2004-0330
+  - CVE-2011-10010
+  - CVE-2016-10108
+  - CVE-2012-10035
+slot_assignments:
+  P11:
+    process: sudoedit_bypass_priv_esc
+    privesc:
+      name: pe_sudoedit_bypass_priv_esc
+      cve_id: CVE-2023-22809
+      prob: 0.99
+      cost: 1
+      access: user
+  P13:
+    process: ptrace_traceme_pkexec_helper
+    privesc:
+      name: pe_ptrace_traceme_pkexec_helper
+      cve_id: CVE-2019-13272
+      prob: 0.99
+      cost: 1
+      access: root
+  P19:
+    process: cve_2022_0847_dirtypipe
+    privesc:
+      name: pe_cve_2022_0847_dirtypipe
+      cve_id: CVE-2022-0847
+      prob: 0.99
+      cost: 1
+      access: root
+  P22:
+    process: cve_2021_4034_pwnkit_lpe_pkexec
+    privesc:
+      name: pe_cve_2021_4034_pwnkit_lpe_pkexec
+      cve_id: CVE-2021-4034
+      prob: 0.99
+      cost: 1
+      access: root
+  P27:
+    process: sudo_baron_samedit
+    privesc:
+      name: pe_sudo_baron_samedit
+      cve_id: CVE-2021-3156
+      prob: 0.99
+      cost: 1
+      access: root
+  P3:
+    process: cve_2023_0386_overlayfs_priv_esc
+    privesc:
+      name: pe_cve_2023_0386_overlayfs_priv_esc
+      cve_id: CVE-2023-0386
+      prob: 0.99
+      cost: 1
+      access: root
+  P5:
+    process: progress_flowmon_sudo_privesc_2024
+    privesc:
+      name: pe_progress_flowmon_sudo_privesc_2024
+      cve_id: CVE-2024-2389
+      prob: 0.99
+      cost: 1
+      access: root
+  P8:
+    process: exim4_deliver_message_priv_esc
+    privesc:
+      name: pe_exim4_deliver_message_priv_esc
+      cve_id: CVE-2019-10149
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2020-15920
+      prob: 0.99
+      cost: 1
+      access: root
+  S10:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20007
+      prob: 0.8
+      cost: 2
+      access: root
+  S12:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-2074
+      prob: 0.8
+      cost: 2
+      access: user
+  S14:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2016-1560
+      prob: 0.99
+      cost: 1
+      access: root
+  S15:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-9462
+      prob: 0.99
+      cost: 1
+      access: user
+  S16:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2014-125121
+      prob: 0.99
+      cost: 1
+      access: root
+  S17:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-4429
+      prob: 0.99
+      cost: 1
+      access: root
+  S18:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20115
+      prob: 0.8
+      cost: 2
+      access: user
+  S2:
+    service: smtp
+    exploit:
+      name: e_smtp
+      cve_id: CVE-2007-4440
+      prob: 0.8
+      cost: 2
+      access: root
+  S20:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-7722
+      prob: 0.99
+      cost: 1
+      access: root
+  S21:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2003-0727
+      prob: 0.8
+      cost: 2
+      access: user
+  S23:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-11857
+      prob: 0.99
+      cost: 1
+      access: root
+  S24:
+    service: samba
+    exploit:
+      name: e_samba
+      cve_id: CVE-2007-2446
+      prob: 0.8
+      cost: 2
+      access: root
+  S25:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2016-7456
+      prob: 0.99
+      cost: 1
+      access: user
+  S26:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2005-0511
+      prob: 0.99
+      cost: 1
+      access: user
+  S28:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2019-1935
+      prob: 0.99
+      cost: 1
+      access: root
+  S29:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2025-32433
+      prob: 0.99
+      cost: 1
+      access: root
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-0330
+      prob: 0.8
+      cost: 2
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-10010
+      prob: 0.99
+      cost: 1
+      access: root
+  S7:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2016-10108
+      prob: 0.99
+      cost: 1
+      access: root
+  S9:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2012-10035
+      prob: 0.8
+      cost: 2
+      access: root
+os_assignments:
+  P11: linux
+  P13: linux
+  P19: linux
+  P22: linux
+  P27: linux
+  P3: linux
+  P5: linux
+  P8: linux
+  S1: linux
+  S10: windows
+  S12: windows
+  S14: linux
+  S15: linux
+  S16: unix
+  S17: linux
+  S18: windows
+  S2: windows
+  S20: linux
+  S21: windows
+  S23: linux
+  S24: linux
+  S25: linux
+  S26: unix
+  S28: cisco
+  S29: linux
+  S4: windows
+  S6: windows
+  S7: linux
+  S9: windows

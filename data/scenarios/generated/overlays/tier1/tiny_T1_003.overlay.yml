@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T1_003
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0215
+  cve_list:
+  - CVE-2023-0386
+  - CVE-2019-10149
+  - CVE-2019-13272
+  - CVE-2025-32433
+  - CVE-2015-0936
+  - CVE-2019-1935
+slot_assignments:
+  P2:
+    process: cve_2023_0386_overlayfs_priv_esc
+    privesc:
+      name: pe_cve_2023_0386_overlayfs_priv_esc
+      cve_id: CVE-2023-0386
+      prob: 0.99
+      cost: 1
+      access: root
+  P4:
+    process: exim4_deliver_message_priv_esc
+    privesc:
+      name: pe_exim4_deliver_message_priv_esc
+      cve_id: CVE-2019-10149
+      prob: 0.99
+      cost: 1
+      access: root
+  P6:
+    process: ptrace_traceme_pkexec_helper
+    privesc:
+      name: pe_ptrace_traceme_pkexec_helper
+      cve_id: CVE-2019-13272
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2025-32433
+      prob: 0.99
+      cost: 1
+      access: root
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2015-0936
+      prob: 0.99
+      cost: 1
+      access: user
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2019-1935
+      prob: 0.99
+      cost: 1
+      access: root
+os_assignments:
+  P2: linux
+  P4: linux
+  P6: linux
+  S1: linux
+  S3: linux
+  S5: cisco

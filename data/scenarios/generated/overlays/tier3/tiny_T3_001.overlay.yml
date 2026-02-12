@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T3_001
+  difficulty_tier: 3
+  avg_difficulty_score: 0.2125
+  cve_list:
+  - CVE-2022-21999
+  - CVE-2011-1485
+  - CVE-2015-8660
+  - CVE-2006-2407
+  - CVE-2002-1059
+  - CVE-2002-1359
+slot_assignments:
+  P2:
+    process: cve_2022_21999_spoolfool_privesc
+    privesc:
+      name: pe_cve_2022_21999_spoolfool_privesc
+      cve_id: CVE-2022-21999
+      prob: 0.6
+      cost: 3
+      access: root
+  P4:
+    process: pkexec
+    privesc:
+      name: pe_pkexec
+      cve_id: CVE-2011-1485
+      prob: 0.8
+      cost: 2
+      access: root
+  P6:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-8660
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1059
+      prob: 0.6
+      cost: 3
+      access: root
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P2: windows
+  P4: linux
+  P6: linux
+  S1: windows
+  S3: windows
+  S5: windows

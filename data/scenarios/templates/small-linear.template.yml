@@ -1,0 +1,273 @@
+meta:
+  name: small-linear
+  description: Auto-generated from small-linear.yml
+  host_count: 8
+  subnet_count: 6
+subnets:
+- 1
+- 1
+- 2
+- 1
+- 2
+- 1
+topology:
+- - 1
+  - 1
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
+- - 1
+  - 1
+  - 1
+  - 0
+  - 0
+  - 0
+  - 0
+- - 0
+  - 1
+  - 1
+  - 1
+  - 0
+  - 0
+  - 0
+- - 0
+  - 0
+  - 1
+  - 1
+  - 1
+  - 0
+  - 0
+- - 0
+  - 0
+  - 0
+  - 1
+  - 1
+  - 1
+  - 0
+- - 0
+  - 0
+  - 0
+  - 0
+  - 1
+  - 1
+  - 1
+- - 1
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
+  - 1
+sensitive_hosts:
+  (3, 0): 100
+  (4, 0): 100
+service_scan_cost: 1
+os_scan_cost: 1
+subnet_scan_cost: 1
+process_scan_cost: 1
+step_limit: 1000
+service_slots:
+- slot_id: S1
+  host:
+  - 1
+  - 0
+  role: entry_point
+  allowed_services:
+  - http
+  default_service: http
+  default_os: linux
+- slot_id: S2
+  host:
+  - 2
+  - 0
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S3
+  host:
+  - 2
+  - 0
+  role: pivot
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S5
+  host:
+  - 3
+  - 0
+  role: target
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S6
+  host:
+  - 3
+  - 1
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S7
+  host:
+  - 4
+  - 0
+  role: target
+  allowed_services:
+  - http
+  default_service: http
+  default_os: linux
+- slot_id: S9
+  host:
+  - 5
+  - 0
+  role: pivot
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S10
+  host:
+  - 5
+  - 0
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S11
+  host:
+  - 5
+  - 1
+  role: pivot
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S13
+  host:
+  - 6
+  - 0
+  role: pivot
+  allowed_services:
+  - http
+  default_service: http
+  default_os: linux
+privesc_slots:
+- slot_id: P4
+  host:
+  - 2
+  - 0
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P8
+  host:
+  - 4
+  - 0
+  allowed_processes:
+  - proftpd
+  - any
+  default_process: proftpd
+  default_os: linux
+- slot_id: P12
+  host:
+  - 5
+  - 1
+  allowed_processes:
+  - proftpd
+  - any
+  default_process: proftpd
+  default_os: linux
+- slot_id: P14
+  host:
+  - 6
+  - 0
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+firewall:
+  (0, 1):
+  - http
+  (1, 0): []
+  (1, 2):
+  - ssh
+  - ftp
+  (2, 1):
+  - http
+  (2, 3):
+  - ssh
+  (3, 2):
+  - ssh
+  - ftp
+  (3, 4): []
+  (4, 3): []
+  (4, 5):
+  - ftp
+  (5, 4):
+  - ftp
+  - http
+  (5, 6):
+  - http
+  (6, 5):
+  - ssh
+  (6, 0): []
+  (0, 6):
+  - http
+_original_host_configurations:
+  (1, 0):
+    os: linux
+    services:
+    - http
+    processes: []
+  (2, 0):
+    os: linux
+    services:
+    - ssh
+    - ftp
+    processes:
+    - tomcat
+  (3, 0):
+    os: linux
+    services:
+    - ftp
+    processes: []
+  (3, 1):
+    os: linux
+    services:
+    - ssh
+    processes: []
+  (4, 0):
+    os: linux
+    services:
+    - http
+    processes:
+    - proftpd
+  (5, 0):
+    os: linux
+    services:
+    - ftp
+    - ssh
+    processes: []
+  (5, 1):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - proftpd
+  (6, 0):
+    os: linux
+    services:
+    - http
+    processes:
+    - tomcat

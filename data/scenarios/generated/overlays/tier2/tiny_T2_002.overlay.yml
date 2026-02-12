@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T2_002
+  difficulty_tier: 2
+  avg_difficulty_score: 0.1356
+  cve_list:
+  - CVE-2016-4998
+  - CVE-2024-21626
+  - CVE-2016-4557
+  - CVE-2012-5975
+  - CVE-2018-18556
+  - CVE-2012-3579
+slot_assignments:
+  P2:
+    process: netfilter_priv_esc_ipv4
+    privesc:
+      name: pe_netfilter_priv_esc_ipv4
+      cve_id: CVE-2016-4998
+      prob: 0.8
+      cost: 2
+      access: root
+  P4:
+    process: runc_cwd_priv_esc
+    privesc:
+      name: pe_runc_cwd_priv_esc
+      cve_id: CVE-2024-21626
+      prob: 0.99
+      cost: 1
+      access: root
+  P6:
+    process: bpf_priv_esc
+    privesc:
+      name: pe_bpf_priv_esc
+      cve_id: CVE-2016-4557
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-5975
+      prob: 0.99
+      cost: 1
+      access: root
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-3579
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P2: linux
+  P4: linux
+  P6: linux
+  S1: unix
+  S3: linux
+  S5: linux

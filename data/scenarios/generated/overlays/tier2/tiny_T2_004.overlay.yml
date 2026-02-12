@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T2_004
+  difficulty_tier: 2
+  avg_difficulty_score: 0.144
+  cve_list:
+  - CVE-2016-4997
+  - CVE-2018-4237
+  - CVE-2016-3225
+  - CVE-2012-6066
+  - CVE-2018-18556
+  - CVE-2012-3579
+slot_assignments:
+  P2:
+    process: netfilter_priv_esc_ipv4
+    privesc:
+      name: pe_netfilter_priv_esc_ipv4
+      cve_id: CVE-2016-4997
+      prob: 0.8
+      cost: 2
+      access: root
+  P4:
+    process: libxpc_mitm_ssudo
+    privesc:
+      name: pe_libxpc_mitm_ssudo
+      cve_id: CVE-2018-4237
+      prob: 0.99
+      cost: 1
+      access: user
+  P6:
+    process: ms16_075_reflection_juicy
+    privesc:
+      name: pe_ms16_075_reflection_juicy
+      cve_id: CVE-2016-3225
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-6066
+      prob: 0.99
+      cost: 1
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-3579
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P2: linux
+  P4: osx
+  P6: windows
+  S1: windows
+  S3: linux
+  S5: linux

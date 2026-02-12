@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T1_000
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0456
+  cve_list:
+  - CVE-2013-10052
+  - CVE-2019-13272
+  - CVE-2023-22809
+  - CVE-2025-32433
+  - CVE-2020-9015
+  - CVE-2020-11857
+slot_assignments:
+  P2:
+    process: zpanel_zsudo
+    privesc:
+      name: pe_zpanel_zsudo
+      cve_id: CVE-2013-10052
+      prob: 0.99
+      cost: 1
+      access: root
+  P4:
+    process: ptrace_traceme_pkexec_helper
+    privesc:
+      name: pe_ptrace_traceme_pkexec_helper
+      cve_id: CVE-2019-13272
+      prob: 0.99
+      cost: 1
+      access: root
+  P6:
+    process: sudoedit_bypass_priv_esc
+    privesc:
+      name: pe_sudoedit_bypass_priv_esc
+      cve_id: CVE-2023-22809
+      prob: 0.99
+      cost: 1
+      access: user
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2025-32433
+      prob: 0.99
+      cost: 1
+      access: root
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-9015
+      prob: 0.8
+      cost: 2
+      access: user
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-11857
+      prob: 0.99
+      cost: 1
+      access: root
+os_assignments:
+  P2: linux
+  P4: linux
+  P6: linux
+  S1: linux
+  S3: unix
+  S5: linux

@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T3_003
+  difficulty_tier: 3
+  avg_difficulty_score: 0.209
+  cve_list:
+  - CVE-2025-32463
+  - CVE-2015-8660
+  - CVE-2021-40449
+  - CVE-2012-4915
+  - CVE-2002-1359
+  - CVE-2010-20122
+  - CVE-2006-2407
+  - CVE-2006-5792
+  - CVE-2003-0558
+  - CVE-2017-15222
+  - CVE-2009-2685
+slot_assignments:
+  P2:
+    process: sudo_chroot_cve_2025_32463
+    privesc:
+      name: pe_sudo_chroot_cve_2025_32463
+      cve_id: CVE-2025-32463
+      prob: 0.6
+      cost: 3
+      access: root
+  P5:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-8660
+      prob: 0.8
+      cost: 2
+      access: root
+  P9:
+    process: cve_2022_21882_win32k
+    privesc:
+      name: pe_cve_2022_21882_win32k
+      cve_id: CVE-2021-40449
+      prob: 0.6
+      cost: 3
+      access: user
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2012-4915
+      prob: 0.6
+      cost: 3
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20122
+      prob: 0.6
+      cost: 3
+      access: root
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-5792
+      prob: 0.6
+      cost: 3
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2003-0558
+      prob: 0.6
+      cost: 3
+      access: user
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2017-15222
+      prob: 0.6
+      cost: 3
+      access: user
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2009-2685
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P2: linux
+  P5: linux
+  P9: windows
+  S1: unix
+  S10: windows
+  S11: windows
+  S3: windows
+  S4: windows
+  S6: windows
+  S7: windows
+  S8: windows

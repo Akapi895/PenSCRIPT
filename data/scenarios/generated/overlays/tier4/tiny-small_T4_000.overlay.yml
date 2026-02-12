@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T4_000
+  difficulty_tier: 4
+  avg_difficulty_score: 0.3186
+  cve_list:
+  - CVE-2016-3225
+  - CVE-2018-8120
+  - CVE-2022-46689
+  - CVE-2014-2127
+  - CVE-2002-1359
+  - CVE-2011-5164
+  - CVE-2002-1059
+  - CVE-2009-3976
+  - CVE-2012-5002
+  - CVE-2010-1465
+  - CVE-2012-6081
+slot_assignments:
+  P2:
+    process: ms16_075_reflection
+    privesc:
+      name: pe_ms16_075_reflection
+      cve_id: CVE-2016-3225
+      prob: 0.6
+      cost: 3
+      access: root
+  P5:
+    process: ms18_8120_win32k_privesc
+    privesc:
+      name: pe_ms18_8120_win32k_privesc
+      cve_id: CVE-2018-8120
+      prob: 0.8
+      cost: 2
+      access: user
+  P9:
+    process: mac_dirty_cow
+    privesc:
+      name: pe_mac_dirty_cow
+      cve_id: CVE-2022-46689
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2014-2127
+      prob: 0.6
+      cost: 3
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-5164
+      prob: 0.6
+      cost: 3
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1059
+      prob: 0.6
+      cost: 3
+      access: root
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-3976
+      prob: 0.6
+      cost: 3
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2012-5002
+      prob: 0.6
+      cost: 3
+      access: user
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-1465
+      prob: 0.6
+      cost: 3
+      access: user
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2012-6081
+      prob: 0.4
+      cost: 4
+      access: user
+os_assignments:
+  P2: windows
+  P5: windows
+  P9: osx
+  S1: cisco
+  S10: windows
+  S11: windows
+  S3: windows
+  S4: windows
+  S6: windows
+  S7: windows
+  S8: unix

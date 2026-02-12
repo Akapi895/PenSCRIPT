@@ -1,0 +1,147 @@
+meta:
+  overlay_id: small-linear_T1_004
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0395
+  cve_list:
+  - CVE-2021-3156
+  - CVE-2019-13272
+  - CVE-2023-0386
+  - CVE-2024-1212
+  - CVE-2017-9822
+  - CVE-2020-9015
+  - CVE-2010-20103
+  - CVE-2023-38035
+  - CVE-2020-4429
+  - CVE-2012-10030
+  - CVE-2006-5792
+  - CVE-2019-1935
+  - CVE-2023-46805
+  - CVE-2025-34107
+slot_assignments:
+  P12:
+    process: sudo_baron_samedit
+    privesc:
+      name: pe_sudo_baron_samedit
+      cve_id: CVE-2021-3156
+      prob: 0.99
+      cost: 1
+      access: root
+  P14:
+    process: ptrace_traceme_pkexec_helper
+    privesc:
+      name: pe_ptrace_traceme_pkexec_helper
+      cve_id: CVE-2019-13272
+      prob: 0.99
+      cost: 1
+      access: root
+  P4:
+    process: cve_2023_0386_overlayfs_priv_esc
+    privesc:
+      name: pe_cve_2023_0386_overlayfs_priv_esc
+      cve_id: CVE-2023-0386
+      prob: 0.99
+      cost: 1
+      access: root
+  P8:
+    process: progress_kemp_loadmaster_sudo_privesc_2024
+    privesc:
+      name: pe_progress_kemp_loadmaster_sudo_privesc_2024
+      cve_id: CVE-2024-1212
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2017-9822
+      prob: 0.99
+      cost: 1
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-9015
+      prob: 0.8
+      cost: 2
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20103
+      prob: 0.99
+      cost: 1
+      access: root
+  S13:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2023-38035
+      prob: 0.99
+      cost: 1
+      access: root
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-4429
+      prob: 0.99
+      cost: 1
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2012-10030
+      prob: 0.99
+      cost: 1
+      access: root
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-5792
+      prob: 0.8
+      cost: 2
+      access: user
+  S6:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2019-1935
+      prob: 0.99
+      cost: 1
+      access: root
+  S7:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2023-46805
+      prob: 0.99
+      cost: 1
+      access: user
+  S9:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2025-34107
+      prob: 0.8
+      cost: 2
+      access: user
+os_assignments:
+  P12: linux
+  P14: linux
+  P4: linux
+  P8: linux
+  S1: windows
+  S10: unix
+  S11: unix
+  S13: linux
+  S2: linux
+  S3: windows
+  S5: windows
+  S6: cisco
+  S7: linux
+  S9: windows

@@ -1,0 +1,147 @@
+meta:
+  overlay_id: small-linear_T3_000
+  difficulty_tier: 3
+  avg_difficulty_score: 0.2089
+  cve_list:
+  - CVE-2015-8660
+  - CVE-2011-1485
+  - CVE-2025-32463
+  - CVE-2022-34918
+  - CVE-2018-0296
+  - CVE-2002-1359
+  - CVE-2017-18047
+  - CVE-2005-3190
+  - CVE-2006-2407
+  - CVE-2018-7573
+  - CVE-2013-4730
+  - CVE-2012-10060
+  - CVE-2007-5003
+  - CVE-2005-0277
+slot_assignments:
+  P12:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-8660
+      prob: 0.8
+      cost: 2
+      access: root
+  P14:
+    process: pkexec
+    privesc:
+      name: pe_pkexec
+      cve_id: CVE-2011-1485
+      prob: 0.8
+      cost: 2
+      access: root
+  P4:
+    process: sudo_chroot_cve_2025_32463
+    privesc:
+      name: pe_sudo_chroot_cve_2025_32463
+      cve_id: CVE-2025-32463
+      prob: 0.6
+      cost: 3
+      access: root
+  P8:
+    process: netfilter_nft_set_elem_init_privesc
+    privesc:
+      name: pe_netfilter_nft_set_elem_init_privesc
+      cve_id: CVE-2022-34918
+      prob: 0.6
+      cost: 3
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2018-0296
+      prob: 0.6
+      cost: 3
+      access: root
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2017-18047
+      prob: 0.6
+      cost: 3
+      access: root
+  S13:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2005-3190
+      prob: 0.6
+      cost: 3
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2018-7573
+      prob: 0.6
+      cost: 3
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2013-4730
+      prob: 0.6
+      cost: 3
+      access: user
+  S6:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-10060
+      prob: 0.6
+      cost: 3
+      access: root
+  S7:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2007-5003
+      prob: 0.6
+      cost: 3
+      access: user
+  S9:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2005-0277
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P12: linux
+  P14: linux
+  P4: linux
+  P8: linux
+  S1: cisco
+  S10: windows
+  S11: windows
+  S13: windows
+  S2: windows
+  S3: windows
+  S5: windows
+  S6: windows
+  S7: windows
+  S9: windows

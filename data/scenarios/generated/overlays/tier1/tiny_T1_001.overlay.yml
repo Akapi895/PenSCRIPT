@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T1_001
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0449
+  cve_list:
+  - CVE-2021-4034
+  - CVE-2024-2389
+  - CVE-2020-0796
+  - CVE-2020-9015
+  - CVE-2019-1935
+  - CVE-2017-7722
+slot_assignments:
+  P2:
+    process: cve_2021_4034_pwnkit_lpe_pkexec
+    privesc:
+      name: pe_cve_2021_4034_pwnkit_lpe_pkexec
+      cve_id: CVE-2021-4034
+      prob: 0.99
+      cost: 1
+      access: root
+  P4:
+    process: progress_flowmon_sudo_privesc_2024
+    privesc:
+      name: pe_progress_flowmon_sudo_privesc_2024
+      cve_id: CVE-2024-2389
+      prob: 0.99
+      cost: 1
+      access: root
+  P6:
+    process: cve_2020_0796_smbghost
+    privesc:
+      name: pe_cve_2020_0796_smbghost
+      cve_id: CVE-2020-0796
+      prob: 0.8
+      cost: 2
+      access: user
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-9015
+      prob: 0.8
+      cost: 2
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2019-1935
+      prob: 0.99
+      cost: 1
+      access: root
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-7722
+      prob: 0.99
+      cost: 1
+      access: root
+os_assignments:
+  P2: linux
+  P4: linux
+  P6: windows
+  S1: unix
+  S3: cisco
+  S5: linux

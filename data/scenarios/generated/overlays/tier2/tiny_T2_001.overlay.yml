@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T2_001
+  difficulty_tier: 2
+  avg_difficulty_score: 0.1356
+  cve_list:
+  - CVE-2024-37081
+  - CVE-2021-22555
+  - CVE-2024-21626
+  - CVE-2018-18556
+  - CVE-2012-5975
+  - CVE-2012-6066
+slot_assignments:
+  P2:
+    process: vcenter_sudo_lpe
+    privesc:
+      name: pe_vcenter_sudo_lpe
+      cve_id: CVE-2024-37081
+      prob: 0.8
+      cost: 2
+      access: root
+  P4:
+    process: netfilter_xtables_heap_oob_write_priv_esc
+    privesc:
+      name: pe_netfilter_xtables_heap_oob_write_priv_esc
+      cve_id: CVE-2021-22555
+      prob: 0.8
+      cost: 2
+      access: root
+  P6:
+    process: runc_cwd_priv_esc
+    privesc:
+      name: pe_runc_cwd_priv_esc
+      cve_id: CVE-2024-21626
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-5975
+      prob: 0.99
+      cost: 1
+      access: root
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-6066
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P2: linux
+  P4: linux
+  P6: linux
+  S1: linux
+  S3: unix
+  S5: windows
