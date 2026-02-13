@@ -1,0 +1,20 @@
+{
+  "mode": "train",
+  "scenario": "data\\scenarios\\tiny.yml",
+  "episodes": 500,
+  "state_dim": 1538,
+  "action_dim": 16,
+  "seed": 42,
+  "reward_normalizer": "linear",
+  "target_selector": "priority",
+  "convergence": {
+    "first_hit_eps": 1,
+    "convergence_eps": -1
+  },
+  "results": {
+    "train_time_s": 23.91,
+    "total_steps": 9019,
+    "best_return": 1900.0,
+    "final_sr": 1.0
+  }
+}

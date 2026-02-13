@@ -228,6 +228,73 @@ class PenGymStateAdapter:
                     reachable.append(addr)
         return reachable
 
+    def get_host_data(self, flat_obs: np.ndarray,
+                      host_addr: Tuple[int, int]) -> Optional[Dict]:
+        """Extract structured host information from PenGym observation.
+
+        Built on top of ``_get_host_segment()``.
+
+        Args:
+            flat_obs: Flat NASim observation (1D array).
+            host_addr: ``(subnet_id, host_id)`` tuple.
+
+        Returns:
+            A dict with the following keys, or ``None`` if *host_addr* is not
+            present in the scenario's host map:
+
+            - ``address``      – ``Tuple[int, int]``
+            - ``reachable``    – ``bool``
+            - ``compromised``  – ``bool``
+            - ``discovered``   – ``bool``
+            - ``access_level`` – ``float`` (0=none, 1=user, 2=root)
+            - ``value``        – ``float`` (scenario-defined host value)
+            - ``os``           – ``str`` (decoded OS name or ``''``)
+            - ``services``     – ``List[str]`` (active service names)
+            - ``ports``        – ``List[str]`` (inferred port numbers)
+            - ``processes``    – ``List[str]`` (active process names)
+        """
+        seg = self._get_host_segment(flat_obs, host_addr)
+        if seg is None:
+            return None
+
+        # Decode binary flags
+        os_flags = seg[self._os_offset:self._os_offset + len(self.os_names)]
+        service_flags = seg[self._service_offset:
+                            self._service_offset + len(self.service_names)]
+        process_flags = seg[self._process_offset:
+                            self._process_offset + len(self.process_names)]
+
+        active_services: List[str] = [
+            self.service_names[i]
+            for i in np.where(service_flags > 0.5)[0]
+            if i < len(self.service_names)
+        ]
+        active_processes: List[str] = [
+            self.process_names[i]
+            for i in np.where(process_flags > 0.5)[0]
+            if i < len(self.process_names)
+        ]
+
+        # Infer ports from services
+        ports: List[str] = [
+            self.service_port_map[svc]
+            for svc in active_services
+            if svc in self.service_port_map
+        ]
+
+        return {
+            'address': host_addr,
+            'reachable': bool(seg[self._reachable_offset] > 0.5),
+            'compromised': bool(seg[self._compromised_offset] > 0.5),
+            'discovered': bool(seg[self._discovered_offset] > 0.5),
+            'access_level': float(seg[self._access_offset]),
+            'value': float(seg[self._value_offset]),
+            'os': self._decode_os(os_flags),
+            'services': active_services,
+            'ports': ports,
+            'processes': active_processes,
+        }
+
     # ---- Decode helpers ----
 
     def _decode_os(self, os_flags: np.ndarray) -> str:

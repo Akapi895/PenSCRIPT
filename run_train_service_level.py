@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+.. deprecated::
+    This script trains on SCRIPT-simulated HOST targets only.
+    For PenGym (NASim) training, use ``run_pengym_train.py`` instead.
+
 Training script with Service-Level Action Abstraction.
 
 Instead of training the PPO agent with 2064 CVE-level actions,

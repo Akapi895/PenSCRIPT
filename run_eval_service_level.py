@@ -1,4 +1,8 @@
 """
+.. deprecated::
+    This evaluator manually constructs PenGym env + adapters.
+    For the unified evaluation interface, use ``run_pengym_eval.py`` instead.
+
 Service-Level Sim-to-Real Evaluator.
 
 Evaluates a SCRIPT agent trained with service-level actions on PenGym.
