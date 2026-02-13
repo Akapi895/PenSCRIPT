@@ -40,7 +40,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.agent.policy.config import PPO_Config
 from src.envs.wrappers.reward_normalizer import IdentityNormalizer
-from src.envs.wrappers.target_selector import PrioritySensitiveSelector
+from src.envs.wrappers.target_selector import ReachabilityAwareSelector
 from src.training.pengym_trainer import PenGymTrainer
 
 
@@ -90,7 +90,7 @@ def main():
         config=config,
         seed=args.seed,
         reward_normalizer=IdentityNormalizer(),  # raw rewards for eval
-        target_selector=PrioritySensitiveSelector(),
+        target_selector=ReachabilityAwareSelector(),
         tb_dir=None,
     )
 
@@ -130,9 +130,9 @@ def main():
         "episodes": args.episodes,
         "max_steps": args.max_steps,
         "seed": args.seed,
-        "success_rate": sr,
-        "total_reward": total_reward,
-        "avg_reward": avg_reward,
+        "success_rate": float(sr),
+        "total_reward": float(total_reward),
+        "avg_reward": float(avg_reward),
         "eval_time_s": round(elapsed, 2),
     }
 

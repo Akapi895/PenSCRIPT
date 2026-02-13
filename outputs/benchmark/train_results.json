@@ -1,0 +1,34 @@
+{
+  "tiny": {
+    "scenario": "tiny",
+    "error": "'config' object has no attribute 'gamma'"
+  },
+  "tiny-hard": {
+    "scenario": "tiny-hard",
+    "error": "'config' object has no attribute 'gamma'"
+  },
+  "tiny-small": {
+    "scenario": "tiny-small",
+    "error": "'config' object has no attribute 'gamma'"
+  },
+  "small-linear": {
+    "scenario": "small-linear",
+    "error": "'config' object has no attribute 'gamma'"
+  },
+  "small-honeypot": {
+    "scenario": "small-honeypot",
+    "error": "'config' object has no attribute 'gamma'"
+  },
+  "medium": {
+    "scenario": "medium",
+    "error": "'config' object has no attribute 'gamma'"
+  },
+  "medium-single-site": {
+    "scenario": "medium-single-site",
+    "error": "'config' object has no attribute 'gamma'"
+  },
+  "medium-multi-site": {
+    "scenario": "medium-multi-site",
+    "error": "'config' object has no attribute 'gamma'"
+  }
+}

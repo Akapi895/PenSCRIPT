@@ -125,6 +125,98 @@ class PrioritySensitiveSelector(TargetSelector):
         return None
 
 
+class ReachabilityAwareSelector(TargetSelector):
+    """Proximity-aware target selection for multi-hop networks.
+
+    Unlike ``PrioritySensitiveSelector`` which jumps directly to distant
+    sensitive hosts (often blocked by inter-subnet firewalls), this
+    selector considers network topology to guide breadth-first expansion:
+
+    1. **Sensitive hosts in compromised subnets** — intra-subnet access
+       bypasses firewalls, so a sensitive host in a subnet where we
+       already have a foothold is the highest-value immediate target.
+    2. **Pivot hosts near blocked targets** — if a sensitive host was
+       blocked (firewall prevented our exploits), try other hosts in
+       the *same subnet* as the blocked one; they may provide the
+       intra-subnet path we need.
+    3. **Breadth-first expansion** — prefer hosts that are in the same
+       or adjacent subnet to a compromised host, enabling progressive
+       network traversal.
+    4. **Any reachable uncompromised host** — general fallback.
+    5. **Discovered sensitive hosts** — long-range targets (may need
+       more pivoting first).
+
+    This selector naturally handles:
+
+    * **Linear topologies** requiring step-by-step subnet traversal.
+    * **Multi-entry-point** networks (two internet connections) by
+      exploring from whichever side has available targets.
+    * **Firewall-restricted paths** by prioritising same-subnet pivots
+      over cross-subnet sensitive hosts.
+    """
+
+    def select(
+        self,
+        available: List[Tuple[int, int]],
+        sensitive: List[Tuple[int, int]],
+        host_info_fn: Callable[[Tuple[int, int]], Optional[Dict]],
+        blocked: Optional[Set[Tuple[int, int]]] = None,
+    ) -> Optional[Tuple[int, int]]:
+        _blocked = blocked or set()
+
+        # Gather intelligence: which subnets do we control?
+        all_hosts = set(available) | set(sensitive)
+        compromised_subnets: Set[int] = set()
+        for host in all_hosts:
+            info = host_info_fn(host)
+            if info and info.get("compromised"):
+                compromised_subnets.add(host[0])
+
+        # Subnets containing blocked targets (need nearby pivots)
+        blocked_subnets: Set[int] = {h[0] for h in _blocked}
+
+        # Helper: is h a valid (uncompromised, not blocked) candidate?
+        def _valid(h: Tuple[int, int]) -> bool:
+            if h in _blocked:
+                return False
+            info = host_info_fn(h)
+            return bool(info and not info.get("compromised"))
+
+        # 1. Sensitive hosts in a subnet we already control
+        #    (intra-subnet = no firewall restrictions)
+        for host in sensitive:
+            if host[0] in compromised_subnets and _valid(host):
+                return host
+
+        # 2. Pivot hosts in same subnet as a blocked target
+        #    (unlock the blocked-target's subnet from inside)
+        for host in available:
+            if host[0] in blocked_subnets and _valid(host):
+                return host
+
+        # 3. Hosts in compromised subnets (same-subnet expansion)
+        for host in available:
+            if host[0] in compromised_subnets and _valid(host):
+                return host
+
+        # 4. Any reachable uncompromised host not blocked
+        #    (breadth-first: try the next accessible host)
+        for host in available:
+            if _valid(host):
+                return host
+
+        # 5. Discovered-but-not-yet-reachable sensitive hosts
+        for host in sensitive:
+            if host in _blocked:
+                continue
+            info = host_info_fn(host)
+            if info and info.get("discovered") and not info.get("compromised"):
+                return host
+
+        # 6. Nothing available
+        return None
+
+
 class RoundRobinSelector(TargetSelector):
     """Cycle through hosts in order.
 

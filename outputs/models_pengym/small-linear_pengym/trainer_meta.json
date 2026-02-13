@@ -1,11 +1,11 @@
 {
   "state_dim": 1538,
   "action_dim": 16,
-  "num_episodes": 400,
-  "total_steps": 60000,
-  "best_return": -1500.0,
-  "best_episode": 400,
-  "first_hit_eps": -1,
+  "num_episodes": 2000,
+  "total_steps": 72371,
+  "best_return": 1770.0,
+  "best_episode": 1988,
+  "first_hit_eps": 1,
   "convergence_eps": -1,
   "scenario": "data\\scenarios\\small-linear.yml"
 }

@@ -69,6 +69,7 @@ from src.envs.wrappers.reward_normalizer import (
 )
 from src.envs.wrappers.target_selector import (
     PrioritySensitiveSelector,
+    ReachabilityAwareSelector,
     RoundRobinSelector,
     ValuePrioritySelector,
 )
@@ -95,7 +96,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--scenario-dir", type=str, default="data/scenarios/chain")
     p.add_argument("--episodes", type=int, default=300)
     p.add_argument("--max-steps", type=int, default=100)
-    p.add_argument("--eval-step-limit", type=int, default=20)
+    p.add_argument("--eval-step-limit", type=int, default=None,
+                   help="Max steps per eval episode. Default: same as --max-steps")
     p.add_argument("--eval-freq", type=int, default=5)
     p.add_argument("--log-freq", type=int, default=50)
     p.add_argument("--save-freq", type=int, default=200)
@@ -109,8 +111,8 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--target-selector",
-        choices=["priority", "roundrobin", "value"],
-        default="priority",
+        choices=["priority", "reachability", "roundrobin", "value"],
+        default="reachability",
     )
     p.add_argument("--no-state-norm", action="store_true")
     p.add_argument("--no-tb", action="store_true")
@@ -135,6 +137,7 @@ def build_normalizer(name: str):
 def build_selector(name: str):
     return {
         "priority": PrioritySensitiveSelector(),
+        "reachability": ReachabilityAwareSelector(),
         "roundrobin": RoundRobinSelector(),
         "value": ValuePrioritySelector(),
     }[name]
@@ -167,10 +170,13 @@ def main():
         tee = TeeLogger(log_path)
         print(f"[LOG] All output is being saved to: {log_path}")
 
+    # eval_step_limit defaults to --max-steps when not explicitly set
+    eval_sl = args.eval_step_limit if args.eval_step_limit is not None else args.max_steps
+
     config = PPO_Config(
         train_eps=args.episodes,
         step_limit=args.max_steps,
-        eval_step_limit=args.eval_step_limit,
+        eval_step_limit=eval_sl,
         use_state_norm=not args.no_state_norm,
     )
 

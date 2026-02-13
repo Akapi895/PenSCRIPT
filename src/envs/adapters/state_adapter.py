@@ -86,10 +86,14 @@ class PenGymStateAdapter:
         self._sbert_cache: Dict[str, np.ndarray] = {}
 
         # Build host_num_map: (subnet, host) → row index in obs tensor
+        # NOTE: scenario.subnets includes internet at index 0.
+        #       Address space bounds[0] = total subnets (including internet).
+        #       We skip internet (subnet 0) and iterate user subnets 1..N-1.
+        #       Use subnets[subnet_id] (NOT subnet_id - 1) to get correct size.
         self.host_num_map: Dict[Tuple[int, int], int] = {}
         host_idx = 0
-        for subnet_id in range(1, self.num_subnets + 1):
-            for host_id in range(self.scenario.subnets[subnet_id - 1]):
+        for subnet_id in range(1, self.num_subnets):
+            for host_id in range(self.scenario.subnets[subnet_id]):
                 self.host_num_map[(subnet_id, host_id)] = host_idx
                 host_idx += 1
         self.num_hosts = host_idx

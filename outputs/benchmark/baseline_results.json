@@ -1,0 +1,467 @@
+{
+  "tiny": {
+    "Random": {
+      "success_rate": 1.0,
+      "avg_reward": 1611.0,
+      "std_reward": 127.39309243440164,
+      "avg_steps": 38.9,
+      "episodes": [
+        {
+          "episode": 1,
+          "status": "SUCCESS",
+          "reward": 1570.0,
+          "steps": 43,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 2,
+          "status": "SUCCESS",
+          "reward": 1740.0,
+          "steps": 26,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 3,
+          "status": "SUCCESS",
+          "reward": 1620.0,
+          "steps": 38,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 4,
+          "status": "SUCCESS",
+          "reward": 1780.0,
+          "steps": 22,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 5,
+          "status": "SUCCESS",
+          "reward": 1390.0,
+          "steps": 61,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 6,
+          "status": "SUCCESS",
+          "reward": 1530.0,
+          "steps": 47,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 7,
+          "status": "SUCCESS",
+          "reward": 1750.0,
+          "steps": 25,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 8,
+          "status": "SUCCESS",
+          "reward": 1530.0,
+          "steps": 47,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 9,
+          "status": "SUCCESS",
+          "reward": 1730.0,
+          "steps": 27,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 10,
+          "status": "SUCCESS",
+          "reward": 1470.0,
+          "steps": 53,
+          "done": true,
+          "last_target": "(2, 0)"
+        }
+      ],
+      "num_episodes": 10,
+      "num_successes": 10,
+      "agent": "Random"
+    },
+    "Greedy-Exploit": {
+      "success_rate": 1.0,
+      "avg_reward": 1719.0,
+      "std_reward": 59.74110812497538,
+      "avg_steps": 28.1,
+      "episodes": [
+        {
+          "episode": 1,
+          "status": "SUCCESS",
+          "reward": 1650.0,
+          "steps": 35,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 2,
+          "status": "SUCCESS",
+          "reward": 1650.0,
+          "steps": 35,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 3,
+          "status": "SUCCESS",
+          "reward": 1690.0,
+          "steps": 31,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 4,
+          "status": "SUCCESS",
+          "reward": 1660.0,
+          "steps": 34,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 5,
+          "status": "SUCCESS",
+          "reward": 1790.0,
+          "steps": 21,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 6,
+          "status": "SUCCESS",
+          "reward": 1710.0,
+          "steps": 29,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 7,
+          "status": "SUCCESS",
+          "reward": 1710.0,
+          "steps": 29,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 8,
+          "status": "SUCCESS",
+          "reward": 1810.0,
+          "steps": 19,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 9,
+          "status": "SUCCESS",
+          "reward": 1710.0,
+          "steps": 29,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 10,
+          "status": "SUCCESS",
+          "reward": 1810.0,
+          "steps": 19,
+          "done": true,
+          "last_target": "(2, 0)"
+        }
+      ],
+      "num_episodes": 10,
+      "num_successes": 10,
+      "agent": "Greedy-Exploit"
+    },
+    "Scan-First": {
+      "success_rate": 1.0,
+      "avg_reward": 1683.0,
+      "std_reward": 93.60021367496978,
+      "avg_steps": 31.7,
+      "episodes": [
+        {
+          "episode": 1,
+          "status": "SUCCESS",
+          "reward": 1780.0,
+          "steps": 22,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 2,
+          "status": "SUCCESS",
+          "reward": 1740.0,
+          "steps": 26,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 3,
+          "status": "SUCCESS",
+          "reward": 1760.0,
+          "steps": 24,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 4,
+          "status": "SUCCESS",
+          "reward": 1740.0,
+          "steps": 26,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 5,
+          "status": "SUCCESS",
+          "reward": 1840.0,
+          "steps": 16,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 6,
+          "status": "SUCCESS",
+          "reward": 1580.0,
+          "steps": 42,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 7,
+          "status": "SUCCESS",
+          "reward": 1580.0,
+          "steps": 42,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 8,
+          "status": "SUCCESS",
+          "reward": 1610.0,
+          "steps": 39,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 9,
+          "status": "SUCCESS",
+          "reward": 1620.0,
+          "steps": 38,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 10,
+          "status": "SUCCESS",
+          "reward": 1580.0,
+          "steps": 42,
+          "done": true,
+          "last_target": "(2, 0)"
+        }
+      ],
+      "num_episodes": 10,
+      "num_successes": 10,
+      "agent": "Scan-First"
+    },
+    "DQN-Baseline": {
+      "success_rate": 1.0,
+      "avg_reward": 1795.0,
+      "std_reward": 63.60031446463138,
+      "avg_steps": 20.5,
+      "episodes": [
+        {
+          "episode": 1,
+          "status": "SUCCESS",
+          "reward": 1670.0,
+          "steps": 33,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 2,
+          "status": "SUCCESS",
+          "reward": 1750.0,
+          "steps": 25,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 3,
+          "status": "SUCCESS",
+          "reward": 1830.0,
+          "steps": 17,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 4,
+          "status": "SUCCESS",
+          "reward": 1760.0,
+          "steps": 24,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 5,
+          "status": "SUCCESS",
+          "reward": 1790.0,
+          "steps": 21,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 6,
+          "status": "SUCCESS",
+          "reward": 1740.0,
+          "steps": 26,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 7,
+          "status": "SUCCESS",
+          "reward": 1850.0,
+          "steps": 15,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 8,
+          "status": "SUCCESS",
+          "reward": 1850.0,
+          "steps": 15,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 9,
+          "status": "SUCCESS",
+          "reward": 1810.0,
+          "steps": 19,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 10,
+          "status": "SUCCESS",
+          "reward": 1900.0,
+          "steps": 10,
+          "done": true,
+          "last_target": "(2, 0)"
+        }
+      ],
+      "num_episodes": 10,
+      "num_successes": 10,
+      "agent": "DQN-Baseline",
+      "train_info": {
+        "train_episodes": 100,
+        "final_train_sr": 1.0
+      }
+    },
+    "A2C-Baseline": {
+      "success_rate": 1.0,
+      "avg_reward": 1719.0,
+      "std_reward": 103.4842983258813,
+      "avg_steps": 28.1,
+      "episodes": [
+        {
+          "episode": 1,
+          "status": "SUCCESS",
+          "reward": 1520.0,
+          "steps": 48,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 2,
+          "status": "SUCCESS",
+          "reward": 1840.0,
+          "steps": 16,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 3,
+          "status": "SUCCESS",
+          "reward": 1750.0,
+          "steps": 25,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 4,
+          "status": "SUCCESS",
+          "reward": 1720.0,
+          "steps": 28,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 5,
+          "status": "SUCCESS",
+          "reward": 1840.0,
+          "steps": 16,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 6,
+          "status": "SUCCESS",
+          "reward": 1860.0,
+          "steps": 14,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 7,
+          "status": "SUCCESS",
+          "reward": 1650.0,
+          "steps": 35,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 8,
+          "status": "SUCCESS",
+          "reward": 1610.0,
+          "steps": 39,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 9,
+          "status": "SUCCESS",
+          "reward": 1700.0,
+          "steps": 30,
+          "done": true,
+          "last_target": "(2, 0)"
+        },
+        {
+          "episode": 10,
+          "status": "SUCCESS",
+          "reward": 1700.0,
+          "steps": 30,
+          "done": true,
+          "last_target": "(2, 0)"
+        }
+      ],
+      "num_episodes": 10,
+      "num_successes": 10,
+      "agent": "A2C-Baseline",
+      "train_info": {
+        "train_episodes": 100,
+        "final_train_sr": 1.0
+      }
+    }
+  }
+}

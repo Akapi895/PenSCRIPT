@@ -39,6 +39,7 @@ from src.envs.wrappers.reward_normalizer import (
 )
 from src.envs.wrappers.target_selector import (
     PrioritySensitiveSelector,
+    ReachabilityAwareSelector,
     TargetSelector,
 )
 
@@ -102,7 +103,7 @@ class SingleHostPenGymWrapper:
         self.target_selector: TargetSelector = (
             target_selector
             if target_selector is not None
-            else PrioritySensitiveSelector()
+            else ReachabilityAwareSelector()
         )
 
         # Internal components — populated by _build()
@@ -409,13 +410,14 @@ class SingleHostPenGymWrapper:
         )
 
         if should_rotate:
-            # v2: Auto subnet_scan from compromised hosts to discover
-            # adjacent subnets before selecting the next target.
+            # v2/v3: Always discover from compromised hosts when rotating
+            # so the selector has up-to-date visibility of available hosts.
+            self._discover_from_compromised()
+
             if target_fully_exploited:
-                self._discover_from_compromised()
-                # Clear blocked set — the new compromise changes network
-                # position, so previously unreachable hosts may now be
-                # reachable from the newly compromised subnet.
+                # New network position — reset all blocks.  Previously
+                # unreachable hosts may now be reachable from the newly
+                # compromised subnet.
                 self._blocked_targets.clear()
                 self._consecutive_failures.clear()
 
