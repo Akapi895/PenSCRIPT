@@ -1333,15 +1333,28 @@ def parse_args():
 
 def main():
     args = parse_args()
-    commands = {
-        "train": cmd_train,
-        "eval": cmd_eval,
-        "baselines": cmd_baselines,
-        "compare": cmd_compare,
-        "full": cmd_full,
-        "cve-audit": cmd_cve_audit,
-    }
-    commands[args.command](args)
+
+    # ── Auto-log ALL output to file ──────────────────────────────────
+    BENCHMARK_DIR.mkdir(parents=True, exist_ok=True)
+    log_name = f"{args.command}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+    global_log_path = str(BENCHMARK_DIR / log_name)
+    tee = TeeLogger(global_log_path)
+    print(f"[LOG] All output is being saved to: {global_log_path}\n")
+
+    try:
+        commands = {
+            "train": cmd_train,
+            "eval": cmd_eval,
+            "baselines": cmd_baselines,
+            "compare": cmd_compare,
+            "full": cmd_full,
+            "cve-audit": cmd_cve_audit,
+        }
+        commands[args.command](args)
+    finally:
+        tee.close()
+        # Print to real stdout after tee is closed
+        print(f"\n[LOG] Full log saved → {global_log_path}")
 
 
 if __name__ == "__main__":
