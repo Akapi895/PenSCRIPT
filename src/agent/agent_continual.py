@@ -47,9 +47,17 @@ class Agent_CL():
             config = Agent.get_policy_config(policy_name=policy_name,
                                              args=rl_config_dict)
 
-        else:
+        elif config is None and cl_config is None:
+            # No explicit config passed — use defaults
             cl_config = self.get_crl_config(method_name=method)
             config = Agent.get_policy_config(policy_name=policy_name)
+        else:
+            # Use the explicitly-provided config/cl_config objects.
+            # Fill in whichever one is None with defaults.
+            if cl_config is None:
+                cl_config = self.get_crl_config(method_name=method)
+            if config is None:
+                config = Agent.get_policy_config(policy_name=policy_name)
         self.cl_agent = self._get_cl_agent(config=config, cl_config=cl_config)
         self.name = self.cl_agent.name
         self.config = self.cl_agent.config

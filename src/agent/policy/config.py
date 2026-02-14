@@ -55,6 +55,8 @@ class PPO_Config(config):
             use_layer_norm=False,
             use_orthogonal_init=False,
             min_decay_lr=5e-1,
+            state_dim=None,
+            action_dim=None,
             **kwargs):
         super().__init__(**kwargs)
         self.batch_size = batch_size
@@ -73,6 +75,11 @@ class PPO_Config(config):
         self.use_orthogonal_init = use_orthogonal_init
         self.use_layer_norm = use_layer_norm
         self.min_decay_lr = min_decay_lr
+        # Optional overrides for state/action dimensions.
+        # None → PPO_agent falls back to StateEncoder.state_space / Action.action_space.
+        # Set to explicit values (e.g. 1538, 16) for PenGym service-level action space.
+        self.state_dim = state_dim
+        self.action_dim = action_dim
 
 
 class Finetune_Config(cl_config):

@@ -1,0 +1,58 @@
+# SCRIPT CRL configuration for PenGym environments
+# Used by: PenGymScriptTrainer / Agent_CL(method="script")
+#
+# This config tunes SCRIPT hyperparameters for PenGym's
+# 1538-dim state space and 16 service-level actions.
+
+RL_Policy:
+  name: PPO
+  HyperParameters:
+    # --- PPO core ---
+    batch_size: 512
+    mini_batch_size: 64
+    gamma: 0.99
+    ppo_update_time: 8
+    actor_lr: 1e-4
+    critic_lr: 5e-5
+    gae_lambda: 0.95
+    policy_clip: 0.2
+    hidden_sizes: [512, 512]
+    entropy_coef: 0.02
+    activate_func: "tanh"
+    use_state_norm: true
+    use_reward_scaling: false
+    use_lr_decay: true
+    min_decay_lr: 0.5
+    # --- Per-task training budget ---
+    train_eps: 500
+    step_limit: 100
+    eval_step_limit: 100
+
+CRL_Method:
+  name: script
+  HyperParameters:
+    # --- Knowledge Distillation ---
+    pd_lr: 5e-5
+    sample_batch: 5000
+    training_batch_size: 256
+    transfer_strength: 0.7
+    consolidation_iteration_num: 1000
+    compress_eval_freq: 100
+    # --- EWC ---
+    ewc_lambda: 2000
+    ewc_gamma: 0.99
+    # --- Teacher Guidance ---
+    use_curriculum_guide: true
+    guide_kl_scale: 2
+    guide_temperature: 0.1
+    max_guide_episodes_rate: 0.1
+    max_guide_step_rate: 0.5
+    # --- Retrospection ---
+    use_retrospection_loss: true
+    beta: 1
+    temperature: 0.5
+    horizion: 0
+    # --- Misc ---
+    reset_teacher: true
+    use_grad_clip: true
+    update_early_terminate: false

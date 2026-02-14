@@ -1,34 +1,14 @@
 {
   "tiny": {
     "scenario": "tiny",
-    "error": "'config' object has no attribute 'gamma'"
-  },
-  "tiny-hard": {
-    "scenario": "tiny-hard",
-    "error": "'config' object has no attribute 'gamma'"
-  },
-  "tiny-small": {
-    "scenario": "tiny-small",
-    "error": "'config' object has no attribute 'gamma'"
-  },
-  "small-linear": {
-    "scenario": "small-linear",
-    "error": "'config' object has no attribute 'gamma'"
-  },
-  "small-honeypot": {
-    "scenario": "small-honeypot",
-    "error": "'config' object has no attribute 'gamma'"
-  },
-  "medium": {
-    "scenario": "medium",
-    "error": "'config' object has no attribute 'gamma'"
-  },
-  "medium-single-site": {
-    "scenario": "medium-single-site",
-    "error": "'config' object has no attribute 'gamma'"
-  },
-  "medium-multi-site": {
-    "scenario": "medium-multi-site",
-    "error": "'config' object has no attribute 'gamma'"
+    "episodes": 30,
+    "max_steps": 100,
+    "train_time_s": 0.91,
+    "final_train_sr": 1.0,
+    "final_eval_sr": 1.0,
+    "final_eval_reward": 17750.0,
+    "best_return": 1830.0,
+    "log_file": "D:\\NCKH\\fusion\\pentest\\outputs\\logs\\pengym\\tiny_bench_20260214_184829.log",
+    "model_dir": "D:\\NCKH\\fusion\\pentest\\outputs\\models_pengym\\tiny_pengym"
   }
 }

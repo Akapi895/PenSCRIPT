@@ -1,11 +1,11 @@
 {
   "state_dim": 1538,
   "action_dim": 16,
-  "num_episodes": 500,
-  "total_steps": 9019,
-  "best_return": 1900.0,
-  "best_episode": 492,
+  "num_episodes": 30,
+  "total_steps": 966,
+  "best_return": 1830.0,
+  "best_episode": 23,
   "first_hit_eps": 1,
   "convergence_eps": -1,
-  "scenario": "data\\scenarios\\tiny.yml"
+  "scenario": "D:\\NCKH\\fusion\\pentest\\data\\scenarios\\tiny.yml"
 }

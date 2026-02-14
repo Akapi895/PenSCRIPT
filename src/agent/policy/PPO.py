@@ -123,8 +123,20 @@ class PPO_agent(BasePolicy):
         self.gae_lambda = self.config.gae_lambda
         
         # Allow custom state/action dimensions (for service-level action space)
-        _state_dim = state_dim if state_dim is not None else StateEncoder.state_space
-        _action_dim = action_dim if action_dim is not None else Action.action_space
+        # Priority: explicit param > config field > class-level default
+        if state_dim is not None:
+            _state_dim = state_dim
+        elif getattr(self.config, 'state_dim', None) is not None:
+            _state_dim = self.config.state_dim
+        else:
+            _state_dim = StateEncoder.state_space
+
+        if action_dim is not None:
+            _action_dim = action_dim
+        elif getattr(self.config, 'action_dim', None) is not None:
+            _action_dim = self.config.action_dim
+        else:
+            _action_dim = Action.action_space
 
         # self.device=torch.device("cpu")
         self.activate_func = self.config.activate_func

@@ -154,6 +154,10 @@ class PenGymTrainer:
         log_freq: int = 50,
         model_dir: Optional[str] = None,
         save_freq: int = 200,
+        start_episode: int = 0,
+        prev_train_rewards: Optional[List[float]] = None,
+        prev_train_sr: Optional[List[float]] = None,
+        prev_eval_sr: Optional[List[float]] = None,
     ) -> Dict:
         """Train for *num_episodes* on the current scenario.
 
@@ -163,6 +167,10 @@ class PenGymTrainer:
             log_freq: Print progress every N episodes.
             model_dir: Where to save checkpoints. ``None`` → no saving.
             save_freq: Save a checkpoint every N episodes.
+            start_episode: Resume from this episode (0 = start fresh).
+            prev_train_rewards: Previous training rewards (for resume).
+            prev_train_sr: Previous training SR (for resume).
+            prev_eval_sr: Previous eval SR (for resume).
 
         Returns:
             dict with ``train_rewards``, ``train_sr``, ``eval_sr``,
@@ -171,12 +179,15 @@ class PenGymTrainer:
         if model_dir:
             Path(model_dir).mkdir(parents=True, exist_ok=True)
 
-        train_rewards: List[float] = []
-        train_sr: List[float] = []
-        eval_sr: List[float] = []
+        train_rewards: List[float] = list(prev_train_rewards or [])
+        train_sr: List[float] = list(prev_train_sr or [])
+        eval_sr: List[float] = list(prev_eval_sr or [])
         t0 = time.time()
 
-        for ep in range(1, num_episodes + 1):
+        if start_episode > 0:
+            print(f"  [RESUME] Continuing from episode {start_episode + 1}/{num_episodes}")
+
+        for ep in range(start_episode + 1, num_episodes + 1):
             ep_return, ep_steps, sr = self._run_episode(explore=False)
             train_rewards.append(ep_return)
             train_sr.append(sr)
@@ -194,7 +205,7 @@ class PenGymTrainer:
                     self._tb.add_scalar("Eval/SuccessRate", e_sr, ep)
 
             # --- Logging ---
-            if ep % log_freq == 0 or ep == 1:
+            if ep % log_freq == 0 or (ep == 1 and start_episode == 0):
                 avg_r = np.mean(train_rewards[-log_freq:])
                 avg_sr = np.mean(train_sr[-log_freq:])
                 ev_str = (
@@ -505,6 +516,102 @@ class PenGymTrainer:
             json.dump(meta, f, indent=2)
 
         print(f"[PenGymTrainer] Model saved → {model_dir}")
+
+    def save_checkpoint(
+        self,
+        model_dir: str,
+        episode: int,
+        num_episodes: int,
+        train_rewards: List[float],
+        train_sr: List[float],
+        eval_sr: List[float],
+    ) -> None:
+        """Save a full checkpoint for training resumption.
+
+        Includes model weights, optimizer state, normalisation, and
+        training progress so that ``train()`` can continue exactly
+        where it left off.
+        """
+        # Save model weights + metadata via normal save()
+        self.save(model_dir)
+
+        model_dir_p = Path(model_dir)
+
+        # Optimizer state
+        torch.save(
+            self.Policy.actor_optimizer.state_dict(),
+            model_dir_p / "PPO-actor_optim.pt",
+        )
+        torch.save(
+            self.Policy.critic_optimizer.state_dict(),
+            model_dir_p / "PPO-critic_optim.pt",
+        )
+
+        # Training progress
+        checkpoint = {
+            "episode": episode,
+            "num_episodes": num_episodes,
+            "num_episodes_counter": self.num_episodes,
+            "total_training_steps": self.total_training_steps,
+            "best_return": float(self.best_return),
+            "best_episode": self.best_episode,
+            "first_hit_step": self.first_hit_step,
+            "first_hit_eps": self.first_hit_eps,
+            "convergence_eps": self.convergence_eps,
+            "train_rewards": [float(r) for r in train_rewards],
+            "train_sr": [float(s) for s in train_sr],
+            "eval_sr": [float(s) for s in eval_sr],
+        }
+        with open(model_dir_p / "checkpoint.json", "w") as f:
+            json.dump(checkpoint, f, indent=2)
+
+        print(f"[PenGymTrainer] Checkpoint saved at episode {episode}/{num_episodes} → {model_dir}")
+
+    def load_checkpoint(self, model_dir: str) -> Optional[Dict]:
+        """Load a full checkpoint for training resumption.
+
+        Returns:
+            checkpoint dict if found, else None.
+        """
+        model_dir_p = Path(model_dir)
+        ckpt_path = model_dir_p / "checkpoint.json"
+
+        if not ckpt_path.exists():
+            return None
+
+        # Load model weights
+        self.load(model_dir)
+
+        # Load optimizer state
+        actor_optim_path = model_dir_p / "PPO-actor_optim.pt"
+        critic_optim_path = model_dir_p / "PPO-critic_optim.pt"
+        if actor_optim_path.exists():
+            self.Policy.actor_optimizer.load_state_dict(
+                torch.load(actor_optim_path, map_location=self.Policy.device, weights_only=True)
+            )
+        if critic_optim_path.exists():
+            self.Policy.critic_optimizer.load_state_dict(
+                torch.load(critic_optim_path, map_location=self.Policy.device, weights_only=True)
+            )
+
+        # Restore training counters
+        with open(ckpt_path, "r") as f:
+            checkpoint = json.load(f)
+
+        self.num_episodes = checkpoint.get("num_episodes_counter", 0)
+        self.total_training_steps = checkpoint.get("total_training_steps", 0)
+        self.best_return = checkpoint.get("best_return", -float("inf"))
+        self.best_episode = checkpoint.get("best_episode", -1)
+        self.first_hit_step = checkpoint.get("first_hit_step", -1)
+        self.first_hit_eps = checkpoint.get("first_hit_eps", -1)
+        self.convergence_eps = checkpoint.get("convergence_eps", -1)
+
+        print(
+            f"[PenGymTrainer] Checkpoint loaded ← {model_dir} "
+            f"(episode {checkpoint['episode']}/{checkpoint['num_episodes']}, "
+            f"best_return={self.best_return:.1f})"
+        )
+        return checkpoint
 
     def load(self, model_dir: str) -> None:
         """Load pre-trained model."""

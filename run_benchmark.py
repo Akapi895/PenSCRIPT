@@ -28,6 +28,7 @@ Usage:
 import argparse
 import json
 import os
+import signal
 import sys
 import time
 import csv
@@ -48,6 +49,23 @@ LOGS_DIR = ROOT / "outputs" / "logs" / "pengym"
 BENCHMARK_DIR = ROOT / "outputs" / "benchmark"
 CVE_CSV = ROOT / "data" / "CVE" / "CVE_dataset.csv"
 CVE_GRADED = ROOT / "data" / "CVE" / "cve_graded.csv"
+
+# ── Graceful interrupt handling ──────────────────────────────────────────────
+_INTERRUPT_REQUESTED = False
+
+def _sigint_handler(sig, frame):
+    """Mark interrupt so training loops can save checkpoint before exit."""
+    global _INTERRUPT_REQUESTED
+    if _INTERRUPT_REQUESTED:
+        # Second Ctrl+C → force exit
+        print("\n[!] Force exit (second Ctrl+C)")
+        sys.exit(1)
+    _INTERRUPT_REQUESTED = True
+    print("\n[!] Ctrl+C detected — saving checkpoint and exiting after current episode...")
+    print("    (Press Ctrl+C again to force exit immediately)")
+
+signal.signal(signal.SIGINT, _sigint_handler)
+
 
 # All available scenarios ordered by difficulty
 SCENARIO_ORDER = [
@@ -490,7 +508,7 @@ class SCRIPTAgent:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         from src.agent.policy.PPO import PPO_agent
-        from src.agent.policy.config import config as PPO_Config
+        from src.agent.policy.config import PPO_Config
 
         cfg = PPO_Config()
         self.policy = PPO_agent(cfg, state_dim=state_dim, action_dim=action_dim)
@@ -774,17 +792,36 @@ def run_cve_audit() -> Dict[str, Any]:
 
 def cmd_train(args):
     """Train SCRIPT PPO on selected scenarios."""
+    global _INTERRUPT_REQUESTED
     from src.training.pengym_trainer import PenGymTrainer
-    from src.agent.policy.config import config as PPO_Config
+    from src.agent.policy.config import PPO_Config
     from src.envs.wrappers.reward_normalizer import LinearNormalizer
     from src.envs.wrappers.target_selector import ReachabilityAwareSelector
 
     scenarios = args.scenarios or SCENARIO_ORDER
     BENCHMARK_DIR.mkdir(parents=True, exist_ok=True)
 
-    all_results = {}
+    # ── Load batch progress (for resume) ─────────────────────────────
+    progress_path = BENCHMARK_DIR / "batch_progress.json"
+    batch_progress = {}
+    if getattr(args, 'resume', False) and progress_path.exists():
+        with open(progress_path, 'r') as f:
+            batch_progress = json.load(f)
+        print(f"[RESUME] Loaded batch progress: {len(batch_progress.get('completed', []))} scenarios done")
+
+    completed_scenarios = batch_progress.get("completed", [])
+    all_results = batch_progress.get("results", {})
 
     for sc_name in scenarios:
+        # Skip already-completed scenarios on resume
+        if getattr(args, 'resume', False) and sc_name in completed_scenarios:
+            print(f"\n[SKIP] {sc_name} — already completed (resume mode)")
+            continue
+
+        if _INTERRUPT_REQUESTED:
+            print(f"\n[!] Skipping remaining scenarios due to interrupt")
+            break
+
         sc_path = SCENARIO_DIR / f"{sc_name}.yml"
         if not sc_path.exists():
             print(f"[SKIP] Scenario not found: {sc_path}")
@@ -808,7 +845,7 @@ def cmd_train(args):
         tee = TeeLogger(log_path)
 
         try:
-            config = PPO_Config(
+            ppo_config = PPO_Config(
                 train_eps=episodes,
                 step_limit=max_steps,
                 eval_step_limit=max_steps,
@@ -817,22 +854,92 @@ def cmd_train(args):
 
             trainer = PenGymTrainer(
                 initial_scenario=str(sc_path),
-                config=config,
+                config=ppo_config,
                 seed=args.seed,
                 reward_normalizer=LinearNormalizer(),
                 target_selector=ReachabilityAwareSelector(),
                 tb_dir=None,
             )
 
+            # ── Check for checkpoint (resume within scenario) ────────
+            start_episode = 0
+            prev_rewards, prev_sr, prev_eval_sr = [], [], []
+
+            if getattr(args, 'resume', False):
+                ckpt = trainer.load_checkpoint(model_dir)
+                if ckpt is not None:
+                    start_episode = ckpt["episode"]
+                    prev_rewards = ckpt.get("train_rewards", [])
+                    prev_sr = ckpt.get("train_sr", [])
+                    prev_eval_sr = ckpt.get("eval_sr", [])
+                    if start_episode >= episodes:
+                        print(f"  [SKIP] Already trained {start_episode}/{episodes} episodes")
+                        completed_scenarios.append(sc_name)
+                        continue
+
             t0 = time.time()
-            results = trainer.train(
-                num_episodes=episodes,
-                eval_freq=max(1, episodes // 20),
-                log_freq=max(1, episodes // 20),
-                model_dir=model_dir,
-                save_freq=max(1, episodes // 5),
-            )
+
+            # ── Training loop with interrupt support ─────────────────
+            eval_freq = max(1, episodes // 20)
+            log_freq = max(1, episodes // 20)
+            save_freq = max(1, episodes // 5)
+
+            if model_dir:
+                Path(model_dir).mkdir(parents=True, exist_ok=True)
+
+            train_rewards = list(prev_rewards)
+            train_sr_list = list(prev_sr)
+            eval_sr_list = list(prev_eval_sr)
+
+            if start_episode > 0:
+                print(f"  [RESUME] Continuing from episode {start_episode + 1}/{episodes}")
+
+            for ep in range(start_episode + 1, episodes + 1):
+                if _INTERRUPT_REQUESTED:
+                    print(f"\n  [!] Interrupt at episode {ep}/{episodes} — saving checkpoint...")
+                    trainer.save_checkpoint(
+                        model_dir, ep - 1, episodes,
+                        train_rewards, train_sr_list, eval_sr_list
+                    )
+                    # Save batch progress
+                    batch_progress["completed"] = completed_scenarios
+                    batch_progress["results"] = all_results
+                    batch_progress["interrupted_scenario"] = sc_name
+                    batch_progress["interrupted_episode"] = ep - 1
+                    with open(progress_path, 'w') as f:
+                        json.dump(batch_progress, f, indent=2)
+                    print(f"  [!] Batch progress saved. Resume with: --resume")
+                    tee.close()
+                    return
+
+                ep_return, ep_steps, sr = trainer._run_episode(explore=False)
+                train_rewards.append(ep_return)
+                train_sr_list.append(sr)
+
+                # Evaluation
+                if ep % eval_freq == 0:
+                    _, e_sr = trainer.evaluate(verbose=False)
+                    eval_sr_list.append(e_sr)
+
+                # Logging
+                if ep % log_freq == 0 or (ep == 1 and start_episode == 0):
+                    avg_r = np.mean(train_rewards[-log_freq:])
+                    avg_sr = np.mean(train_sr_list[-log_freq:])
+                    ev_str = f", eval_sr={eval_sr_list[-1]*100:.1f}%" if eval_sr_list else ""
+                    print(f"  [ep {ep:4d}/{episodes}] avg_r={avg_r:.1f}, "
+                          f"avg_sr={avg_sr*100:.1f}%{ev_str}")
+
+                # Periodic checkpoint
+                if ep % save_freq == 0:
+                    trainer.save_checkpoint(
+                        model_dir, ep, episodes,
+                        train_rewards, train_sr_list, eval_sr_list
+                    )
+
             train_time = time.time() - t0
+
+            # Final save
+            trainer.save(model_dir)
 
             # Final evaluation (10 episodes)
             print(f"\nFinal Evaluation ({sc_name}, 10 episodes):")
@@ -845,7 +952,7 @@ def cmd_train(args):
                 "episodes": episodes,
                 "max_steps": max_steps,
                 "train_time_s": round(train_time, 2),
-                "final_train_sr": float(np.mean(results["train_sr"][-50:])),
+                "final_train_sr": float(np.mean(train_sr_list[-50:])),
                 "final_eval_sr": final_sr,
                 "final_eval_reward": float(total_reward),
                 "best_return": float(trainer.best_return),
@@ -859,6 +966,7 @@ def cmd_train(args):
                 json.dump(sc_result, f, indent=2)
 
             all_results[sc_name] = sc_result
+            completed_scenarios.append(sc_name)
             print(f"\n  ✓ {sc_name}: SR={final_sr*100:.0f}%, "
                   f"Time={train_time:.0f}s")
 
@@ -872,11 +980,113 @@ def cmd_train(args):
         finally:
             tee.close()
 
+        # Update batch progress after each scenario
+        batch_progress["completed"] = completed_scenarios
+        batch_progress["results"] = all_results
+        with open(progress_path, 'w') as f:
+            json.dump(batch_progress, f, indent=2)
+
     # Save combined results
     combined_path = BENCHMARK_DIR / "train_results.json"
     with open(combined_path, 'w') as f:
         json.dump(all_results, f, indent=2)
     print(f"\nAll training results saved → {combined_path}")
+
+
+def cmd_script_train(args):
+    """Train with full SCRIPT CRL (teacher-student) on PenGym scenarios."""
+    from src.training.pengym_script_trainer import PenGymScriptTrainer
+
+    scenarios = args.scenarios or ["tiny", "small-linear"]
+    scenario_paths = []
+    for sc_name in scenarios:
+        sc_path = SCENARIO_DIR / f"{sc_name}.yml"
+        if not sc_path.exists():
+            print(f"[SKIP] Scenario not found: {sc_path}")
+            continue
+        scenario_paths.append(str(sc_path))
+
+    if not scenario_paths:
+        print("[ERROR] No valid scenarios found")
+        return
+
+    model_dir = str(MODELS_DIR / "script_crl")
+    tb_dir = str(ROOT / "outputs" / "tensorboard" / "pengym" / "script_crl")
+
+    print(f"\n{'='*60}")
+    print(f"SCRIPT CRL TRAINING (Teacher-Student)")
+    print(f"  Scenarios: {scenarios}")
+    print(f"  Episodes/task: {args.episodes or 'auto'}")
+    print(f"  Max steps: {args.max_steps or 'auto'}")
+    print(f"  Model dir: {model_dir}")
+    print(f"{'='*60}\n")
+
+    # Build config overrides
+    ppo_kwargs = {}
+    if args.episodes:
+        ppo_kwargs["train_eps"] = args.episodes
+    if args.max_steps:
+        ppo_kwargs["step_limit"] = args.max_steps
+        ppo_kwargs["eval_step_limit"] = args.max_steps
+
+    script_kwargs = {}
+    if hasattr(args, 'ewc_lambda') and args.ewc_lambda is not None:
+        script_kwargs["ewc_lambda"] = args.ewc_lambda
+    if hasattr(args, 'guide_kl') and args.guide_kl is not None:
+        script_kwargs["guide_kl_scale"] = args.guide_kl
+
+    try:
+        config_file = getattr(args, 'config', None)
+
+        trainer = PenGymScriptTrainer(
+            scenario_list=scenario_paths,
+            ppo_kwargs=ppo_kwargs if not config_file else None,
+            script_kwargs=script_kwargs if not config_file else None,
+            seed=args.seed,
+            tb_dir=tb_dir,
+            model_dir=model_dir,
+            config_file=config_file,
+        )
+
+        result = trainer.train(
+            eval_freq=5,
+            save_agent=True,
+            verbose=True,
+        )
+
+        # Print summary
+        sr_list = result.get("SR_previous_tasks", [])
+        print(f"\n{'='*60}")
+        print(f"SCRIPT CRL TRAINING COMPLETE")
+        print(f"  Training time: {result.get('train_time_s', 0):.1f}s")
+        if sr_list:
+            print(f"  Final SR (all tasks): {sr_list[-1]*100:.1f}%")
+            for i, sr in enumerate(sr_list):
+                print(f"    After task {i}: SR={sr*100:.1f}%")
+        print(f"  Model saved → {model_dir}")
+        print(f"{'='*60}")
+
+        # Save results
+        result_path = BENCHMARK_DIR / "script_crl_results.json"
+        BENCHMARK_DIR.mkdir(parents=True, exist_ok=True)
+        # Convert non-serializable values
+        serializable = {}
+        for k, v in result.items():
+            try:
+                json.dumps(v)
+                serializable[k] = v
+            except (TypeError, ValueError):
+                serializable[k] = str(v)
+        with open(result_path, 'w') as f:
+            json.dump(serializable, f, indent=2)
+        print(f"  Results saved → {result_path}")
+
+        trainer.close()
+
+    except Exception as e:
+        print(f"\n[ERROR] SCRIPT CRL training failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def cmd_eval(args):
@@ -1279,6 +1489,8 @@ def parse_args():
     p_train.add_argument("--max-steps", type=int, default=None,
                          help="Override max steps (default: per-scenario config)")
     p_train.add_argument("--seed", type=int, default=42)
+    p_train.add_argument("--resume", action="store_true",
+                         help="Resume from last checkpoint")
 
     # ── eval ──
     p_eval = sub.add_parser("eval", help="Evaluate trained SCRIPT models")
@@ -1310,8 +1522,27 @@ def parse_args():
     p_full.add_argument("--max-steps", type=int, default=None)
     p_full.add_argument("--seed", type=int, default=42)
     p_full.add_argument("--verbose", action="store_true")
+    p_full.add_argument("--resume", action="store_true",
+                        help="Resume from last checkpoint")
     p_full.add_argument("--train_episodes", type=int, default=None,
                         help=argparse.SUPPRESS)  # alias
+
+    # ── script-train ──
+    p_script = sub.add_parser("script-train",
+                              help="Train with full SCRIPT CRL (teacher-student) on PenGym")
+    p_script.add_argument("--scenarios", nargs="*", default=None,
+                          help="Scenario names in curriculum order (default: tiny small-linear)")
+    p_script.add_argument("--episodes", type=int, default=None,
+                          help="Training episodes per task")
+    p_script.add_argument("--max-steps", type=int, default=None,
+                          help="Max steps per episode")
+    p_script.add_argument("--seed", type=int, default=42)
+    p_script.add_argument("--config", type=str, default=None,
+                          help="YAML config file name (in data/config/)")
+    p_script.add_argument("--ewc-lambda", type=float, default=None,
+                          help="Override EWC lambda")
+    p_script.add_argument("--guide-kl", type=float, default=None,
+                          help="Override guide KL scale")
 
     # ── cve-audit ──
     sub.add_parser("cve-audit", help="Audit CVE dataset integration")
@@ -1327,6 +1558,8 @@ def parse_args():
         args.max_steps = None
     if not hasattr(args, 'train_episodes'):
         args.train_episodes = None
+    if not hasattr(args, 'resume'):
+        args.resume = False
 
     return args
 
@@ -1344,6 +1577,7 @@ def main():
     try:
         commands = {
             "train": cmd_train,
+            "script-train": cmd_script_train,
             "eval": cmd_eval,
             "baselines": cmd_baselines,
             "compare": cmd_compare,
