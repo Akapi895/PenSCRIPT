@@ -1588,7 +1588,7 @@ def main():
     finally:
         tee.close()
         # Print to real stdout after tee is closed
-        print(f"\n[LOG] Full log saved → {global_log_path}")
+        print(f"\n[LOG] Full log saved -> {global_log_path}")
 
 
 if __name__ == "__main__":

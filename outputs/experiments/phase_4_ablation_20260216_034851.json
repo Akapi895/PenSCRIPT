@@ -1,0 +1,68 @@
+[
+  {
+    "label": "Ablation: Full SCRIPT",
+    "returncode": 1,
+    "elapsed_s": 843.6,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "ablation": "Full SCRIPT",
+    "config_file": null,
+    "seed": 42
+  },
+  {
+    "label": "Ablation: No Teacher Guide",
+    "returncode": 0,
+    "elapsed_s": 6.4,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "ablation": "No Teacher Guide",
+    "config_file": "script-no_guide.yaml",
+    "seed": 42
+  },
+  {
+    "label": "Ablation: No KL Imitation",
+    "returncode": 0,
+    "elapsed_s": 6.8,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "ablation": "No KL Imitation",
+    "config_file": "script-no_imitation.yaml",
+    "seed": 42
+  },
+  {
+    "label": "Ablation: No Retrospection",
+    "returncode": 0,
+    "elapsed_s": 6.1,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "ablation": "No Retrospection",
+    "config_file": "script-no_res.yaml",
+    "seed": 42
+  },
+  {
+    "label": "Ablation: No EWC",
+    "returncode": 0,
+    "elapsed_s": 6.2,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "ablation": "No EWC",
+    "config_file": "script-no_wic.yaml",
+    "seed": 42
+  },
+  {
+    "label": "Ablation: No Teacher Reset",
+    "returncode": 0,
+    "elapsed_s": 5.9,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "ablation": "No Teacher Reset",
+    "config_file": "script-no_reset.yaml",
+    "seed": 42
+  }
+]

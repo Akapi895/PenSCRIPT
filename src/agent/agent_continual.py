@@ -157,7 +157,12 @@ class Agent_CL():
             '''
             new_task_learner = self.cl_agent.get_new_task_learner(
                 new_task_id=i)
-            _new_task_learner_ = copy.deepcopy(new_task_learner)
+            
+            # DISABLED: Deepcopy fails with TensorBoard loggers (threading.Lock unpicklable)
+            # This was for forward_transfer_eval_task (never used with forward_transfer_eval_task=None)
+            # _new_task_learner_ = copy.deepcopy(new_task_learner)
+            _new_task_learner_ = new_task_learner  # Use reference (OK since forward_transfer_eval_task=None)
+            
             start = time.time()
             result, Task_Train_matrix = self.learn_new_task(
                 player=new_task_learner,

@@ -1,0 +1,54 @@
+{
+  "phase1_multiseed": [
+    {
+      "label": "SCRIPT-3task-seed42",
+      "returncode": 1,
+      "elapsed_s": 1379.7,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "seed": 42,
+      "scenarios": [
+        "tiny",
+        "small-linear",
+        "medium"
+      ],
+      "episodes": 1000,
+      "max_steps": 1000
+    },
+    {
+      "label": "SCRIPT-3task-seed123",
+      "returncode": 1,
+      "elapsed_s": 2529.3,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "seed": 123,
+      "scenarios": [
+        "tiny",
+        "small-linear",
+        "medium"
+      ],
+      "episodes": 1000,
+      "max_steps": 1000
+    },
+    {
+      "label": "SCRIPT-3task-seed456",
+      "returncode": 1,
+      "elapsed_s": 1529.2,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "seed": 456,
+      "scenarios": [
+        "tiny",
+        "small-linear",
+        "medium"
+      ],
+      "episodes": 1000,
+      "max_steps": 1000
+    }
+  ],
+  "total_time_s": 5440.3,
+  "timestamp": "2026-02-16T02:01:24.959647"
+}

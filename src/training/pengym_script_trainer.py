@@ -128,7 +128,7 @@ class PenGymScriptTrainer:
                 seed=seed,
             )
             self.task_list.append(adapter)
-            logging.info(f"[PenGymScriptTrainer] Task added: {adapter.ip} ← {sc_path}")
+            logging.info(f"[PenGymScriptTrainer] Task added: {adapter.ip} <- {sc_path}")
 
         if not self.task_list:
             raise ValueError("scenario_list is empty — need at least 1 scenario")
@@ -226,7 +226,7 @@ class PenGymScriptTrainer:
         logging.info(f"  Tasks: {[t.ip for t in self.task_list]}")
         logging.info(f"  PPO train_eps={self.ppo_config.train_eps}, "
                       f"step_limit={self.ppo_config.step_limit}")
-        logging.info(f"  SCRIPT: ewc_λ={self.script_config.ewc_lambda}, "
+        logging.info(f"  SCRIPT: ewc_lambda={self.script_config.ewc_lambda}, "
                       f"guide_kl={self.script_config.guide_kl_scale}, "
                       f"transfer={self.script_config.transfer_strength}")
 

@@ -1,0 +1,27 @@
+[
+  {
+    "label": "Generalization-train-3task",
+    "returncode": 1,
+    "elapsed_s": 918.3,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "phase": "train"
+  },
+  {
+    "label": "Generalization-eval-unseen",
+    "returncode": 0,
+    "elapsed_s": 8.1,
+    "final_sr": 0.5,
+    "sr_per_task": {
+      "0": 1.0,
+      "1": 0.0
+    },
+    "success": true,
+    "phase": "eval_unseen",
+    "eval_scenarios": [
+      "medium-single-site",
+      "medium-multi-site"
+    ]
+  }
+]

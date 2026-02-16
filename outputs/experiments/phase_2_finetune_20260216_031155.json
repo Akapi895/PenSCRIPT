@@ -1,0 +1,17 @@
+[
+  {
+    "label": "Finetune-baseline-3task",
+    "returncode": 1,
+    "elapsed_s": 1615.5,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "seed": 42,
+    "scenarios": [
+      "tiny",
+      "small-linear",
+      "medium"
+    ],
+    "config": "finetune (ewc=0, guide=0)"
+  }
+]

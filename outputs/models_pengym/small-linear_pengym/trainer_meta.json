@@ -1,11 +1,11 @@
 {
   "state_dim": 1538,
   "action_dim": 16,
-  "num_episodes": 2000,
-  "total_steps": 72371,
+  "num_episodes": 1000,
+  "total_steps": 39906,
   "best_return": 1770.0,
-  "best_episode": 1988,
+  "best_episode": 930,
   "first_hit_eps": 1,
   "convergence_eps": -1,
-  "scenario": "data\\scenarios\\small-linear.yml"
+  "scenario": "D:\\NCKH\\fusion\\pentest\\data\\scenarios\\small-linear.yml"
 }

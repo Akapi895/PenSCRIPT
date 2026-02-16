@@ -1,0 +1,22 @@
+{
+  "signal": "finished",
+  "Rewards_initial_task": [
+    1900
+  ],
+  "SR_previous_tasks": [
+    1.0
+  ],
+  "Rewards_current_task": [
+    1900
+  ],
+  "last_task": 0,
+  "train_time_s": 53.05,
+  "scenario_list": [
+    "D:\\NCKH\\fusion\\pentest\\data\\scenarios\\tiny.yml"
+  ],
+  "task_names": [
+    "tiny"
+  ],
+  "state_dim": 1538,
+  "action_dim": 16
+}

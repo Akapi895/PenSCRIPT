@@ -1,0 +1,18 @@
+[
+  {
+    "label": "SCRIPT-5task",
+    "returncode": 1,
+    "elapsed_s": 1341.2,
+    "final_sr": null,
+    "sr_per_task": {},
+    "success": false,
+    "seed": 42,
+    "scenarios": [
+      "tiny",
+      "small-linear",
+      "medium",
+      "medium-single-site",
+      "medium-multi-site"
+    ]
+  }
+]

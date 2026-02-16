@@ -1,0 +1,184 @@
+{
+  "phase1_multiseed": [
+    {
+      "label": "SCRIPT-3task-seed42",
+      "returncode": 1,
+      "elapsed_s": 2867.7,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "seed": 42,
+      "scenarios": [
+        "tiny",
+        "small-linear",
+        "medium"
+      ],
+      "episodes": 1000,
+      "max_steps": 1000
+    },
+    {
+      "label": "SCRIPT-3task-seed123",
+      "returncode": 1,
+      "elapsed_s": 3207.8,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "seed": 123,
+      "scenarios": [
+        "tiny",
+        "small-linear",
+        "medium"
+      ],
+      "episodes": 1000,
+      "max_steps": 1000
+    },
+    {
+      "label": "SCRIPT-3task-seed456",
+      "returncode": 1,
+      "elapsed_s": 1766.6,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "seed": 456,
+      "scenarios": [
+        "tiny",
+        "small-linear",
+        "medium"
+      ],
+      "episodes": 1000,
+      "max_steps": 1000
+    }
+  ],
+  "phase2_finetune": [
+    {
+      "label": "Finetune-baseline-3task",
+      "returncode": 1,
+      "elapsed_s": 1615.5,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "seed": 42,
+      "scenarios": [
+        "tiny",
+        "small-linear",
+        "medium"
+      ],
+      "config": "finetune (ewc=0, guide=0)"
+    }
+  ],
+  "phase3_five_tasks": [
+    {
+      "label": "SCRIPT-5task",
+      "returncode": 1,
+      "elapsed_s": 1341.2,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "seed": 42,
+      "scenarios": [
+        "tiny",
+        "small-linear",
+        "medium",
+        "medium-single-site",
+        "medium-multi-site"
+      ]
+    }
+  ],
+  "phase4_ablation": [
+    {
+      "label": "Ablation: Full SCRIPT",
+      "returncode": 1,
+      "elapsed_s": 843.6,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "ablation": "Full SCRIPT",
+      "config_file": null,
+      "seed": 42
+    },
+    {
+      "label": "Ablation: No Teacher Guide",
+      "returncode": 0,
+      "elapsed_s": 6.4,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "ablation": "No Teacher Guide",
+      "config_file": "script-no_guide.yaml",
+      "seed": 42
+    },
+    {
+      "label": "Ablation: No KL Imitation",
+      "returncode": 0,
+      "elapsed_s": 6.8,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "ablation": "No KL Imitation",
+      "config_file": "script-no_imitation.yaml",
+      "seed": 42
+    },
+    {
+      "label": "Ablation: No Retrospection",
+      "returncode": 0,
+      "elapsed_s": 6.1,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "ablation": "No Retrospection",
+      "config_file": "script-no_res.yaml",
+      "seed": 42
+    },
+    {
+      "label": "Ablation: No EWC",
+      "returncode": 0,
+      "elapsed_s": 6.2,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "ablation": "No EWC",
+      "config_file": "script-no_wic.yaml",
+      "seed": 42
+    },
+    {
+      "label": "Ablation: No Teacher Reset",
+      "returncode": 0,
+      "elapsed_s": 5.9,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "ablation": "No Teacher Reset",
+      "config_file": "script-no_reset.yaml",
+      "seed": 42
+    }
+  ],
+  "phase5_generalization": [
+    {
+      "label": "Generalization-train-3task",
+      "returncode": 1,
+      "elapsed_s": 918.3,
+      "final_sr": null,
+      "sr_per_task": {},
+      "success": false,
+      "phase": "train"
+    },
+    {
+      "label": "Generalization-eval-unseen",
+      "returncode": 0,
+      "elapsed_s": 8.1,
+      "final_sr": 0.5,
+      "sr_per_task": {
+        "0": 1.0,
+        "1": 0.0
+      },
+      "success": true,
+      "phase": "eval_unseen",
+      "eval_scenarios": [
+        "medium-single-site",
+        "medium-multi-site"
+      ]
+    }
+  ],
+  "total_time_s": 12603.7,
+  "timestamp": "2026-02-16T04:04:18.595347"
+}

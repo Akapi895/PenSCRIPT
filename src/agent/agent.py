@@ -107,6 +107,49 @@ class Agent(BaseAgent):
         self.convergence_judge_done_list = [False
                                             ] * self.convergence_judge_done_num
 
+    def __deepcopy__(self, memo):
+        """Custom deepcopy to exclude unpicklable objects (loggers, locks)."""
+        import copy
+        
+        # Helper to recursively nullify loggers before deepcopy
+        def nullify_loggers(obj):
+            """Recursively set all logger/tf_logger attributes to None."""
+            if obj is None:
+                return
+            if hasattr(obj, '__dict__'):
+                for attr in list(obj.__dict__.keys()):
+                    if attr in ['tf_logger', 'logger']:
+                        setattr(obj, attr, None)
+                    elif hasattr(getattr(obj, attr, None), '__dict__'):
+                        nullify_loggers(getattr(obj, attr))
+        
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        
+        # Recursively deepcopy all attributes, nullifying loggers first
+        for k, v in self.__dict__.items():
+            if k in ['tf_logger', 'logger']:
+                # Don't copy loggers (contain threading locks)
+                setattr(result, k, None)
+            elif k in ['Policy', 'guide_policy']:
+                # Policy objects contain loggers - nullify before deepcopy
+                if v is not None:
+                    v_backup = copy.copy(v)  # shallow backup
+                    nullify_loggers(v)
+                    v_copy = copy.deepcopy(v, memo)
+                    setattr(result, k, v_copy)
+                    # Restore original (in case referenced elsewhere)
+                    for attr in v_backup.__dict__:
+                        setattr(v, attr, getattr(v_backup, attr))
+                else:
+                    setattr(result, k, None)
+            else:
+                # Normal deepcopy for everything else
+                setattr(result, k, copy.deepcopy(v, memo))
+        
+        return result
+
     def decison_making(self, observation):
         if self.use_state_norm:
             observation = self.state_norm(observation, update=False)

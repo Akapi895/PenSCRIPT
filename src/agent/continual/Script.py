@@ -613,6 +613,11 @@ class KnowledgeKeeper(Agent):
                 # nll_loss=self.NLL(train_batch=batch, task_id=task_id)
                 loss = ewc_loss + kd_loss
 
+                # Safety check: skip update if loss is NaN
+                if not torch.isfinite(loss):
+                    logging.warning(f"[Compress] Detected non-finite loss (NaN/Inf) at task {task_id}, iteration {i}. Skipping this update.")
+                    continue
+
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
@@ -652,24 +657,27 @@ class KnowledgeKeeper(Agent):
                     e_p_sr=color.color_str(f"{e_p_sr*100}%", c=color.CYAN),
                     e_c_r=color.color_str(f"{e_c_r}", c=color.DARKCYAN),
                 )
-                # if self.tf_logger:
-                #     self.tf_logger.add_scalar("policy_preservation/loss",
-                #                               loss.item(), self.update_times)
-                #     self.tf_logger.add_scalar("policy_preservation/ewc_loss",
-                #                               ewc_loss.item(),
-                #                               self.update_times)
-                #     self.tf_logger.add_scalar(
-                #         "policy_preservation/retrospection_loss",
-                #         retrospection_loss.item(), self.update_times)
-                #     self.tf_logger.add_scalar(
-                #         "policy_preservation/EvalRewards_current_task", e_c_r,
-                #         self.update_times)
-                #     self.tf_logger.add_scalar(
-                #         "policy_preservation/EvalRewards_first_task", e_i_r,
-                #         self.update_times)
-                #     self.tf_logger.add_scalar(
-                #         "policy_preservation/EvalSR_alltask", e_p_sr,
-                #         self.update_times)
+                if self.tf_logger:
+                    self.tf_logger.add_scalar("policy_preservation/loss",
+                                              loss.item(), self.update_times)
+                    self.tf_logger.add_scalar("policy_preservation/ewc_loss",
+                                              ewc_loss.item(),
+                                              self.update_times)
+                    self.tf_logger.add_scalar(
+                        "policy_preservation/retrospection_loss",
+                        retrospection_loss.item(), self.update_times)
+                    self.tf_logger.add_scalar(
+                        "policy_preservation/transfer_loss",
+                        transfer_loss.item(), self.update_times)
+                    self.tf_logger.add_scalar(
+                        "policy_preservation/EvalRewards_current_task", e_c_r,
+                        self.update_times)
+                    self.tf_logger.add_scalar(
+                        "policy_preservation/EvalRewards_first_task", e_i_r,
+                        self.update_times)
+                    self.tf_logger.add_scalar(
+                        "policy_preservation/EvalSR_alltask", e_p_sr,
+                        self.update_times)
 
                 # if self.use_wandb:
                 #     wandb.log({
@@ -738,6 +746,12 @@ class OnlineEWC():
                 penalty += (old_imp *
                             (cur_param - old_model_para).pow(2)).sum()
 
+        # Safety check: if penalty is NaN or Inf, return zero loss
+        # This prevents corrupting all model weights
+        if not torch.isfinite(penalty):
+            logging.warning(f"[EWC] Detected non-finite penalty (NaN/Inf) at task {task_id}. Returning zero EWC loss to prevent model corruption.")
+            return torch.tensor(0.0, device=self.device, requires_grad=True)
+        
         ewc_loss = self.ewc_lambda * penalty
         return ewc_loss
 
@@ -800,6 +814,7 @@ class OnlineEWC():
                 assert (k1 == k2)
                 if p.grad is not None:
                     imp.data += p.grad.data.clone().pow(2)
+                    imp.data = torch.clamp(imp.data, max=1e6)  # Prevent Inf
 
         # average over number of batches
         for _, imp in importances.items():
@@ -809,7 +824,14 @@ class OnlineEWC():
         if self.normaliza_fisher:
             for _, imp in importances.items():
                 v = imp.data
-                imp.data /= torch.norm(v)
+                norm_v = torch.norm(v)
+                # Prevent NaN: add epsilon to avoid division by zero
+                # Also check for Inf in norm
+                if torch.isfinite(norm_v) and norm_v > 1e-8:
+                    imp.data /= norm_v
+                else:
+                    # If norm is 0, Inf, or NaN, reset to uniform small importance
+                    imp.data = torch.full_like(imp.data, 1e-8)
             # for k, imp in importances.items():
             #     normalized_fisher_importance[k].data = imp.data/torch.norm(imp.data)
             # importances=normalized_fisher_importance
@@ -880,7 +902,7 @@ class ScriptAgent():
         self.seed = seed
         self.use_wandb = use_wandb
         self.explorer = KnowledgeExplorer(
-            logger=None,
+            logger=self.logger,
             curriculum_guide_params=self.cl_config.curriculum_guide_params,
             use_wandb=self.use_wandb,
             policy_name=policy_name,
@@ -892,7 +914,7 @@ class ScriptAgent():
             use_grad_clip=self.cl_config.use_grad_clip)
         self.keeper = KnowledgeKeeper(
             policy_name=policy_name,
-            logger=None,
+            logger=self.logger,
             use_wandb=self.use_wandb,
             seed=seed,
             config=config,

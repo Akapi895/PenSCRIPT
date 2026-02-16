@@ -1,0 +1,31 @@
+{
+  "state_dim": 1538,
+  "action_dim": 16,
+  "method": "script",
+  "scenario_list": [
+    "D:\\NCKH\\fusion\\pentest\\data\\scenarios\\tiny.yml",
+    "D:\\NCKH\\fusion\\pentest\\data\\scenarios\\small-linear.yml",
+    "D:\\NCKH\\fusion\\pentest\\data\\scenarios\\medium.yml"
+  ],
+  "task_names": [
+    "tiny",
+    "small-linear",
+    "medium"
+  ],
+  "seed": 42,
+  "ppo_config": {
+    "train_eps": 1000,
+    "step_limit": 1000,
+    "hidden_sizes": [
+      512,
+      512
+    ]
+  },
+  "script_config": {
+    "ewc_lambda": 2000,
+    "guide_kl_scale": 2,
+    "transfer_strength": 0.7,
+    "consolidation_iteration_num": 1000,
+    "sample_batch": 5000
+  }
+}
