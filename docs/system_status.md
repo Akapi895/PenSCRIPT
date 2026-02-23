@@ -277,14 +277,20 @@ StrategyCEvaluator(
 
 ```bash
 # Chạy scratch agent trên từng scenario riêng, tìm ngưỡng SR ≥ 50%
-for scenario in tiny tiny-hard tiny-small small-linear; do
-    for eps in 500 1000 2000 3000; do
-        python run_strategy_c.py \
-            --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
-            --pengym-scenarios data/scenarios/$scenario.yml \
-            --train-scratch --episodes $eps --step-limit 150
-    done
-done
+$scenarios = @("tiny","tiny-hard","tiny-small","small-linear")
+$episodes = @(500,1000,2000,3000)
+foreach ($scenario in $scenarios) {
+    foreach ($eps in $episodes) {
+        $outDir = "outputs/strategy_c/calibration/${scenario}_${eps}eps"
+        python run_strategy_c.py `
+            --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json `
+            --pengym-scenarios data/scenarios/$scenario.yml `
+            --scratch-only `
+            --episodes $eps `
+            --step-limit 150 `
+            --output-dir $outDir
+    }
+}
 ```
 
 **Tiêu chí:** Chọn `train_eps` nhỏ nhất sao cho `theta_scratch` đạt SR ≥ 0.3 (30%) trên scenario đó qua multi-episode eval (20 eps). Nếu không đạt ở 3000 eps → loại scenario khỏi benchmark.
