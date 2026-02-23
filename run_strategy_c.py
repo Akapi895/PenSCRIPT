@@ -118,6 +118,10 @@ def parse_args() -> argparse.Namespace:
         "--train-scratch", action="store_true",
         help="Also train θ_pengym_scratch for full 4-agent comparison.",
     )
+    parser.add_argument(
+        "--scratch-only", action="store_true",
+        help="Only train θ_pengym_scratch and evaluate it (calibration mode). Skips Phases 0-3.",
+    )
 
     # ── Output ───────────────────────────────────────────────────────
     parser.add_argument(
@@ -144,6 +148,7 @@ def main():
     print(f"  Transfer:         {args.transfer_strategy} (β={args.fisher_beta}, LR×{args.lr_factor})")
     print(f"  Training:         {args.episodes} eps, {args.step_limit} steps, EWC λ={args.ewc_lambda}")
     print(f"  Seed:             {args.seed}")
+    print(f"  Mode:             {'scratch-only (calibration)' if args.scratch_only else 'full pipeline'}")
     print(f"  Output:           {args.output_dir}")
     print("=" * 70)
 
@@ -171,23 +176,30 @@ def main():
 
     t0 = time.time()
 
-    # Run full pipeline
-    results = trainer.run_full_pipeline(
-        skip_phase0=args.skip_phase0,
-        eval_freq=args.eval_freq,
-    )
-
-    # Optionally train scratch baseline
-    if args.train_scratch:
-        print("\n" + "=" * 60)
-        print("  Training θ_pengym_scratch baseline...")
-        print("=" * 60)
+    if args.scratch_only:
+        # Calibration mode: only train scratch + evaluate it
+        results = {"mode": "scratch_only"}
         scratch_results = trainer.train_pengym_scratch(eval_freq=args.eval_freq)
         results["scratch"] = scratch_results
-
-        # Re-run Phase 4 with the scratch agent available
-        print("\n  Re-running Phase 4 with all 4 agents...")
         results["phase4"] = trainer.phase4_evaluation()
+    else:
+        # Full pipeline
+        results = trainer.run_full_pipeline(
+            skip_phase0=args.skip_phase0,
+            eval_freq=args.eval_freq,
+        )
+
+        # Optionally train scratch baseline
+        if args.train_scratch:
+            print("\n" + "=" * 60)
+            print("  Training θ_pengym_scratch baseline...")
+            print("=" * 60)
+            scratch_results = trainer.train_pengym_scratch(eval_freq=args.eval_freq)
+            results["scratch"] = scratch_results
+
+            # Re-run Phase 4 with the scratch agent available
+            print("\n  Re-running Phase 4 with all 4 agents...")
+            results["phase4"] = trainer.phase4_evaluation()
 
     elapsed = time.time() - t0
 
@@ -201,15 +213,28 @@ def main():
         phase4 = results["phase4"]
         for agent_name, data in phase4.get("agents", {}).items():
             sr = data.get("success_rate", "N/A")
+            nr = data.get("normalized_reward")
+            eta = data.get("step_efficiency")
             if isinstance(sr, float):
-                sr = f"{sr:.1%}"
-            print(f"    {agent_name}: SR={sr}")
+                sr_str = f"{sr:.1%}"
+            else:
+                sr_str = str(sr)
+            parts = [f"SR={sr_str}"]
+            if nr is not None:
+                parts.append(f"NR={nr:.3f}")
+            if eta is not None:
+                parts.append(f"η={eta:.3f}")
+            print(f"    {agent_name}: {', '.join(parts)}")
         transfer = phase4.get("transfer_metrics", {})
         if transfer:
-            ft = transfer.get("forward_transfer")
-            bt = transfer.get("backward_transfer")
-            print(f"  Forward transfer:  {ft:+.2%}" if ft is not None else "")
-            print(f"  Backward transfer: {bt:+.2%}" if bt is not None else "")
+            for key in ["FT_SR", "FT_NR", "FT_eta", "BT_SR", "BT_NR", "BT_eta"]:
+                val = transfer.get(key)
+                if val is not None:
+                    print(f"  {key}: {val:+.4f}")
+            for key in ["BT_KL", "BT_fisher_dist"]:
+                val = transfer.get(key)
+                if val is not None:
+                    print(f"  {key}: {val:.6f}")
 
     # Save final results
     results_path = Path(args.output_dir) / "strategy_c_results.json"

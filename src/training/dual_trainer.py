@@ -299,6 +299,9 @@ class DualTrainer:
             logging.error("No sim tasks loaded — cannot proceed with Phase 1")
             return {"error": "no_sim_tasks"}
 
+        # Save for Phase 4 BT evaluation
+        self._sim_tasks = sim_tasks
+
         # Build Agent_CL for simulation training
         sim_agent = Agent_CL(
             time_flag=time_flag,
@@ -457,9 +460,10 @@ class DualTrainer:
         - θ_dual        : Dual-trained (Phase 1 → Phase 2 → Phase 3)
         - θ_pengym_scratch : SCRIPT trained from scratch on PenGym (if available)
 
-        Each agent is evaluated on PenGym tasks. Transfer metrics
-        (Forward Transfer, Backward Transfer, Transfer Ratio) are
-        computed automatically by StrategyCEvaluator.
+        Each agent is evaluated on PenGym (fresh adapters per agent)
+        and sim tasks. Transfer metrics (FT_SR, FT_NR, FT_eta,
+        BT_SR, BT_NR, BT_eta, BT_KL, BT_fisher_dist) are computed
+        automatically.
         """
         logging.info("\n" + "=" * 60)
         logging.info("[Phase 4] Multi-Agent Evaluation")
@@ -467,16 +471,45 @@ class DualTrainer:
 
         from src.evaluation.strategy_c_eval import StrategyCEvaluator
 
-        pengym_tasks = getattr(self, '_pengym_tasks', None)
-        if not pengym_tasks:
-            logging.warning("[Phase 4] No PenGym tasks for evaluation")
+        # Collect agent names that will be evaluated
+        agent_names = []
+        if self._theta_sim_unified is not None:
+            agent_names.append("theta_sim_unified")
+        if self._theta_dual is not None:
+            agent_names.append("theta_dual")
+        if self._theta_pengym_scratch is not None:
+            agent_names.append("theta_pengym_scratch")
+
+        if not agent_names:
+            logging.warning("[Phase 4] No agents to evaluate")
             return {"agents": {}}
+
+        # Create fresh PenGym adapters per agent (isolated eval environments)
+        per_agent_pengym_tasks = {
+            name: self._create_eval_pengym_tasks()
+            for name in agent_names
+        }
 
         step_limit = getattr(self.ppo_config, 'eval_step_limit',
                              self.ppo_config.step_limit)
+
+        # Optimal rewards and steps per scenario (from YAML comments)
+        optimal_rewards = {
+            "tiny": 195, "tiny-hard": 192,
+            "tiny-small": 189, "small-linear": 179,
+        }
+        optimal_steps = {
+            "tiny": 6, "tiny-hard": 5,
+            "tiny-small": 7, "small-linear": 12,
+        }
+
         evaluator = StrategyCEvaluator(
-            pengym_tasks=pengym_tasks,
+            pengym_tasks=per_agent_pengym_tasks,
+            sim_tasks=getattr(self, '_sim_tasks', None),
             step_limit=step_limit,
+            eval_episodes=20,
+            optimal_rewards=optimal_rewards,
+            optimal_steps=optimal_steps,
         )
 
         if self._theta_sim_unified is not None:
@@ -486,7 +519,16 @@ class DualTrainer:
         if self._theta_pengym_scratch is not None:
             evaluator.register_agent("theta_pengym_scratch", self._theta_pengym_scratch)
 
+        # Run multi-episode evaluation
         report = evaluator.evaluate_all()
+
+        # Compute policy-level BT metrics and inject before printing
+        policy_metrics = self._compute_policy_bt_metrics()
+        if policy_metrics:
+            report["policy_metrics"] = policy_metrics
+            # Re-compute transfer metrics with policy_metrics included
+            report["metrics"] = evaluator._compute_transfer_metrics(report)
+
         evaluator.print_report(report)
 
         # Save detailed evaluation report
@@ -497,24 +539,161 @@ class DualTrainer:
         results = {"agents": {}, "transfer_metrics": report.get("metrics", {})}
         for name, domains in report.get("agents", {}).items():
             pengym_data = domains.get("pengym", {})
+            sim_data = domains.get("sim", {})
             results["agents"][name] = {
                 "success_rate": pengym_data.get("success_rate", 0),
+                "normalized_reward": pengym_data.get("normalized_reward"),
+                "step_efficiency": pengym_data.get("step_efficiency"),
                 "total_rewards": pengym_data.get("total_rewards", 0),
                 "per_task": pengym_data.get("per_task", []),
+                "sim_success_rate": sim_data.get("success_rate") if sim_data else None,
+                "sim_step_efficiency": sim_data.get("step_efficiency") if sim_data else None,
             }
             sr = pengym_data.get("success_rate", "N/A")
             logging.info(f"    {name}: SR={sr:.2%}" if isinstance(sr, float) else f"    {name}: {sr}")
 
         metrics = results["transfer_metrics"]
         if metrics:
-            ft = metrics.get("forward_transfer")
-            bt = metrics.get("backward_transfer")
-            if ft is not None:
-                logging.info(f"  Forward Transfer: {ft:+.2%}")
-            if bt is not None:
-                logging.info(f"  Backward Transfer: {bt:+.2%}")
+            for key in ["FT_SR", "FT_NR", "FT_eta", "BT_SR", "BT_NR", "BT_eta"]:
+                val = metrics.get(key)
+                if val is not None:
+                    logging.info(f"  {key}: {val:+.4f}")
+            for key in ["BT_KL", "BT_fisher_dist"]:
+                val = metrics.get(key)
+                if val is not None:
+                    logging.info(f"  {key}: {val:.6f}")
 
         return results
+
+    # ==================================================================
+    # Convenience: fresh PenGym adapter factory for eval isolation
+    # ==================================================================
+
+    def _create_eval_pengym_tasks(self):
+        """Create a fresh set of PenGym adapters for evaluation.
+
+        Each call returns new adapter objects with the same seed, ensuring
+        deterministic initial state and no residual state from training.
+        """
+        from src.envs.adapters.pengym_host_adapter import PenGymHostAdapter
+
+        tasks = []
+        for sc_path in self.pengym_scenarios:
+            adapter = PenGymHostAdapter.from_scenario(
+                sc_path, seed=self.seed, use_unified_encoding=True,
+            )
+            tasks.append(adapter)
+        return tasks
+
+    # ==================================================================
+    # Policy-level backward transfer metrics
+    # ==================================================================
+
+    def _collect_sim_states(self, n: int = 200) -> "torch.Tensor":
+        """Collect *n* observation vectors from sim tasks using θ_sim policy.
+
+        States are gathered by rolling out the learned sim policy and
+        recording observations.  If sim tasks or θ_sim are unavailable,
+        returns an empty tensor.
+        """
+        import torch
+
+        if self._theta_sim_unified is None:
+            return torch.empty(0)
+
+        sim_tasks = getattr(self, '_sim_tasks', None)
+        if not sim_tasks:
+            return torch.empty(0)
+
+        states: list = []
+        evaluator = self._theta_sim_unified.cl_agent.get_task_evaluator(
+            on_train=False,
+        )
+
+        per_task = max(1, n // len(sim_tasks))
+        for task in sim_tasks:
+            obs = task.reset()
+            for _ in range(per_task + 20):          # small buffer for early dones
+                states.append(obs.copy() if hasattr(obs, 'copy') else obs)
+                action = evaluator.Policy.evaluate(obs)
+                obs, _reward, done, _info = task.step(action)
+                if done:
+                    obs = task.reset()
+                if len(states) >= n:
+                    break
+            if len(states) >= n:
+                break
+
+        states = states[:n]
+        return torch.FloatTensor(states)
+
+    def _compute_policy_bt_metrics(self) -> Dict[str, float]:
+        """Compute policy-level backward transfer metrics.
+
+        BT_KL
+            Average KL divergence  D_KL(π_sim ‖ π_dual) over sim states.
+            Measures how much the action distribution shifted after
+            PenGym fine-tuning.
+
+        BT_fisher_dist
+            Fisher-weighted L2 distance  Σ_k F_k (θ_dual_k − θ_sim_k)².
+            Weights parameter drift by task-importance from EWC.
+        """
+        import torch
+
+        if self._theta_sim_unified is None or self._theta_dual is None:
+            return {}
+
+        metrics: Dict[str, float] = {}
+
+        # ---- BT_KL: D_KL(π_sim ‖ π_dual) on sim states ----
+        try:
+            states = self._collect_sim_states(n=200)
+            if len(states) > 0:
+                sim_actor = (
+                    self._theta_sim_unified.cl_agent.keeper.Policy.actor
+                )
+                dual_actor = (
+                    self._theta_dual.cl_agent.keeper.Policy.actor
+                )
+                sim_actor.eval()
+                dual_actor.eval()
+
+                device = next(sim_actor.parameters()).device
+                states = states.to(device)
+
+                with torch.no_grad():
+                    p = sim_actor(states).clamp(min=1e-8)   # (N, A)
+                    q = dual_actor(states).clamp(min=1e-8)  # (N, A)
+                    kl = (p * (p.log() - q.log())).sum(dim=-1)  # (N,)
+                    metrics["BT_KL"] = float(kl.mean().item())
+        except Exception as e:
+            logging.warning(f"[Phase 4] BT_KL computation failed: {e}")
+
+        # ---- BT_fisher_dist: Σ_k F_k × (θ_dual_k − θ_sim_k)² ----
+        try:
+            ewc = self._theta_dual.cl_agent.ewc
+            if hasattr(ewc, 'importances') and ewc.importances:
+                # Use Fisher diagonal from the first sim task
+                first_task_id = next(iter(ewc.importances))
+                fisher = ewc.importances[first_task_id]
+                saved = ewc.saved_params.get(first_task_id, {})
+
+                dual_params = dict(
+                    self._theta_dual.cl_agent.keeper.Policy.actor.named_parameters()
+                )
+
+                fisher_dist = 0.0
+                for name, f_k in fisher.items():
+                    if name in dual_params and name in saved:
+                        diff = dual_params[name].data - saved[name]
+                        fisher_dist += float((f_k * diff.pow(2)).sum().item())
+
+                metrics["BT_fisher_dist"] = fisher_dist
+        except Exception as e:
+            logging.warning(f"[Phase 4] BT_fisher_dist computation failed: {e}")
+
+        return metrics
 
     # ==================================================================
     # Convenience: train θ_pengym_scratch
