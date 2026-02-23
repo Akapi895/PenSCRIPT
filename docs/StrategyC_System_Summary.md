@@ -21,28 +21,34 @@
 
 ## 1. Tổng Quan Trạng Thái Hệ Thống
 
-### Kết luận: **Pipeline Hoạt Động End-to-End, Còn 1 Khoảng Cách Chính**
+### Kết luận: **Pipeline Hoàn Chỉnh End-to-End với Unified Encoding + Unified Reward**
 
 Hệ thống đã triển khai **đầy đủ pipeline 5 giai đoạn** (Phase 0→1→2→3→4) với tất cả các thành phần cốt lõi: huấn luyện CRL trên sim, chuyển giao domain có kiểm soát, fine-tune trên PenGym, và đánh giá đa-agent. Kiến trúc hành động phân cấp (hierarchical action space) đã được tích hợp xuyên suốt.
 
-**Khoảng cách duy nhất có ý nghĩa:** `UnifiedStateEncoder` (1540-dim) đã được triển khai code hoàn chỉnh nhưng **chưa được tích hợp vào luồng huấn luyện thực tế** — cả sim và PenGym đều sử dụng encoding 1538-dim legacy. Điều này có nghĩa chuyển giao sim→PenGym đang dựa vào sự tương đồng cấu trúc giữa hai bộ mã hóa riêng biệt, thay vì một bộ mã hóa thống nhất đảm bảo căn chỉnh ngữ nghĩa.
+**Tất cả các khoảng cách trước đó đã được lấp:**
 
-| Thành phần                           | Trạng thái                        | File chính                                  |
-| ------------------------------------ | --------------------------------- | ------------------------------------------- |
-| CLI Entry Point                      | ✅ Hoàn chỉnh                     | `run_strategy_c.py`                         |
-| DualTrainer (Phase 0→4)              | ✅ Hoàn chỉnh                     | `src/training/dual_trainer.py`              |
-| Hierarchical Action Space (16-dim)   | ✅ Hoàn chỉnh + tích hợp          | `src/agent/actions/service_action_space.py` |
-| HOST + select_cve()                  | ✅ Hoàn chỉnh + tích hợp          | `src/agent/host.py`                         |
-| DomainTransferManager (3 strategies) | ✅ Hoàn chỉnh + tích hợp          | `src/training/domain_transfer.py`           |
-| OnlineEWC + discount_fisher()        | ✅ Hoàn chỉnh + tích hợp          | `src/agent/continual/Script.py`             |
-| Script_Config (Strategy C params)    | ✅ Hoàn chỉnh                     | `src/agent/policy/config.py`                |
-| StrategyCEvaluator (Phase 4)         | ✅ Hoàn chỉnh + tích hợp          | `src/evaluation/strategy_c_eval.py`         |
-| SingleHostPenGymWrapper              | ✅ Hoàn chỉnh                     | `src/envs/wrappers/single_host_wrapper.py`  |
-| PenGymHostAdapter (duck-typing HOST) | ✅ Hoàn chỉnh                     | `src/envs/adapters/pengym_host_adapter.py`  |
-| PenGymStateAdapter (1538-dim)        | ✅ Hoàn chỉnh                     | `src/envs/adapters/state_adapter.py`        |
-| SCRIPT CRL (5 trụ cột)               | ✅ Hoàn chỉnh                     | `src/agent/continual/Script.py`             |
-| UnifiedStateEncoder (1540-dim)       | ⚠️ Code hoàn chỉnh, chưa tích hợp | `src/envs/core/unified_state_encoder.py`    |
-| UnifiedNormalizer ([-1,+1])          | ⚠️ Code hoàn chỉnh, chưa tích hợp | `src/envs/wrappers/reward_normalizer.py`    |
+- `UnifiedStateEncoder` (1540-dim) đã được **tích hợp đầy đủ** vào pipeline: HOST sử dụng `encode_from_sim()`, PenGym wrapper sử dụng `convert_unified()`, PPO `state_dim=1540`.
+- `UnifiedNormalizer` ([-1,+1]) đã được **tích hợp đầy đủ**: sim dùng `UnifiedNormalizer(source='simulation')`, PenGym dùng `UnifiedNormalizer(source='pengym')` → Fisher information tương thích cross-domain.
+- Canonicalization (ubuntu→linux, openssh→ssh) **hoạt động tự động** qua UnifiedStateEncoder.
+
+**Backward compatible:** Các luồng không qua DualTrainer (run.py, run_benchmark.py) vẫn hoạt động với 1538-dim/LinearNormalizer.
+
+| Thành phần                           | Trạng thái                       | File chính                                  |
+| ------------------------------------ | -------------------------------- | ------------------------------------------- |
+| CLI Entry Point                      | ✅ Hoàn chỉnh                    | `run_strategy_c.py`                         |
+| DualTrainer (Phase 0→4)              | ✅ Hoàn chỉnh                    | `src/training/dual_trainer.py`              |
+| Hierarchical Action Space (16-dim)   | ✅ Hoàn chỉnh + tích hợp         | `src/agent/actions/service_action_space.py` |
+| HOST + select_cve()                  | ✅ Hoàn chỉnh + tích hợp         | `src/agent/host.py`                         |
+| DomainTransferManager (3 strategies) | ✅ Hoàn chỉnh + tích hợp         | `src/training/domain_transfer.py`           |
+| OnlineEWC + discount_fisher()        | ✅ Hoàn chỉnh + tích hợp         | `src/agent/continual/Script.py`             |
+| Script_Config (Strategy C params)    | ✅ Hoàn chỉnh                    | `src/agent/policy/config.py`                |
+| StrategyCEvaluator (Phase 4)         | ✅ Hoàn chỉnh + tích hợp         | `src/evaluation/strategy_c_eval.py`         |
+| SingleHostPenGymWrapper              | ✅ Hoàn chỉnh + unified encoding | `src/envs/wrappers/single_host_wrapper.py`  |
+| PenGymHostAdapter (duck-typing HOST) | ✅ Hoàn chỉnh + float reward     | `src/envs/adapters/pengym_host_adapter.py`  |
+| PenGymStateAdapter                   | ✅ Hoàn chỉnh (legacy + unified) | `src/envs/adapters/state_adapter.py`        |
+| SCRIPT CRL (5 trụ cột)               | ✅ Hoàn chỉnh                    | `src/agent/continual/Script.py`             |
+| UnifiedStateEncoder (1540-dim)       | ✅ Hoàn chỉnh + tích hợp         | `src/envs/core/unified_state_encoder.py`    |
+| UnifiedNormalizer ([-1,+1])          | ✅ Hoàn chỉnh + tích hợp         | `src/envs/wrappers/reward_normalizer.py`    |
 
 ---
 
@@ -63,8 +69,9 @@ run_strategy_c.py
       │
       ├─ Phase 1: Sim Training
       │   ├─ ServiceActionSpace(action_class=Action) → 16 groups
-      │   ├─ HOST(ip, env_data, service_action_space=sas) per host
-      │   ├─ PPO_Config(action_dim=16) → PPO Actor outputs 16-dim
+      │   ├─ HOST(ip, env_data, sas, unified_encoder, reward_normalizer) per host
+      │   ├─ PPO_Config(action_dim=16, state_dim=1540) → PPO Actor/Critic 1540→16
+      │   ├─ UnifiedNormalizer(source='simulation') → reward [-1,+1]
       │   ├─ Agent_CL.train_continually(sim_tasks)
       │   └─ → θ_sim_unified
       │
@@ -77,7 +84,8 @@ run_strategy_c.py
       │   └─ → θ_dual (sẵn sàng cho Phase 3)
       │
       ├─ Phase 3: PenGym Fine-tuning
-      │   ├─ PenGymHostAdapter.from_scenario() per scenario
+      │   ├─ PenGymHostAdapter.from_scenario(use_unified_encoding=True) per scenario
+      │   ├─ UnifiedNormalizer(source='pengym') → reward [-1,+1]
       │   ├─ θ_dual.train_continually(pengym_tasks)
       │   └─ → θ_dual (fine-tuned)
       │
@@ -109,24 +117,28 @@ HOST.perform_action(service_action)
             HOST.step(cve_index)  → thực thi CVE exploit cụ thể
 ```
 
-### 2.3 Luồng Trạng Thái (hiện tại: 1538-dim)
+### 2.3 Luồng Trạng Thái (1540-dim unified)
 
 ```
-SIM path:  HOST.state_vector = StateEncoder
-           → access(2) + OS(384) + Port(384) + Service(384) + Aux(384) = 1538
+SIM path:  HOST._build_unified_state() → UnifiedStateEncoder.encode_from_sim()
+           → access(3) + discovery(1) + OS(384) + Port(384) + Service(384) + Aux(384) = 1540
+           + canonicalization: ubuntu→linux, openssh→ssh, ...
 
-PenGym path: SingleHostPenGymWrapper → PenGymStateAdapter.convert()
-             → access(2) + OS(384) + Port(384) + Service(384) + Aux(384) = 1538
+PenGym path: SingleHostPenGymWrapper(use_unified_encoding=True)
+             → PenGymStateAdapter.convert_unified()
+             → UnifiedStateEncoder.encode_from_pengym()
+             → access(3) + discovery(1) + OS(384) + Port(384) + Service(384) + Aux(384) = 1540
+             + canonicalization: ubuntu→linux, openssh→ssh, ...
 
-PPO Actor/Critic input: state_dim = StateEncoder.state_space = 1538
+PPO Actor/Critic input: state_dim = UnifiedStateEncoder.TOTAL_DIM = 1540
 ```
 
-**Thiết kế mong muốn (chưa tích hợp):**
+**Legacy (backward compat khi không qua DualTrainer):**
 
 ```
-UnifiedStateEncoder.encode_from_sim() hoặc encode_from_pengym()
-→ access(3) + discovery(1) + OS(384) + Port(384) + Service(384) + Aux(384) = 1540
-  + canonicalization: ubuntu→linux, openssh→ssh, ...
+SIM path:  HOST() (không có unified_encoder) → StateEncoder → 1538-dim
+PenGym path: SingleHostPenGymWrapper() (mặc định) → PenGymStateAdapter.convert() → 1538-dim
+PPO: state_dim fallback = StateEncoder.state_space = 1538
 ```
 
 ---
@@ -307,75 +319,45 @@ Output: `outputs/strategy_c/strategy_c_results.json` + TensorBoard logs + model 
 
 ---
 
-## 4. Thành Phần Triển Khai Một Phần
+## 4. Thành Phần Độc Lập (Không Nằm Trong Dual Pipeline)
 
-### 4.1 UnifiedStateEncoder — Code Hoàn Chỉnh, Chưa Tích Hợp
-
-**File:** `src/envs/core/unified_state_encoder.py` (432 dòng)
-
-**Đã triển khai code:**
-
-- `encode_from_sim()`: Mã hóa từ SCRIPT simulation → 1540-dim
-- `encode_from_pengym()`: Mã hóa từ PenGym observation → 1540-dim
-- `pad_legacy_state()`: Chuyển đổi 1538-dim → 1540-dim
-- Canonicalization maps: `CANONICAL_OS_MAP`, `CANONICAL_SERVICE_MAP`
-- SBERT caching + dimension safety
-
-**Cấu trúc 1540-dim:**
-
-```
-access[0:3]         — 3-dim (none/user/root) thay vì 2-dim
-discovery[3:4]      — 1-dim (đã khám phá host?)
-os_embed[4:388]     — 384-dim SBERT embedding
-port_embed[388:772] — 384-dim SBERT embedding
-service_embed[772:1156]  — 384-dim SBERT embedding
-aux_embed[1156:1540]     — 384-dim SBERT embedding
-```
-
-**Chưa tích hợp:**
-
-- `encode_from_sim()` **không được gọi** ở bất kỳ đâu trong pipeline
-- `HOST.state_vector` vẫn dùng `StateEncoder` (1538-dim)
-- `SingleHostPenGymWrapper` gọi `state_adapter.convert()` (1538-dim), không gọi `convert_unified()` (1540-dim)
-- `PPO_Config.state_dim` không được set → fallback `StateEncoder.state_space = 1538`
-- `DualTrainer.__init__()` tạo `self.unified_encoder` nhưng chỉ dùng trong Phase 0 validation
-
-**Tác động:** Chuyển giao sim→PenGym hoạt động nhưng dựa vào sự tương đồng cấu trúc giữa hai bộ mã hóa riêng biệt (`StateEncoder` cho sim, `PenGymStateAdapter` cho PenGym) thay vì một bộ mã hóa thống nhất đảm bảo căn chỉnh ngữ nghĩa chính xác.
-
-### 4.2 UnifiedNormalizer — Code Hoàn Chỉnh, Chưa Tích Hợp
-
-**File:** `src/envs/wrappers/reward_normalizer.py` (dòng 123-168)
-
-- Chuẩn hóa reward về [-1, +1] cho cả hai domain
-- Simulation: max=1000, min=-10 → [-1, +1]
-- PenGym: max=100, min=-3 → [-1, +1]
-
-**Chưa tích hợp:** `SingleHostPenGymWrapper` mặc định dùng `LinearNormalizer` (PenGym → SCRIPT scale).
-
-**Tác động:** Fisher information từ sim và PenGym có magnitude khác nhau do thang reward khác nhau → EWC penalty có thể bị lệch.
-
-### 4.3 PenGymScriptTrainer — Standalone, Không Nằm Trong Dual Pipeline
+### 4.1 PenGymScriptTrainer — Standalone Trainer
 
 **File:** `src/training/pengym_script_trainer.py` (378 dòng)
 
 Trainer độc lập cho PenGym (không qua DualTrainer):
 
-- `STATE_DIM = 1538`, `ACTION_DIM = 16`
+- `STATE_DIM = 1538`, `ACTION_DIM = 16` (vẫn dùng legacy dimension)
 - Dùng cho `run_pengym_train.py` — huấn luyện SCRIPT CRL từ đầu trên PenGym
 - **Không** được DualTrainer sử dụng (Phase 3 dùng `Agent_CL.train_continually()` trực tiếp)
+- Có thể cập nhật lên 1540 nếu cần, nhưng không ảnh hưởng pipeline chính
+
+### 4.2 Legacy StateEncoder (1538-dim) — Backward Compatibility
+
+**File:** `src/agent/host.py` (class `StateEncoder`, dòng 190+)
+
+Vẫn tồn tại và hoạt động cho các luồng không qua DualTrainer (run.py, run_benchmark.py).
+Khi HOST được tạo **không có `unified_encoder`**, vẫn trả về vector 1538-dim như trước.
+
+### 4.3 Legacy LinearNormalizer — Backward Compatibility
+
+**File:** `src/envs/wrappers/reward_normalizer.py`
+
+`SingleHostPenGymWrapper` mặc định dùng `LinearNormalizer` khi `use_unified_encoding=False`.
+Chỉ khi DualTrainer truyền `use_unified_encoding=True`, mới tự động dùng `UnifiedNormalizer`.
 
 ---
 
-## 5. Thành Phần Chưa Tích Hợp Vào Pipeline
+## 5. Kiến Trúc Backward Compatibility
 
-Các module dưới đây đã có code hoàn chỉnh nhưng chưa ảnh hưởng đến luồng training thực tế:
+Tất cả thay đổi sử dụng cơ chế flag-based, không phá vỡ luồng cũ:
 
-| Module                                       | Lý do chưa tích hợp                                                           | Ưu tiên                                  |
-| -------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------- |
-| `UnifiedStateEncoder` (1540-dim)             | HOST dùng StateEncoder (1538-dim), wrapper dùng PenGymStateAdapter (1538-dim) | P0 — Cần cho căn chỉnh ngữ nghĩa         |
-| `UnifiedNormalizer` ([-1,+1])                | Wrapper mặc định LinearNormalizer, sim không normalize reward                 | P1 — Ảnh hưởng EWC Fisher quality        |
-| `convert_unified()` trong PenGymStateAdapter | Wrapper gọi `convert()` thay vì `convert_unified()`                           | Tự động khi tích hợp UnifiedStateEncoder |
-| `pad_legacy_state()`                         | Không cần nếu chuyển hoàn toàn sang 1540-dim                                  | Phụ thuộc UnifiedStateEncoder            |
+| Luồng         | HOST dim | PenGym dim | Reward norm     | Kích hoạt bởi                                   |
+| ------------- | -------- | ---------- | --------------- | ----------------------------------------------- |
+| DualTrainer   | 1540     | 1540       | [-1,+1] unified | `unified_encoder` + `use_unified_encoding=True` |
+| run.py        | 1538     | —          | N/A (raw int)   | Mặc định (không flag)                           |
+| run_benchmark | 1538     | —          | N/A (raw int)   | Mặc định                                        |
+| run*pengym*\* | —        | 1538       | Linear          | Mặc định                                        |
 
 ---
 
@@ -394,7 +376,7 @@ Các module dưới đây đã có code hoàn chỉnh nhưng chưa ảnh hưởn
 
 | File                            | Dòng | Chức năng                                     | Phase |
 | ------------------------------- | ---- | --------------------------------------------- | ----- |
-| `src/agent/host.py`             | 366  | HOST + hierarchical action via select_cve()   | 1     |
+| `src/agent/host.py`             | 394  | HOST + unified encoder + reward norm          | 1     |
 | `src/agent/agent_continual.py`  | 499  | Agent_CL — CRL task orchestrator              | 1, 3  |
 | `src/agent/continual/Script.py` | 966  | ScriptAgent, EWC, discount_fisher()           | 1-3   |
 | `src/agent/policy/PPO.py`       | 349  | PPO Actor/Critic (state_dim, action_dim)      | 1, 3  |
@@ -409,96 +391,44 @@ Các module dưới đây đã có code hoàn chỉnh nhưng chưa ảnh hưởn
 
 ### PenGym Integration (tích hợp đầy đủ)
 
-| File                                       | Dòng | Chức năng                              | Phase |
-| ------------------------------------------ | ---- | -------------------------------------- | ----- |
-| `src/envs/wrappers/single_host_wrapper.py` | 543  | Wrapper PenGym → single-host interface | 3     |
-| `src/envs/adapters/pengym_host_adapter.py` | 253  | Duck-typing HOST for PenGym            | 2-4   |
-| `src/envs/adapters/state_adapter.py`       | 420  | PenGym obs → SBERT 1538-dim state      | 3     |
-
-### Chưa tích hợp vào pipeline
-
-| File                                     | Dòng | Chức năng                                   | Trạng thái    |
-| ---------------------------------------- | ---- | ------------------------------------------- | ------------- |
-| `src/envs/core/unified_state_encoder.py` | 432  | Unified 1540-dim encoder + canonicalization | Phase 0 only  |
-| `src/envs/wrappers/reward_normalizer.py` | 168  | UnifiedNormalizer ([-1,+1])                 | Defined only  |
-| `src/training/pengym_script_trainer.py`  | 378  | Standalone PenGym trainer                   | Separate tool |
+| File                                       | Dòng | Chức năng                           | Phase |
+| ------------------------------------------ | ---- | ----------------------------------- | ----- |
+| `src/envs/wrappers/single_host_wrapper.py` | 561  | Wrapper PenGym + unified encoding   | 3     |
+| `src/envs/adapters/pengym_host_adapter.py` | 277  | Duck-typing HOST + float reward     | 2-4   |
+| `src/envs/adapters/state_adapter.py`       | 420  | PenGym obs → 1538/1540-dim state    | 3     |
+| `src/envs/core/unified_state_encoder.py`   | 432  | Unified 1540-dim + canonicalization | 0-3   |
+| `src/envs/wrappers/reward_normalizer.py`   | 168  | UnifiedNormalizer [-1,+1] + others  | 1, 3  |
 
 ---
 
-## 7. Khoảng Cách So Với Thiết Kế Ban Đầu
+## 7. So Sánh Với Thiết Kế Ban Đầu
 
-### So sánh với đặc tả (`docs/strategy_C_shared_state_dual_training.md`)
+### Đối chiếu với đặc tả (`docs/strategy_C_shared_state_dual_training.md`)
 
-| #   | Yêu cầu thiết kế                     | Trạng thái thực tế                                 | Mức độ   |
-| --- | ------------------------------------ | -------------------------------------------------- | -------- |
-| 1   | Pipeline Phase 0→1→2→3→4             | ✅ Hoàn chỉnh, tất cả phases functional            | Đầy đủ   |
-| 2   | Unified State Encoder (1540-dim)     | ⚠️ Code xong, chưa tích hợp vào training           | Một phần |
-| 3   | Hierarchical Action Space (16-dim)   | ✅ Hoàn chỉnh + select_cve() tích hợp              | Đầy đủ   |
-| 4   | DomainTransferManager (3 strategies) | ✅ Hoàn chỉnh + tích hợp Phase 2                   | Đầy đủ   |
-| 5   | Fisher Discount (β)                  | ✅ `discount_fisher(beta)` trong OnlineEWC         | Đầy đủ   |
-| 6   | Normalizer Reset + Warmup            | ✅ reset stats + collect warmup states             | Đầy đủ   |
-| 7   | SBERT Canonicalization               | ⚠️ Code xong trong UnifiedStateEncoder, chưa dùng  | Một phần |
-| 8   | Reward Normalization [-1,+1]         | ⚠️ UnifiedNormalizer code xong, chưa dùng          | Một phần |
-| 9   | 4-Agent Evaluation Matrix            | ✅ StrategyCEvaluator + DualTrainer Phase 4        | Đầy đủ   |
-| 10  | Forward/Backward Transfer            | ✅ StrategyCEvaluator.\_compute_transfer_metrics() | Đầy đủ   |
-| 11  | SBERT Consistency Check (Phase 0)    | ✅ Cosine similarity test                          | Đầy đủ   |
-| 12  | PenGym Stability Check (Phase 0)     | ✅ Scenario loadability test                       | Đầy đủ   |
-| 13  | CRL 5 Trụ Cột                        | ✅ Không thay đổi, hoạt động trên cả sim và PenGym | Đầy đủ   |
-| 14  | Black/Grey/White-box modes           | ❌ Không triển khai (đã loại bỏ khỏi scope)        | N/A      |
+| #   | Yêu cầu thiết kế                     | Trạng thái thực tế                                 | Mức độ |
+| --- | ------------------------------------ | -------------------------------------------------- | ------ |
+| 1   | Pipeline Phase 0→1→2→3→4             | ✅ Hoàn chỉnh, tất cả phases functional            | Đầy đủ |
+| 2   | Unified State Encoder (1540-dim)     | ✅ Tích hợp vào HOST + PenGym wrapper + PPO        | Đầy đủ |
+| 3   | Hierarchical Action Space (16-dim)   | ✅ Hoàn chỉnh + select_cve() tích hợp              | Đầy đủ |
+| 4   | DomainTransferManager (3 strategies) | ✅ Hoàn chỉnh + tích hợp Phase 2                   | Đầy đủ |
+| 5   | Fisher Discount (β)                  | ✅ `discount_fisher(beta)` trong OnlineEWC         | Đầy đủ |
+| 6   | Normalizer Reset + Warmup            | ✅ reset stats + collect warmup states (1540-dim)  | Đầy đủ |
+| 7   | SBERT Canonicalization               | ✅ Active qua UnifiedStateEncoder trong pipeline   | Đầy đủ |
+| 8   | Reward Normalization [-1,+1]         | ✅ UnifiedNormalizer cho cả sim và PenGym          | Đầy đủ |
+| 9   | 4-Agent Evaluation Matrix            | ✅ StrategyCEvaluator + DualTrainer Phase 4        | Đầy đủ |
+| 10  | Forward/Backward Transfer            | ✅ StrategyCEvaluator.\_compute_transfer_metrics() | Đầy đủ |
+| 11  | SBERT Consistency Check (Phase 0)    | ✅ Cosine similarity test                          | Đầy đủ |
+| 12  | PenGym Stability Check (Phase 0)     | ✅ Scenario loadability test                       | Đầy đủ |
+| 13  | CRL 5 Trụ Cột                        | ✅ Không thay đổi, hoạt động trên cả sim và PenGym | Đầy đủ |
+| 14  | Black/Grey/White-box modes           | ❌ Không triển khai (đã loại bỏ khỏi scope)        | N/A    |
 
-### Chi tiết khoảng cách còn lại
-
-**Gap 1: UnifiedStateEncoder chưa tích hợp vào luồng training**
-
-Tất cả components sử dụng 1538-dim thay vì 1540-dim:
-
-- `HOST.state_vector` = `StateEncoder` (2 + 4×384 = 1538)
-- `SingleHostPenGymWrapper.step()` → `state_adapter.convert()` → 1538
-- `PPO_Config.state_dim` = None → fallback `StateEncoder.state_space` = 1538
-
-Để tích hợp cần:
-
-1. HOST sim: Thay `StateEncoder` bằng `UnifiedStateEncoder.encode_from_sim()` hoặc tạo wrapper
-2. PenGym: Wrapper gọi `convert_unified()` thay vì `convert()`
-3. PPO: Set `state_dim=1540` trong DualTrainer
-4. DomainTransfer warmup fallback: Đã sửa sang dynamic (dùng `StateEncoder.state_space`)
-
-**Gap 2: UnifiedNormalizer chưa dùng**
-
-Cần inject `UnifiedNormalizer` vào:
-
-1. `SingleHostPenGymWrapper` (thay `LinearNormalizer`)
-2. Sim training HOST (chuẩn hóa reward trước khi truyền cho agent)
-
-**Gap 3: Canonicalization chưa active**
-
-`UnifiedStateEncoder` có `CANONICAL_OS_MAP` và `CANONICAL_SERVICE_MAP` nhưng chỉ được sử dụng bên trong `encode_from_sim()` / `encode_from_pengym()` — vốn chưa được gọi.
+**Kết luận:** 13/14 yêu cầu thiết kế đã được triển khai đầy đủ. Yêu cầu duy nhất bỏ qua (Black/Grey/White-box) đã được loại khỏi scope từ đầu.
 
 ---
 
 ## 8. Hướng Phát Triển Tiếp Theo
 
-### Ưu Tiên P0: Tích Hợp UnifiedStateEncoder
-
-**Mục tiêu:** Cả sim và PenGym sử dụng cùng bộ mã hóa 1540-dim.
-
-**Phạm vi thay đổi:**
-
-1. `host.py` — HOST sử dụng UnifiedStateEncoder thay vì StateEncoder cho state vector
-2. `single_host_wrapper.py` — Gọi `convert_unified()` thay vì `convert()`
-3. `dual_trainer.py` — Set `state_dim=1540`
-4. Verify: PPO_agent properly receives 1540 input dim
-
-### Ưu Tiên P1: Tích Hợp UnifiedNormalizer
-
-**Mục tiêu:** Reward scale đồng nhất [-1, +1] cho cả hai domain.
-
-**Phạm vi thay đổi:**
-
-1. `single_host_wrapper.py` — Default normalizer = `UnifiedNormalizer(source='pengym')`
-2. `host.py` — Normalize reward trước khi trả về (hoặc trong training loop)
-
-### Ưu Tiên P2: Chạy Thử Nghiệm End-to-End
+### Ưu Tiên P0: Chạy Thử Nghiệm End-to-End
 
 ```bash
 # Test nhanh
@@ -515,10 +445,16 @@ python run_strategy_c.py \
     --train-scratch
 ```
 
-### Ưu Tiên P3: Thu Thập và Phân Tích Kết Quả
+### Ưu Tiên P1: Thu Thập và Phân Tích Kết Quả
 
 Sau khi chạy, kiểm tra:
 
 - `phase4.transfer_metrics.forward_transfer > 0` → sim pre-training giúp ích
 - `phase4.transfer_metrics.backward_transfer ≈ 0` → không quên sim
 - So sánh `conservative` vs `cautious` vs `aggressive`
+
+### Ưu Tiên P2: Hyperparameter Tuning
+
+- `fisher_discount_beta` ∈ [0.1, 0.5] — thử độ nhạy
+- `transfer_lr_factor` ∈ [0.01, 0.5] — tốc độ học sau transfer
+- So sánh 3 transfer strategies trên nhiều scenarios

@@ -83,7 +83,8 @@ class Agent(BaseAgent):
             self.reward_scaling = RewardScaling(shape=1,
                                                 gamma=self.config.gamma)
         if self.use_state_norm:
-            self.state_norm = Normalization(shape=StateEncoder.state_space)
+            norm_dim = getattr(self.config, 'state_dim', None) or StateEncoder.state_space
+            self.state_norm = Normalization(shape=norm_dim)
         self.num_episodes = 0
         self.eval_times = 0
 

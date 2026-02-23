@@ -33,9 +33,13 @@ class HOST:
                  pivot=0,
                  env_data: dict = None,
                  env_file:Path=None,
-                 service_action_space=None):
+                 service_action_space=None,
+                 unified_encoder=None,
+                 reward_normalizer=None):
         self.ip = ip
         self.sas = service_action_space
+        self._unified_encoder = unified_encoder
+        self._reward_normalizer = reward_normalizer
         self.state_vector = StateEncoder(ip=self.ip)
         self.info = Host_info(ip=self.ip)
         self.action = Action()
@@ -51,7 +55,10 @@ class HOST:
         self.info_no_reset= copy.deepcopy(self.info)
         self.action.reset()
         self.info = Host_info(ip=self.ip)
-        return self.state_vector.reset()
+        self.state_vector.reset()
+        if self._unified_encoder is not None:
+            return self._build_unified_state()
+        return self.state_vector.host_vector
 
     def perform_action(self, action_mask):
         # Hierarchical: translate service-level action (0..15) → CVE index
@@ -72,6 +79,24 @@ class HOST:
             self.action_history = self.action.history_set
             # UTIL.write_csv(self.info)
             return next_o, r, done, result
+
+    def _build_unified_state(self):
+        """Build 1540-dim unified state vector from current host data."""
+        sv = self.state_vector
+        if sv.access == "compromised":
+            access = "compromised"
+        elif sv.port:
+            access = "reachable"
+        else:
+            access = ""
+        return self._unified_encoder.encode_from_sim(
+            access=access,
+            os=sv.os or "",
+            ports=sv.port or [],
+            services=sv.services or [],
+            web_fps=sv.web_fingerprint or [],
+            discovered=bool(sv.port or sv.os),
+        )
 
     def step(self,  action_mask: int):
         # The action_idx here is the index of the action set
@@ -163,12 +188,15 @@ class HOST:
                 # else:
                 #     cost += self.action.action_failed['cost']
         reward = int(reward - cost)
-        # cost = cost * action_exec_vector[action_idx]
+        if self._reward_normalizer is not None:
+            reward = self._reward_normalizer.normalize(float(reward))
         done = self.state_vector.goal_reached()
-        next_state = self.state_vector.host_vector
+        if self._unified_encoder is not None:
+            next_state = self._build_unified_state()
+        else:
+            next_state = self.state_vector.host_vector
         if isinstance(result, list):
             result = ','.join(result)
-        # reward = reward - cost
         
         return next_state, reward, done, result
 

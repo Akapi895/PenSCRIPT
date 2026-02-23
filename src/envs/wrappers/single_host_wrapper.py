@@ -36,6 +36,7 @@ from src.envs.wrappers.reward_normalizer import (
     IdentityNormalizer,
     LinearNormalizer,
     RewardNormalizer,
+    UnifiedNormalizer,
 )
 from src.envs.wrappers.target_selector import (
     PrioritySensitiveSelector,
@@ -71,6 +72,7 @@ class SingleHostPenGymWrapper:
         target_selector: Optional[TargetSelector] = None,
         seed: int = 42,
         auto_select_target: bool = True,
+        use_unified_encoding: bool = False,
     ):
         """
         Args:
@@ -94,11 +96,16 @@ class SingleHostPenGymWrapper:
         self.flat_obs = flat_obs
         self.seed = seed
         self.auto_select_target = auto_select_target
+        self.use_unified_encoding = use_unified_encoding
 
         self.reward_normalizer: RewardNormalizer = (
             reward_normalizer
             if reward_normalizer is not None
-            else LinearNormalizer()
+            else (
+                UnifiedNormalizer(source='pengym')
+                if use_unified_encoding
+                else LinearNormalizer()
+            )
         )
         self.target_selector: TargetSelector = (
             target_selector
@@ -165,9 +172,11 @@ class SingleHostPenGymWrapper:
 
     @property
     def state_dim(self) -> int:
-        """From ``PenGymStateAdapter.STATE_DIM`` (canonical: ``StateEncoder.state_space``)."""
+        """State vector dimension: 1540 (unified) or 1538 (legacy)."""
+        if self.use_unified_encoding:
+            from src.envs.core.unified_state_encoder import UnifiedStateEncoder
+            return UnifiedStateEncoder.TOTAL_DIM
         from src.envs.adapters.state_adapter import PenGymStateAdapter as _PSA
-
         return _PSA.STATE_DIM
 
     @property
@@ -279,7 +288,8 @@ class SingleHostPenGymWrapper:
         ``TargetSelector``.
 
         Returns:
-            1538-dim ``float32`` state vector.
+            State vector (1540-dim when ``use_unified_encoding=True``,
+            1538-dim legacy otherwise).
 
         Raises:
             RuntimeError: If no target is set and auto-select is disabled.
@@ -311,6 +321,8 @@ class SingleHostPenGymWrapper:
                     self._current_target = addr
                     break
 
+        if self.use_unified_encoding:
+            return self.state_adapter.convert_unified(self._flat_obs, self._current_target)
         return self.state_adapter.convert(self._flat_obs, self._current_target)
 
     def step(
@@ -324,7 +336,7 @@ class SingleHostPenGymWrapper:
         Returns:
             A 4-tuple ``(next_state, reward, done, info)`` where:
 
-            - **next_state** — 1538-dim ``float32`` vector of the current target.
+            - **next_state** — State vector (1540-dim unified or 1538-dim legacy).
             - **reward** — Normalised reward.
             - **done** — ``True`` when all sensitive hosts are compromised.
             - **info** — dict with diagnostic keys:
@@ -450,9 +462,14 @@ class SingleHostPenGymWrapper:
         }
 
         # --- Convert state ---
-        next_state = self.state_adapter.convert(
-            self._flat_obs, self._current_target
-        )
+        if self.use_unified_encoding:
+            next_state = self.state_adapter.convert_unified(
+                self._flat_obs, self._current_target
+            )
+        else:
+            next_state = self.state_adapter.convert(
+                self._flat_obs, self._current_target
+            )
 
         return next_state, reward, done, info
 
@@ -489,9 +506,11 @@ class SingleHostPenGymWrapper:
         return self.state_adapter.get_host_data(self._flat_obs, host_addr)
 
     def get_all_host_states(self) -> Dict[Tuple[int, int], np.ndarray]:
-        """Return 1538-dim state vectors for ALL hosts."""
+        """Return state vectors for ALL hosts (1540-dim unified or 1538-dim legacy)."""
         if self._flat_obs is None:
             return {}
+        if self.use_unified_encoding:
+            return self.state_adapter.convert_all_hosts_unified(self._flat_obs)
         return self.state_adapter.convert_all_hosts(self._flat_obs)
 
     def get_sensitive_hosts(self) -> List[Tuple[int, int]]:

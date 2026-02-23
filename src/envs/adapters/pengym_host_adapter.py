@@ -101,6 +101,12 @@ class PenGymHostAdapter:
         # --- Diagnostics ---
         self.action_history: Set[int] = set()
 
+        # Unified encoding: return float rewards instead of int
+        self._use_float_reward: bool = (
+            getattr(wrapper, 'use_unified_encoding', False)
+            if wrapper is not None else False
+        )
+
     # -----------------------------------------------------------------
     # Factory
     # -----------------------------------------------------------------
@@ -183,6 +189,9 @@ class PenGymHostAdapter:
                 **self._wrapper_kwargs,
             )
             PenGymHostAdapter._active_scenario = self._scenario_path
+            self._use_float_reward = getattr(
+                self.wrapper, 'use_unified_encoding', False
+            )
 
     # -----------------------------------------------------------------
     # HOST interface: reset / perform_action
@@ -196,14 +205,15 @@ class PenGymHostAdapter:
         ensure NASim's class-level ``HostVector`` state is correct.
 
         Returns:
-            ``ndarray`` with shape ``(1538,)`` and dtype ``float32``.
+            ``ndarray`` with shape ``(state_dim,)`` and dtype ``float32``
+            (1540-dim when unified, 1538-dim legacy).
         """
         self.action_history = set()
         self._ensure_wrapper()
         obs = self.wrapper.reset()
         return obs
 
-    def perform_action(self, action: int) -> Tuple[np.ndarray, int, int, str]:
+    def perform_action(self, action: int) -> Tuple[np.ndarray, float, int, str]:
         """Execute a service-level action.
 
         Args:
@@ -212,8 +222,9 @@ class PenGymHostAdapter:
         Returns:
             4-tuple ``(next_obs, reward, done, result_str)`` where:
 
-            - **next_obs** — ``ndarray[1538]``.
-            - **reward** — Integer reward (SCRIPT convention).
+            - **next_obs** — state vector (1540-dim unified or 1538-dim legacy).
+            - **reward** — Float reward when unified normalizer is active,
+              otherwise integer (SCRIPT convention).
             - **done** — ``1`` if episode finished, ``0`` otherwise.
             - **result_str** — Human-readable result string.
         """
@@ -221,8 +232,9 @@ class PenGymHostAdapter:
 
         next_obs, reward, done, info = self.wrapper.step(action)
 
-        # SCRIPT expects integer reward and integer done
-        r = int(round(reward))
+        # Unified encoding: keep float reward for [-1,+1] range.
+        # Legacy: integer reward (SCRIPT convention).
+        r = float(reward) if self._use_float_reward else int(round(reward))
         d = 1 if done else 0
 
         # Build result string from wrapper info

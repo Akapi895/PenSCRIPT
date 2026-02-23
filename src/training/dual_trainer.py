@@ -42,6 +42,7 @@ from src.agent.policy.config import PPO_Config, Script_Config
 from src.agent.agent_continual import Agent_CL
 from src.agent.host import HOST, StateEncoder
 from src.envs.core.unified_state_encoder import UnifiedStateEncoder
+from src.envs.wrappers.reward_normalizer import UnifiedNormalizer
 from src.training.domain_transfer import DomainTransferManager
 from src.agent.actions.service_action_space import ServiceActionSpace
 
@@ -90,6 +91,7 @@ class DualTrainer:
             "eval_step_limit": 100,
             "use_state_norm": True,
             "action_dim": ServiceActionSpace.DEFAULT_ACTION_DIM,  # 16
+            "state_dim": UnifiedStateEncoder.TOTAL_DIM,  # 1540
             **(ppo_kwargs or {}),
         }
         self.ppo_config = PPO_Config(**ppo_args)
@@ -275,6 +277,7 @@ class DualTrainer:
 
         # Build sim task list from JSON scenarios
         sim_tasks = []
+        sim_reward_norm = UnifiedNormalizer(source='simulation')
         for sc_path in self.sim_scenarios:
             sc_path = Path(sc_path)
             with open(sc_path, 'r', encoding='utf-8') as f:
@@ -286,7 +289,9 @@ class DualTrainer:
                     logging.warning(f"Skipping host {ip}: vuln {vul} not in Vul_cve_set")
                     continue
                 t = HOST(ip, env_data=host_data, env_file=sc_path,
-                         service_action_space=sas)
+                         service_action_space=sas,
+                         unified_encoder=self.unified_encoder,
+                         reward_normalizer=sim_reward_norm)
                 sim_tasks.append(t)
         logging.info(f"  Sim tasks: {len(sim_tasks)} hosts from {len(self.sim_scenarios)} scenarios")
 
@@ -355,7 +360,9 @@ class DualTrainer:
 
         pengym_tasks = []
         for sc_path in self.pengym_scenarios:
-            adapter = PenGymHostAdapter.from_scenario(sc_path, seed=self.seed)
+            adapter = PenGymHostAdapter.from_scenario(
+                sc_path, seed=self.seed, use_unified_encoding=True,
+            )
             pengym_tasks.append(adapter)
 
         if not pengym_tasks:
@@ -526,7 +533,9 @@ class DualTrainer:
 
         pengym_tasks = []
         for sc_path in self.pengym_scenarios:
-            adapter = PenGymHostAdapter.from_scenario(sc_path, seed=self.seed)
+            adapter = PenGymHostAdapter.from_scenario(
+                sc_path, seed=self.seed, use_unified_encoding=True,
+            )
             pengym_tasks.append(adapter)
 
         tb_scratch = SummaryWriter(

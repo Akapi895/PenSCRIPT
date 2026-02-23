@@ -249,10 +249,10 @@ class DomainTransferManager:
 
         if all_states:
             return np.stack(all_states)
-        # Fallback: infer state dim from StateEncoder (default 1538)
+        # Fallback: infer state dim from UnifiedStateEncoder (1540)
         try:
-            from src.agent.host import StateEncoder
-            state_dim = StateEncoder.state_space
+            from src.envs.core.unified_state_encoder import UnifiedStateEncoder
+            state_dim = UnifiedStateEncoder.TOTAL_DIM
         except Exception:
-            state_dim = 1538
+            state_dim = 1540
         return np.zeros((1, state_dim), dtype=np.float32)
