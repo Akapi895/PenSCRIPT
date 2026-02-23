@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T1_005
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0373
+  cve_list:
+  - CVE-2020-0796
+  - CVE-2022-0492
+  - CVE-2021-4034
+  - CVE-2016-7456
+  - CVE-2014-125121
+  - CVE-2012-1493
+slot_assignments:
+  P2:
+    process: cve_2020_0796_smbghost
+    privesc:
+      name: pe_cve_2020_0796_smbghost
+      cve_id: CVE-2020-0796
+      prob: 0.8
+      cost: 2
+      access: user
+  P4:
+    process: docker_cgroup_escape
+    privesc:
+      name: pe_docker_cgroup_escape
+      cve_id: CVE-2022-0492
+      prob: 0.99
+      cost: 1
+      access: root
+  P6:
+    process: cve_2021_4034_pwnkit_lpe_pkexec
+    privesc:
+      name: pe_cve_2021_4034_pwnkit_lpe_pkexec
+      cve_id: CVE-2021-4034
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2016-7456
+      prob: 0.99
+      cost: 1
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2014-125121
+      prob: 0.99
+      cost: 1
+      access: root
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-1493
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P2: windows
+  P4: linux
+  P6: linux
+  S1: linux
+  S3: unix
+  S5: linux

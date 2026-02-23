@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T1_008
+  difficulty_tier: 1
+  avg_difficulty_score: 0.069
+  cve_list:
+  - CVE-2023-22809
+  - CVE-2021-3156
+  - CVE-2010-20113
+  - CVE-2020-4429
+  - CVE-2010-20107
+  - CVE-2025-34107
+slot_assignments:
+  P4:
+    process: sudoedit_bypass_priv_esc
+    privesc:
+      name: pe_sudoedit_bypass_priv_esc
+      cve_id: CVE-2023-22809
+      prob: 0.99
+      cost: 1
+      access: user
+  P6:
+    process: sudo_baron_samedit
+    privesc:
+      name: pe_sudo_baron_samedit
+      cve_id: CVE-2021-3156
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2010-20113
+      prob: 0.8
+      cost: 2
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-4429
+      prob: 0.99
+      cost: 1
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20107
+      prob: 0.8
+      cost: 2
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2025-34107
+      prob: 0.8
+      cost: 2
+      access: user
+os_assignments:
+  P4: linux
+  P6: linux
+  S1: windows
+  S2: linux
+  S3: windows
+  S5: windows

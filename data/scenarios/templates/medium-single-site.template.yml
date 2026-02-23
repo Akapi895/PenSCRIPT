@@ -1,0 +1,391 @@
+meta:
+  name: medium-single-site
+  description: Auto-generated from medium-single-site.yml
+  host_count: 16
+  subnet_count: 1
+subnets:
+- 16
+topology:
+- - 1
+  - 1
+- - 1
+  - 1
+sensitive_hosts:
+  (1, 3): 100
+  (1, 8): 100
+service_scan_cost: 1
+os_scan_cost: 1
+subnet_scan_cost: 1
+process_scan_cost: 1
+step_limit: 2000
+service_slots:
+- slot_id: S1
+  host:
+  - 1
+  - 0
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S3
+  host:
+  - 1
+  - 1
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S4
+  host:
+  - 1
+  - 1
+  role: entry_point
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S6
+  host:
+  - 1
+  - 10
+  role: entry_point
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S7
+  host:
+  - 1
+  - 11
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S9
+  host:
+  - 1
+  - 12
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S10
+  host:
+  - 1
+  - 12
+  role: entry_point
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S11
+  host:
+  - 1
+  - 13
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S12
+  host:
+  - 1
+  - 14
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S14
+  host:
+  - 1
+  - 15
+  role: entry_point
+  allowed_services:
+  - http
+  default_service: http
+  default_os: linux
+- slot_id: S15
+  host:
+  - 1
+  - 2
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S17
+  host:
+  - 1
+  - 3
+  role: entry_point
+  allowed_services:
+  - smtp
+  default_service: smtp
+  default_os: linux
+- slot_id: S19
+  host:
+  - 1
+  - 4
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S21
+  host:
+  - 1
+  - 5
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S22
+  host:
+  - 1
+  - 5
+  role: entry_point
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S24
+  host:
+  - 1
+  - 6
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S26
+  host:
+  - 1
+  - 7
+  role: entry_point
+  allowed_services:
+  - http
+  default_service: http
+  default_os: linux
+- slot_id: S27
+  host:
+  - 1
+  - 8
+  role: entry_point
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S29
+  host:
+  - 1
+  - 9
+  role: entry_point
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+privesc_slots:
+- slot_id: P2
+  host:
+  - 1
+  - 0
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P5
+  host:
+  - 1
+  - 1
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P8
+  host:
+  - 1
+  - 11
+  allowed_processes:
+  - proftpd
+  - any
+  default_process: proftpd
+  default_os: linux
+- slot_id: P13
+  host:
+  - 1
+  - 14
+  allowed_processes:
+  - cron
+  - any
+  default_process: cron
+  default_os: linux
+- slot_id: P16
+  host:
+  - 1
+  - 2
+  allowed_processes:
+  - cron
+  - any
+  default_process: cron
+  default_os: linux
+- slot_id: P18
+  host:
+  - 1
+  - 3
+  allowed_processes:
+  - cron
+  - any
+  default_process: cron
+  default_os: linux
+- slot_id: P20
+  host:
+  - 1
+  - 4
+  allowed_processes:
+  - cron
+  - any
+  default_process: cron
+  default_os: linux
+- slot_id: P23
+  host:
+  - 1
+  - 5
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P25
+  host:
+  - 1
+  - 6
+  allowed_processes:
+  - proftpd
+  - any
+  default_process: proftpd
+  default_os: linux
+- slot_id: P28
+  host:
+  - 1
+  - 8
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P30
+  host:
+  - 1
+  - 9
+  allowed_processes:
+  - cron
+  - any
+  default_process: cron
+  default_os: linux
+firewall:
+  (0, 1):
+  - http
+  (1, 0): []
+_original_host_configurations:
+  (1, 0):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - tomcat
+  (1, 1):
+    os: linux
+    services:
+    - ftp
+    - ssh
+    processes:
+    - tomcat
+  (1, 2):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - cron
+  (1, 3):
+    os: linux
+    services:
+    - smtp
+    processes:
+    - cron
+  (1, 4):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - cron
+  (1, 5):
+    os: linux
+    services:
+    - ftp
+    - ssh
+    processes:
+    - tomcat
+  (1, 6):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - proftpd
+  (1, 7):
+    os: linux
+    services:
+    - http
+    processes: []
+  (1, 8):
+    os: linux
+    services:
+    - ssh
+    processes:
+    - tomcat
+  (1, 9):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - cron
+  (1, 10):
+    os: linux
+    services:
+    - ssh
+    processes: []
+  (1, 11):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - proftpd
+  (1, 12):
+    os: linux
+    services:
+    - ftp
+    - ssh
+    processes: []
+  (1, 13):
+    os: linux
+    services:
+    - ftp
+    processes: []
+  (1, 14):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - cron
+  (1, 15):
+    os: linux
+    services:
+    - http
+    processes: []

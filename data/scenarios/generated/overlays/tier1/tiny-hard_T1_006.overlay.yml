@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T1_006
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0532
+  cve_list:
+  - CVE-2013-10052
+  - CVE-2019-10149
+  - CVE-2021-25281
+  - CVE-2017-9462
+  - CVE-2010-20108
+  - CVE-2010-20007
+slot_assignments:
+  P4:
+    process: zpanel_zsudo
+    privesc:
+      name: pe_zpanel_zsudo
+      cve_id: CVE-2013-10052
+      prob: 0.99
+      cost: 1
+      access: root
+  P6:
+    process: exim4_deliver_message_priv_esc
+    privesc:
+      name: pe_exim4_deliver_message_priv_esc
+      cve_id: CVE-2019-10149
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2021-25281
+      prob: 0.99
+      cost: 1
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-9462
+      prob: 0.99
+      cost: 1
+      access: user
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20108
+      prob: 0.8
+      cost: 2
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20007
+      prob: 0.8
+      cost: 2
+      access: root
+os_assignments:
+  P4: linux
+  P6: linux
+  S1: linux
+  S2: linux
+  S3: windows
+  S5: windows

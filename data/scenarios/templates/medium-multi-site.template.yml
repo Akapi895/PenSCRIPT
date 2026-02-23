@@ -1,0 +1,461 @@
+meta:
+  name: medium-multi-site
+  description: Auto-generated from medium-multi-site.yml
+  host_count: 16
+  subnet_count: 6
+subnets:
+- 2
+- 2
+- 6
+- 2
+- 2
+- 2
+topology:
+- - 1
+  - 1
+  - 0
+  - 0
+  - 1
+  - 1
+  - 1
+- - 1
+  - 1
+  - 1
+  - 1
+  - 0
+  - 0
+  - 0
+- - 0
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+- - 0
+  - 1
+  - 1
+  - 1
+  - 0
+  - 0
+  - 0
+- - 1
+  - 0
+  - 1
+  - 0
+  - 1
+  - 0
+  - 0
+- - 1
+  - 0
+  - 1
+  - 0
+  - 0
+  - 1
+  - 0
+- - 1
+  - 0
+  - 1
+  - 0
+  - 0
+  - 0
+  - 1
+sensitive_hosts:
+  (2, 1): 100
+  (3, 4): 100
+service_scan_cost: 1
+os_scan_cost: 1
+subnet_scan_cost: 1
+process_scan_cost: 1
+step_limit: 2000
+service_slots:
+- slot_id: S1
+  host:
+  - 1
+  - 0
+  role: entry_point
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S3
+  host:
+  - 1
+  - 1
+  role: entry_point
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S5
+  host:
+  - 2
+  - 0
+  role: pivot
+  allowed_services:
+  - smtp
+  default_service: smtp
+  default_os: linux
+- slot_id: S6
+  host:
+  - 2
+  - 1
+  role: target
+  allowed_services:
+  - smtp
+  default_service: smtp
+  default_os: linux
+- slot_id: S8
+  host:
+  - 3
+  - 0
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S10
+  host:
+  - 3
+  - 1
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S11
+  host:
+  - 3
+  - 1
+  role: pivot
+  allowed_services:
+  - http
+  default_service: http
+  default_os: linux
+- slot_id: S12
+  host:
+  - 3
+  - 2
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S13
+  host:
+  - 3
+  - 3
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S14
+  host:
+  - 3
+  - 4
+  role: target
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S16
+  host:
+  - 3
+  - 5
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S17
+  host:
+  - 4
+  - 0
+  role: pivot
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S19
+  host:
+  - 4
+  - 1
+  role: pivot
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S21
+  host:
+  - 5
+  - 0
+  role: pivot
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S24
+  host:
+  - 5
+  - 1
+  role: pivot
+  allowed_services:
+  - ftp
+  default_service: ftp
+  default_os: linux
+- slot_id: S25
+  host:
+  - 5
+  - 1
+  role: pivot
+  allowed_services:
+  - http
+  default_service: http
+  default_os: linux
+- slot_id: S26
+  host:
+  - 6
+  - 0
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S28
+  host:
+  - 6
+  - 1
+  role: pivot
+  allowed_services:
+  - ssh
+  default_service: ssh
+  default_os: linux
+- slot_id: S29
+  host:
+  - 6
+  - 1
+  role: pivot
+  allowed_services:
+  - samba
+  default_service: samba
+  default_os: linux
+privesc_slots:
+- slot_id: P2
+  host:
+  - 1
+  - 0
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P4
+  host:
+  - 1
+  - 1
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P7
+  host:
+  - 2
+  - 1
+  allowed_processes:
+  - cron
+  - any
+  default_process: cron
+  default_os: linux
+- slot_id: P9
+  host:
+  - 3
+  - 0
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P15
+  host:
+  - 3
+  - 4
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+- slot_id: P18
+  host:
+  - 4
+  - 0
+  allowed_processes:
+  - proftpd
+  - any
+  default_process: proftpd
+  default_os: linux
+- slot_id: P20
+  host:
+  - 4
+  - 1
+  allowed_processes:
+  - proftpd
+  - any
+  default_process: proftpd
+  default_os: linux
+- slot_id: P22
+  host:
+  - 5
+  - 0
+  allowed_processes:
+  - proftpd
+  - any
+  default_process: proftpd
+  default_os: linux
+- slot_id: P23
+  host:
+  - 5
+  - 0
+  allowed_processes:
+  - cron
+  - any
+  default_process: cron
+  default_os: linux
+- slot_id: P27
+  host:
+  - 6
+  - 0
+  allowed_processes:
+  - tomcat
+  - any
+  default_process: tomcat
+  default_os: linux
+firewall:
+  (0, 1): []
+  (1, 0): []
+  (0, 4): []
+  (4, 0): []
+  (0, 5):
+  - http
+  (5, 0): []
+  (0, 6):
+  - samba
+  (6, 0): []
+  (1, 2): []
+  (2, 1):
+  - ssh
+  (1, 3): []
+  (3, 1):
+  - ssh
+  (2, 3):
+  - http
+  (3, 2):
+  - smtp
+  (2, 4):
+  - ftp
+  (4, 2):
+  - smtp
+  (2, 5):
+  - ftp
+  (5, 2):
+  - smtp
+  (2, 6):
+  - ftp
+  - ssh
+  (6, 2):
+  - smtp
+_original_host_configurations:
+  (1, 0):
+    os: linux
+    services:
+    - ssh
+    processes:
+    - tomcat
+  (1, 1):
+    os: linux
+    services:
+    - ssh
+    processes:
+    - tomcat
+  (2, 0):
+    os: linux
+    services:
+    - smtp
+    processes: []
+  (2, 1):
+    os: linux
+    services:
+    - smtp
+    processes:
+    - cron
+  (3, 0):
+    os: linux
+    services:
+    - ssh
+    processes:
+    - tomcat
+  (3, 1):
+    os: linux
+    services:
+    - ssh
+    - http
+    processes: []
+  (3, 2):
+    os: linux
+    services:
+    - ssh
+    processes: []
+  (3, 3):
+    os: linux
+    services:
+    - ssh
+    processes: []
+  (3, 4):
+    os: linux
+    services:
+    - ssh
+    processes:
+    - tomcat
+  (3, 5):
+    os: linux
+    services:
+    - ssh
+    processes: []
+  (4, 0):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - proftpd
+  (4, 1):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - proftpd
+  (5, 0):
+    os: linux
+    services:
+    - ftp
+    processes:
+    - proftpd
+    - cron
+  (5, 1):
+    os: linux
+    services:
+    - ftp
+    - http
+    processes: []
+  (6, 0):
+    os: linux
+    services:
+    - ssh
+    processes:
+    - tomcat
+  (6, 1):
+    os: linux
+    services:
+    - ssh
+    - samba
+    processes: []

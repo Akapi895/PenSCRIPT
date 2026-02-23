@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T3_007
+  difficulty_tier: 3
+  avg_difficulty_score: 0.2068
+  cve_list:
+  - CVE-2015-8660
+  - CVE-2011-1485
+  - CVE-2024-32019
+  - CVE-2014-8687
+  - CVE-2002-1359
+  - CVE-2006-6576
+  - CVE-2006-2407
+  - CVE-2006-3952
+  - CVE-2017-15222
+  - CVE-2004-0695
+  - CVE-2020-5902
+slot_assignments:
+  P2:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-8660
+      prob: 0.8
+      cost: 2
+      access: root
+  P5:
+    process: pkexec
+    privesc:
+      name: pe_pkexec
+      cve_id: CVE-2011-1485
+      prob: 0.8
+      cost: 2
+      access: root
+  P9:
+    process: ndsudo_cve_2024_32019
+    privesc:
+      name: pe_ndsudo_cve_2024_32019
+      cve_id: CVE-2024-32019
+      prob: 0.6
+      cost: 3
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2014-8687
+      prob: 0.6
+      cost: 3
+      access: root
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-6576
+      prob: 0.6
+      cost: 3
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-3952
+      prob: 0.6
+      cost: 3
+      access: root
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2017-15222
+      prob: 0.6
+      cost: 3
+      access: user
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-0695
+      prob: 0.6
+      cost: 3
+      access: user
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2020-5902
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P2: linux
+  P5: linux
+  P9: linux
+  S1: linux
+  S10: windows
+  S11: windows
+  S3: windows
+  S4: windows
+  S6: windows
+  S7: osx
+  S8: linux

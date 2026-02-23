@@ -1,0 +1,60 @@
+{
+  "phase0": {
+    "skipped": true
+  },
+  "phase1": {
+    "num_tasks": 6,
+    "train_time_s": 310.03,
+    "final_sr": 0.0,
+    "final_reward": -300,
+    "model_dir": "/Data/nckh/PenSCRIPT/outputs/strategy_c/models/phase1_sim"
+  },
+  "phase2": {
+    "strategy": "conservative",
+    "norm_reset": true,
+    "fisher_discount": 0.3,
+    "lr_factor": 0.1,
+    "warmup_states": 347,
+    "num_pengym_tasks": 1
+  },
+  "phase3": {
+    "num_tasks": 1,
+    "train_time_s": 29.87,
+    "final_sr": 0.0,
+    "final_reward": 700,
+    "model_dir": "/Data/nckh/PenSCRIPT/outputs/strategy_c/models/phase3_dual"
+  },
+  "phase4": {
+    "agents": {
+      "theta_sim_unified": {
+        "total_rewards": 700,
+        "success_rate": 0.0,
+        "per_task": [
+          {
+            "task": "tiny",
+            "reward": 700,
+            "success": 0
+          }
+        ]
+      },
+      "theta_dual": {
+        "total_rewards": 700,
+        "success_rate": 0.0,
+        "per_task": [
+          {
+            "task": "tiny",
+            "reward": 700,
+            "success": 0
+          }
+        ]
+      }
+    },
+    "transfer_metrics": {
+      "sim_sr_on_pengym": 0.0,
+      "dual_sr_on_pengym": 0.0,
+      "transfer_gain": 0.0,
+      "transfer_ratio": 0.0
+    }
+  },
+  "total_time_s": 340.13
+}

@@ -74,6 +74,7 @@ processes:
 - chkrootkit
 - cve_2018_8453_win32k_priv_esc
 - cve_2020_0796_smbghost
+- cve_2021_3490_ebpf_alu32_bounds_check_lpe
 - cve_2021_3493_overlayfs
 - cve_2021_4034_pwnkit_lpe_pkexec
 - cve_2022_0847_dirtypipe
@@ -95,13 +96,16 @@ processes:
 - netfilter_xtables_heap_oob_write_priv_esc
 - overlayfs_priv_esc
 - pkexec
+- progress_flowmon_sudo_privesc_2024
 - progress_kemp_loadmaster_sudo_privesc_2024
 - ptrace_traceme_pkexec_helper
 - runc_cwd_priv_esc
 - sudo_baron_samedit
 - sudo_chroot_cve_2025_32463
 - sudo_password_bypass
+- sudoedit_bypass_priv_esc
 - vcenter_sudo_lpe
+- zpanel_zsudo
 exploits:
   e_http:
     service: http
@@ -166,6 +170,12 @@ privilege_escalation:
     access: root
   pe_cve_2020_0796_smbghost:
     process: cve_2020_0796_smbghost
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_cve_2021_3490_ebpf_alu32_bounds_check_lpe:
+    process: cve_2021_3490_ebpf_alu32_bounds_check_lpe
     os: 'None'
     prob: 0.0
     cost: 100
@@ -278,6 +288,12 @@ privilege_escalation:
     prob: 0.0
     cost: 100
     access: root
+  pe_progress_flowmon_sudo_privesc_2024:
+    process: progress_flowmon_sudo_privesc_2024
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
   pe_progress_kemp_loadmaster_sudo_privesc_2024:
     process: progress_kemp_loadmaster_sudo_privesc_2024
     os: 'None'
@@ -314,8 +330,20 @@ privilege_escalation:
     prob: 0.0
     cost: 100
     access: root
+  pe_sudoedit_bypass_priv_esc:
+    process: sudoedit_bypass_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
   pe_vcenter_sudo_lpe:
     process: vcenter_sudo_lpe
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_zpanel_zsudo:
+    process: zpanel_zsudo
     os: 'None'
     prob: 0.0
     cost: 100

@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T1_008
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0617
+  cve_list:
+  - CVE-2019-13272
+  - CVE-2013-10052
+  - CVE-2022-0492
+  - CVE-2010-20113
+  - CVE-2015-0936
+  - CVE-2005-2373
+  - CVE-2020-4429
+  - CVE-2010-20107
+  - CVE-2025-34107
+  - CVE-2006-5815
+  - CVE-2010-4335
+slot_assignments:
+  P2:
+    process: ptrace_traceme_pkexec_helper
+    privesc:
+      name: pe_ptrace_traceme_pkexec_helper
+      cve_id: CVE-2019-13272
+      prob: 0.99
+      cost: 1
+      access: root
+  P5:
+    process: zpanel_zsudo
+    privesc:
+      name: pe_zpanel_zsudo
+      cve_id: CVE-2013-10052
+      prob: 0.99
+      cost: 1
+      access: root
+  P9:
+    process: docker_cgroup_escape
+    privesc:
+      name: pe_docker_cgroup_escape
+      cve_id: CVE-2022-0492
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2010-20113
+      prob: 0.8
+      cost: 2
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2015-0936
+      prob: 0.99
+      cost: 1
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2005-2373
+      prob: 0.8
+      cost: 2
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-4429
+      prob: 0.99
+      cost: 1
+      access: root
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20107
+      prob: 0.8
+      cost: 2
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2025-34107
+      prob: 0.8
+      cost: 2
+      access: user
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-5815
+      prob: 0.8
+      cost: 2
+      access: user
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2010-4335
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P2: linux
+  P5: linux
+  P9: linux
+  S1: windows
+  S10: linux
+  S11: windows
+  S3: linux
+  S4: windows
+  S6: windows
+  S7: linux
+  S8: unix

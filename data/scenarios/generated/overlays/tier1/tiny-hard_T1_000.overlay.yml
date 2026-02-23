@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T1_000
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0766
+  cve_list:
+  - CVE-2023-22809
+  - CVE-2020-0796
+  - CVE-2018-10660
+  - CVE-2020-9015
+  - CVE-2006-5792
+  - CVE-2004-0330
+slot_assignments:
+  P4:
+    process: sudoedit_bypass_priv_esc
+    privesc:
+      name: pe_sudoedit_bypass_priv_esc
+      cve_id: CVE-2023-22809
+      prob: 0.99
+      cost: 1
+      access: user
+  P6:
+    process: cve_2020_0796_smbghost
+    privesc:
+      name: pe_cve_2020_0796_smbghost
+      cve_id: CVE-2020-0796
+      prob: 0.8
+      cost: 2
+      access: user
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2018-10660
+      prob: 0.99
+      cost: 1
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-9015
+      prob: 0.8
+      cost: 2
+      access: user
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-5792
+      prob: 0.8
+      cost: 2
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-0330
+      prob: 0.8
+      cost: 2
+      access: user
+os_assignments:
+  P4: linux
+  P6: windows
+  S1: linux
+  S2: unix
+  S3: windows
+  S5: windows

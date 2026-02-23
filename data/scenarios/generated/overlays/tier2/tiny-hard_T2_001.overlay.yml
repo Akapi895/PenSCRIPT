@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T2_001
+  difficulty_tier: 2
+  avg_difficulty_score: 0.143
+  cve_list:
+  - CVE-2024-37081
+  - CVE-2017-16995
+  - CVE-2013-5093
+  - CVE-2018-18556
+  - CVE-2011-10005
+  - CVE-2010-2620
+slot_assignments:
+  P4:
+    process: vcenter_sudo_lpe
+    privesc:
+      name: pe_vcenter_sudo_lpe
+      cve_id: CVE-2024-37081
+      prob: 0.8
+      cost: 2
+      access: root
+  P6:
+    process: bpf_sign_extension_priv_esc
+    privesc:
+      name: pe_bpf_sign_extension_priv_esc
+      cve_id: CVE-2017-16995
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2013-5093
+      prob: 0.99
+      cost: 1
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-10005
+      prob: 0.8
+      cost: 2
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-2620
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P4: linux
+  P6: linux
+  S1: unix
+  S2: linux
+  S3: windows
+  S5: windows

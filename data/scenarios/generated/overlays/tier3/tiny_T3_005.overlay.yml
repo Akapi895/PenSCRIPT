@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T3_005
+  difficulty_tier: 3
+  avg_difficulty_score: 0.2248
+  cve_list:
+  - CVE-2021-1732
+  - CVE-2022-34918
+  - CVE-2024-32019
+  - CVE-2002-1059
+  - CVE-2006-2407
+  - CVE-2002-1359
+slot_assignments:
+  P2:
+    process: cve_2022_21882_win32k
+    privesc:
+      name: pe_cve_2022_21882_win32k
+      cve_id: CVE-2021-1732
+      prob: 0.6
+      cost: 3
+      access: user
+  P4:
+    process: netfilter_nft_set_elem_init_privesc
+    privesc:
+      name: pe_netfilter_nft_set_elem_init_privesc
+      cve_id: CVE-2022-34918
+      prob: 0.6
+      cost: 3
+      access: root
+  P6:
+    process: ndsudo_cve_2024_32019
+    privesc:
+      name: pe_ndsudo_cve_2024_32019
+      cve_id: CVE-2024-32019
+      prob: 0.6
+      cost: 3
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1059
+      prob: 0.6
+      cost: 3
+      access: root
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P2: windows
+  P4: linux
+  P6: linux
+  S1: windows
+  S3: windows
+  S5: windows

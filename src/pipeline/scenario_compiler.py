@@ -951,13 +951,17 @@ if __name__ == '__main__':
 
     # Step 1: Convert existing scenarios to templates
     print("\n[1/3] Generating templates from existing scenarios...")
-    yaml_files = ['tiny.yml', 'tiny-small.yml', 'small-linear.yml', 'medium.yml']
+    yaml_files = [
+        'tiny.yml', 'tiny-hard.yml', 'tiny-small.yml',
+        'small-linear.yml', 'small-honeypot.yml',
+        'medium.yml', 'medium-single-site.yml', 'medium-multi-site.yml',
+    ]
     n_templates = pipeline.generate_templates_from_existing(yaml_files)
     print(f"  Created {n_templates} templates")
 
     # Step 2: Generate overlays
     print("\n[2/3] Generating overlays...")
-    n_overlays = pipeline.generate_overlays(n_per_tier=5, seed_base=42)
+    n_overlays = pipeline.generate_overlays(n_per_tier=10, seed_base=42)
     print(f"  Created {n_overlays} overlays")
 
     # Step 3: Compile
