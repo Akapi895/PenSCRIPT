@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T2_008
+  difficulty_tier: 2
+  avg_difficulty_score: 0.1282
+  cve_list:
+  - CVE-2018-4237
+  - CVE-2016-4997
+  - CVE-2024-28741
+  - CVE-2012-5975
+  - CVE-2011-10005
+  - CVE-2010-2620
+slot_assignments:
+  P4:
+    process: libxpc_mitm_ssudo
+    privesc:
+      name: pe_libxpc_mitm_ssudo
+      cve_id: CVE-2018-4237
+      prob: 0.99
+      cost: 1
+      access: user
+  P6:
+    process: netfilter_priv_esc_ipv4
+    privesc:
+      name: pe_netfilter_priv_esc_ipv4
+      cve_id: CVE-2016-4997
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2024-28741
+      prob: 0.99
+      cost: 1
+      access: root
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-5975
+      prob: 0.99
+      cost: 1
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-10005
+      prob: 0.8
+      cost: 2
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-2620
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P4: osx
+  P6: linux
+  S1: windows
+  S2: unix
+  S3: windows
+  S5: windows

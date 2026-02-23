@@ -1,0 +1,297 @@
+meta:
+  overlay_id: medium-multi-site_T4_007
+  difficulty_tier: 4
+  avg_difficulty_score: 0.267
+  cve_list:
+  - CVE-2022-46689
+  - CVE-2019-5736
+  - CVE-2018-8453
+  - CVE-2013-1775
+  - CVE-2014-0476
+  - CVE-2025-32463
+  - CVE-2011-1485
+  - CVE-2019-15752
+  - CVE-2018-8120
+  - CVE-2016-3225
+  - CVE-2006-2407
+  - CVE-2002-1359
+  - CVE-2006-3747
+  - CVE-2012-5975
+  - CVE-2012-3579
+  - CVE-2018-18556
+  - CVE-2012-6066
+  - CVE-2010-1465
+  - CVE-2004-2111
+  - CVE-2011-5164
+  - CVE-2009-3976
+  - CVE-2017-7269
+  - FALLBACK-SSH
+  - FALLBACK-SSH
+  - CVE-2012-1182
+  - CVE-2002-1059
+  - CVE-2015-7611
+  - CVE-2004-1558
+  - CVE-2012-10060
+slot_assignments:
+  P15:
+    process: mac_dirty_cow
+    privesc:
+      name: pe_mac_dirty_cow
+      cve_id: CVE-2022-46689
+      prob: 0.99
+      cost: 1
+      access: root
+  P18:
+    process: docker_runc_escape
+    privesc:
+      name: pe_docker_runc_escape
+      cve_id: CVE-2019-5736
+      prob: 0.4
+      cost: 4
+      access: root
+  P2:
+    process: cve_2018_8453_win32k_priv_esc
+    privesc:
+      name: pe_cve_2018_8453_win32k_priv_esc
+      cve_id: CVE-2018-8453
+      prob: 0.4
+      cost: 4
+      access: root
+  P20:
+    process: sudo_password_bypass
+    privesc:
+      name: pe_sudo_password_bypass
+      cve_id: CVE-2013-1775
+      prob: 0.6
+      cost: 3
+      access: root
+  P22:
+    process: chkrootkit
+    privesc:
+      name: pe_chkrootkit
+      cve_id: CVE-2014-0476
+      prob: 0.4
+      cost: 4
+      access: root
+  P23:
+    process: sudo_chroot_cve_2025_32463
+    privesc:
+      name: pe_sudo_chroot_cve_2025_32463
+      cve_id: CVE-2025-32463
+      prob: 0.6
+      cost: 3
+      access: root
+  P27:
+    process: pkexec
+    privesc:
+      name: pe_pkexec
+      cve_id: CVE-2011-1485
+      prob: 0.8
+      cost: 2
+      access: root
+  P4:
+    process: docker_credential_wincred
+    privesc:
+      name: pe_docker_credential_wincred
+      cve_id: CVE-2019-15752
+      prob: 0.4
+      cost: 4
+      access: root
+  P7:
+    process: ms18_8120_win32k_privesc
+    privesc:
+      name: pe_ms18_8120_win32k_privesc
+      cve_id: CVE-2018-8120
+      prob: 0.8
+      cost: 2
+      access: user
+  P9:
+    process: ms16_075_reflection
+    privesc:
+      name: pe_ms16_075_reflection
+      cve_id: CVE-2016-3225
+      prob: 0.6
+      cost: 3
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S11:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2006-3747
+      prob: 0.8
+      cost: 2
+      access: user
+  S12:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-5975
+      prob: 0.99
+      cost: 1
+      access: root
+  S13:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-3579
+      prob: 0.99
+      cost: 1
+      access: user
+  S14:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S16:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-6066
+      prob: 0.99
+      cost: 1
+      access: user
+  S17:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-1465
+      prob: 0.6
+      cost: 3
+      access: user
+  S19:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-2111
+      prob: 0.6
+      cost: 3
+      access: user
+  S21:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-5164
+      prob: 0.6
+      cost: 3
+      access: user
+  S24:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-3976
+      prob: 0.6
+      cost: 3
+      access: user
+  S25:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2017-7269
+      prob: 0.4
+      cost: 4
+      access: user
+  S26:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: FALLBACK-SSH
+      prob: 0.4
+      cost: 4
+      access: user
+  S28:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: FALLBACK-SSH
+      prob: 0.4
+      cost: 4
+      access: user
+  S29:
+    service: samba
+    exploit:
+      name: e_samba
+      cve_id: CVE-2012-1182
+      prob: 0.6
+      cost: 3
+      access: root
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1059
+      prob: 0.6
+      cost: 3
+      access: root
+  S5:
+    service: smtp
+    exploit:
+      name: e_smtp
+      cve_id: CVE-2015-7611
+      prob: 0.6
+      cost: 3
+      access: root
+  S6:
+    service: smtp
+    exploit:
+      name: e_smtp
+      cve_id: CVE-2004-1558
+      prob: 0.6
+      cost: 3
+      access: user
+  S8:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-10060
+      prob: 0.6
+      cost: 3
+      access: root
+os_assignments:
+  P15: osx
+  P18: linux
+  P2: windows
+  P20: osx
+  P22: unix
+  P23: linux
+  P27: linux
+  P4: windows
+  P7: windows
+  P9: windows
+  S1: windows
+  S10: windows
+  S11: windows
+  S12: unix
+  S13: linux
+  S14: linux
+  S16: windows
+  S17: windows
+  S19: windows
+  S21: windows
+  S24: windows
+  S25: windows
+  S26: linux
+  S28: linux
+  S29: linux
+  S3: windows
+  S5: linux
+  S6: windows
+  S8: windows

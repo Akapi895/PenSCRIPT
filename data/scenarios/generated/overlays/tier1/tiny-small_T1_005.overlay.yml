@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T1_005
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0617
+  cve_list:
+  - CVE-2023-22809
+  - CVE-2022-0847
+  - CVE-2024-2389
+  - CVE-2007-4880
+  - CVE-2016-7456
+  - CVE-2009-3023
+  - CVE-2017-9462
+  - CVE-2010-4221
+  - CVE-2003-0727
+  - CVE-2025-47812
+  - CVE-2009-4179
+slot_assignments:
+  P2:
+    process: sudoedit_bypass_priv_esc
+    privesc:
+      name: pe_sudoedit_bypass_priv_esc
+      cve_id: CVE-2023-22809
+      prob: 0.99
+      cost: 1
+      access: user
+  P5:
+    process: cve_2022_0847_dirtypipe
+    privesc:
+      name: pe_cve_2022_0847_dirtypipe
+      cve_id: CVE-2022-0847
+      prob: 0.99
+      cost: 1
+      access: root
+  P9:
+    process: progress_flowmon_sudo_privesc_2024
+    privesc:
+      name: pe_progress_flowmon_sudo_privesc_2024
+      cve_id: CVE-2024-2389
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2007-4880
+      prob: 0.8
+      cost: 2
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2016-7456
+      prob: 0.99
+      cost: 1
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-3023
+      prob: 0.8
+      cost: 2
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-9462
+      prob: 0.99
+      cost: 1
+      access: user
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-4221
+      prob: 0.8
+      cost: 2
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2003-0727
+      prob: 0.8
+      cost: 2
+      access: user
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2025-47812
+      prob: 0.99
+      cost: 1
+      access: root
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2009-4179
+      prob: 0.8
+      cost: 2
+      access: user
+os_assignments:
+  P2: linux
+  P5: linux
+  P9: linux
+  S1: windows
+  S10: linux
+  S11: windows
+  S3: linux
+  S4: linux
+  S6: windows
+  S7: windows
+  S8: windows

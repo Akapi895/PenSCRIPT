@@ -1,0 +1,297 @@
+meta:
+  overlay_id: medium-multi-site_T1_002
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0464
+  cve_list:
+  - CVE-2022-0492
+  - CVE-2023-0386
+  - CVE-2020-0796
+  - CVE-2019-13272
+  - CVE-2021-3156
+  - CVE-2024-2389
+  - CVE-2013-10052
+  - CVE-2021-4034
+  - CVE-2023-22809
+  - CVE-2024-1212
+  - CVE-2017-7722
+  - CVE-2016-1561
+  - CVE-2024-4577
+  - CVE-2015-0936
+  - CVE-2014-125121
+  - CVE-2023-34039
+  - CVE-2020-9015
+  - CVE-2010-20007
+  - CVE-2024-0546
+  - CVE-2004-1135
+  - CVE-2004-2074
+  - CVE-2015-7857
+  - CVE-2012-1493
+  - CVE-2016-1560
+  - CVE-2010-2063
+  - CVE-2025-32433
+  - CVE-2007-4440
+  - CVE-2004-1638
+  - CVE-2020-11857
+slot_assignments:
+  P15:
+    process: docker_cgroup_escape
+    privesc:
+      name: pe_docker_cgroup_escape
+      cve_id: CVE-2022-0492
+      prob: 0.99
+      cost: 1
+      access: root
+  P18:
+    process: cve_2023_0386_overlayfs_priv_esc
+    privesc:
+      name: pe_cve_2023_0386_overlayfs_priv_esc
+      cve_id: CVE-2023-0386
+      prob: 0.99
+      cost: 1
+      access: root
+  P2:
+    process: cve_2020_0796_smbghost
+    privesc:
+      name: pe_cve_2020_0796_smbghost
+      cve_id: CVE-2020-0796
+      prob: 0.8
+      cost: 2
+      access: user
+  P20:
+    process: ptrace_traceme_pkexec_helper
+    privesc:
+      name: pe_ptrace_traceme_pkexec_helper
+      cve_id: CVE-2019-13272
+      prob: 0.99
+      cost: 1
+      access: root
+  P22:
+    process: sudo_baron_samedit
+    privesc:
+      name: pe_sudo_baron_samedit
+      cve_id: CVE-2021-3156
+      prob: 0.99
+      cost: 1
+      access: root
+  P23:
+    process: progress_flowmon_sudo_privesc_2024
+    privesc:
+      name: pe_progress_flowmon_sudo_privesc_2024
+      cve_id: CVE-2024-2389
+      prob: 0.99
+      cost: 1
+      access: root
+  P27:
+    process: zpanel_zsudo
+    privesc:
+      name: pe_zpanel_zsudo
+      cve_id: CVE-2013-10052
+      prob: 0.99
+      cost: 1
+      access: root
+  P4:
+    process: cve_2021_4034_pwnkit_lpe_pkexec
+    privesc:
+      name: pe_cve_2021_4034_pwnkit_lpe_pkexec
+      cve_id: CVE-2021-4034
+      prob: 0.99
+      cost: 1
+      access: root
+  P7:
+    process: sudoedit_bypass_priv_esc
+    privesc:
+      name: pe_sudoedit_bypass_priv_esc
+      cve_id: CVE-2023-22809
+      prob: 0.99
+      cost: 1
+      access: user
+  P9:
+    process: progress_kemp_loadmaster_sudo_privesc_2024
+    privesc:
+      name: pe_progress_kemp_loadmaster_sudo_privesc_2024
+      cve_id: CVE-2024-1212
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-7722
+      prob: 0.99
+      cost: 1
+      access: root
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2016-1561
+      prob: 0.99
+      cost: 1
+      access: root
+  S11:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2024-4577
+      prob: 0.99
+      cost: 1
+      access: root
+  S12:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2015-0936
+      prob: 0.99
+      cost: 1
+      access: user
+  S13:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2014-125121
+      prob: 0.99
+      cost: 1
+      access: root
+  S14:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2023-34039
+      prob: 0.99
+      cost: 1
+      access: user
+  S16:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-9015
+      prob: 0.8
+      cost: 2
+      access: user
+  S17:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20007
+      prob: 0.8
+      cost: 2
+      access: root
+  S19:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2024-0546
+      prob: 0.8
+      cost: 2
+      access: user
+  S21:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-1135
+      prob: 0.8
+      cost: 2
+      access: user
+  S24:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-2074
+      prob: 0.8
+      cost: 2
+      access: user
+  S25:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2015-7857
+      prob: 0.99
+      cost: 1
+      access: root
+  S26:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-1493
+      prob: 0.99
+      cost: 1
+      access: user
+  S28:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2016-1560
+      prob: 0.99
+      cost: 1
+      access: root
+  S29:
+    service: samba
+    exploit:
+      name: e_samba
+      cve_id: CVE-2010-2063
+      prob: 0.8
+      cost: 2
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2025-32433
+      prob: 0.99
+      cost: 1
+      access: root
+  S5:
+    service: smtp
+    exploit:
+      name: e_smtp
+      cve_id: CVE-2007-4440
+      prob: 0.8
+      cost: 2
+      access: root
+  S6:
+    service: smtp
+    exploit:
+      name: e_smtp
+      cve_id: CVE-2004-1638
+      prob: 0.8
+      cost: 2
+      access: user
+  S8:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2020-11857
+      prob: 0.99
+      cost: 1
+      access: root
+os_assignments:
+  P15: linux
+  P18: linux
+  P2: windows
+  P20: linux
+  P22: linux
+  P23: linux
+  P27: linux
+  P4: linux
+  P7: linux
+  P9: linux
+  S1: linux
+  S10: linux
+  S11: windows
+  S12: linux
+  S13: unix
+  S14: linux
+  S16: unix
+  S17: windows
+  S19: windows
+  S21: windows
+  S24: windows
+  S25: unix
+  S26: linux
+  S28: linux
+  S29: linux
+  S3: linux
+  S5: windows
+  S6: windows
+  S8: linux

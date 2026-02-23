@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T1_002
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0373
+  cve_list:
+  - CVE-2019-10149
+  - CVE-2022-0847
+  - CVE-2012-10039
+  - CVE-2017-7722
+  - CVE-2015-3306
+  - CVE-2025-34107
+slot_assignments:
+  P4:
+    process: exim4_deliver_message_priv_esc
+    privesc:
+      name: pe_exim4_deliver_message_priv_esc
+      cve_id: CVE-2019-10149
+      prob: 0.99
+      cost: 1
+      access: root
+  P6:
+    process: cve_2022_0847_dirtypipe
+    privesc:
+      name: pe_cve_2022_0847_dirtypipe
+      cve_id: CVE-2022-0847
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2012-10039
+      prob: 0.99
+      cost: 1
+      access: root
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-7722
+      prob: 0.99
+      cost: 1
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2015-3306
+      prob: 0.99
+      cost: 1
+      access: root
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2025-34107
+      prob: 0.8
+      cost: 2
+      access: user
+os_assignments:
+  P4: linux
+  P6: linux
+  S1: linux
+  S2: linux
+  S3: unix
+  S5: windows

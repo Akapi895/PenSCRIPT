@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny_T2_005
+  difficulty_tier: 2
+  avg_difficulty_score: 0.143
+  cve_list:
+  - CVE-2016-4997
+  - CVE-2015-1328
+  - CVE-2021-3493
+  - CVE-2018-18556
+  - CVE-2012-3579
+  - CVE-2012-6066
+slot_assignments:
+  P2:
+    process: netfilter_priv_esc_ipv4
+    privesc:
+      name: pe_netfilter_priv_esc_ipv4
+      cve_id: CVE-2016-4997
+      prob: 0.8
+      cost: 2
+      access: root
+  P4:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-1328
+      prob: 0.8
+      cost: 2
+      access: root
+  P6:
+    process: cve_2021_3493_overlayfs
+    privesc:
+      name: pe_cve_2021_3493_overlayfs
+      cve_id: CVE-2021-3493
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-3579
+      prob: 0.99
+      cost: 1
+      access: user
+  S5:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-6066
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P2: linux
+  P4: linux
+  P6: linux
+  S1: linux
+  S3: linux
+  S5: windows

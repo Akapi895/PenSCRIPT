@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T4_009
+  difficulty_tier: 4
+  avg_difficulty_score: 0.3414
+  cve_list:
+  - CVE-2018-8453
+  - CVE-2014-0476
+  - CVE-2022-46689
+  - CVE-2012-6530
+  - CVE-2002-1359
+  - CVE-2009-3976
+  - CVE-2002-1059
+  - CVE-2012-5002
+  - CVE-2010-1465
+  - CVE-2008-5106
+  - CVE-2013-7389
+slot_assignments:
+  P2:
+    process: cve_2018_8453_win32k_priv_esc
+    privesc:
+      name: pe_cve_2018_8453_win32k_priv_esc
+      cve_id: CVE-2018-8453
+      prob: 0.4
+      cost: 4
+      access: root
+  P5:
+    process: chkrootkit
+    privesc:
+      name: pe_chkrootkit
+      cve_id: CVE-2014-0476
+      prob: 0.4
+      cost: 4
+      access: root
+  P9:
+    process: mac_dirty_cow
+    privesc:
+      name: pe_mac_dirty_cow
+      cve_id: CVE-2022-46689
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2012-6530
+      prob: 0.6
+      cost: 3
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-3976
+      prob: 0.6
+      cost: 3
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1059
+      prob: 0.6
+      cost: 3
+      access: root
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2012-5002
+      prob: 0.6
+      cost: 3
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-1465
+      prob: 0.6
+      cost: 3
+      access: user
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2008-5106
+      prob: 0.4
+      cost: 4
+      access: user
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2013-7389
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P2: windows
+  P5: unix
+  P9: osx
+  S1: windows
+  S10: windows
+  S11: windows
+  S3: windows
+  S4: windows
+  S6: windows
+  S7: windows
+  S8: linux

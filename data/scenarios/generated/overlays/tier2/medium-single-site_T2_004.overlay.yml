@@ -1,0 +1,307 @@
+meta:
+  overlay_id: medium-single-site_T2_004
+  difficulty_tier: 2
+  avg_difficulty_score: 0.1629
+  cve_list:
+  - CVE-2021-22555
+  - CVE-2015-1328
+  - CVE-2018-4237
+  - CVE-2021-3493
+  - CVE-2016-4998
+  - CVE-2016-3225
+  - CVE-2021-3490
+  - CVE-2017-16995
+  - CVE-2024-21626
+  - CVE-2016-4557
+  - CVE-2016-4997
+  - CVE-2011-10005
+  - CVE-2012-3579
+  - CVE-2003-0558
+  - CVE-2006-4318
+  - CVE-2018-9276
+  - CVE-2009-4769
+  - CVE-2004-1558
+  - CVE-2010-20122
+  - CVE-2018-7573
+  - CVE-2012-5975
+  - CVE-2006-5792
+  - CVE-2020-9496
+  - CVE-2002-1359
+  - CVE-2009-1675
+  - CVE-2010-2620
+  - CVE-2012-6066
+  - CVE-2018-18556
+  - CVE-2006-3952
+  - CVE-2015-7768
+slot_assignments:
+  P13:
+    process: netfilter_xtables_heap_oob_write_priv_esc
+    privesc:
+      name: pe_netfilter_xtables_heap_oob_write_priv_esc
+      cve_id: CVE-2021-22555
+      prob: 0.8
+      cost: 2
+      access: root
+  P16:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-1328
+      prob: 0.8
+      cost: 2
+      access: root
+  P18:
+    process: libxpc_mitm_ssudo
+    privesc:
+      name: pe_libxpc_mitm_ssudo
+      cve_id: CVE-2018-4237
+      prob: 0.99
+      cost: 1
+      access: user
+  P2:
+    process: cve_2021_3493_overlayfs
+    privesc:
+      name: pe_cve_2021_3493_overlayfs
+      cve_id: CVE-2021-3493
+      prob: 0.8
+      cost: 2
+      access: root
+  P20:
+    process: netfilter_priv_esc_ipv4
+    privesc:
+      name: pe_netfilter_priv_esc_ipv4
+      cve_id: CVE-2016-4998
+      prob: 0.8
+      cost: 2
+      access: root
+  P23:
+    process: ms16_075_reflection_juicy
+    privesc:
+      name: pe_ms16_075_reflection_juicy
+      cve_id: CVE-2016-3225
+      prob: 0.8
+      cost: 2
+      access: root
+  P25:
+    process: cve_2021_3490_ebpf_alu32_bounds_check_lpe
+    privesc:
+      name: pe_cve_2021_3490_ebpf_alu32_bounds_check_lpe
+      cve_id: CVE-2021-3490
+      prob: 0.8
+      cost: 2
+      access: root
+  P28:
+    process: bpf_sign_extension_priv_esc
+    privesc:
+      name: pe_bpf_sign_extension_priv_esc
+      cve_id: CVE-2017-16995
+      prob: 0.8
+      cost: 2
+      access: root
+  P30:
+    process: runc_cwd_priv_esc
+    privesc:
+      name: pe_runc_cwd_priv_esc
+      cve_id: CVE-2024-21626
+      prob: 0.99
+      cost: 1
+      access: root
+  P5:
+    process: bpf_priv_esc
+    privesc:
+      name: pe_bpf_priv_esc
+      cve_id: CVE-2016-4557
+      prob: 0.8
+      cost: 2
+      access: root
+  P8:
+    process: netfilter_priv_esc_ipv4
+    privesc:
+      name: pe_netfilter_priv_esc_ipv4
+      cve_id: CVE-2016-4997
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-10005
+      prob: 0.8
+      cost: 2
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-3579
+      prob: 0.99
+      cost: 1
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2003-0558
+      prob: 0.6
+      cost: 3
+      access: user
+  S12:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-4318
+      prob: 0.6
+      cost: 3
+      access: user
+  S14:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2018-9276
+      prob: 0.99
+      cost: 1
+      access: root
+  S15:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-4769
+      prob: 0.8
+      cost: 2
+      access: user
+  S17:
+    service: smtp
+    exploit:
+      name: e_smtp
+      cve_id: CVE-2004-1558
+      prob: 0.6
+      cost: 3
+      access: user
+  S19:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20122
+      prob: 0.6
+      cost: 3
+      access: root
+  S21:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2018-7573
+      prob: 0.6
+      cost: 3
+      access: user
+  S22:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-5975
+      prob: 0.99
+      cost: 1
+      access: root
+  S24:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-5792
+      prob: 0.6
+      cost: 3
+      access: user
+  S26:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2020-9496
+      prob: 0.99
+      cost: 1
+      access: user
+  S27:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S29:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-1675
+      prob: 0.8
+      cost: 2
+      access: user
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-2620
+      prob: 0.99
+      cost: 1
+      access: user
+  S4:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-6066
+      prob: 0.99
+      cost: 1
+      access: user
+  S6:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-3952
+      prob: 0.6
+      cost: 3
+      access: root
+  S9:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2015-7768
+      prob: 0.6
+      cost: 3
+      access: root
+os_assignments:
+  P13: linux
+  P16: linux
+  P18: osx
+  P2: linux
+  P20: linux
+  P23: windows
+  P25: linux
+  P28: linux
+  P30: linux
+  P5: linux
+  P8: linux
+  S1: windows
+  S10: linux
+  S11: windows
+  S12: windows
+  S14: windows
+  S15: windows
+  S17: windows
+  S19: windows
+  S21: windows
+  S22: unix
+  S24: windows
+  S26: linux
+  S27: windows
+  S29: windows
+  S3: windows
+  S4: windows
+  S6: linux
+  S7: windows
+  S9: windows

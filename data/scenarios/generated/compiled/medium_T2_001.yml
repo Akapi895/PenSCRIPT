@@ -93,6 +93,7 @@ processes:
 - sudo_password_bypass
 - sudoedit_bypass_priv_esc
 - vcenter_sudo_lpe
+- zpanel_zsudo
 exploits:
   e_http:
     service: http
@@ -337,6 +338,12 @@ privilege_escalation:
     access: root
   pe_sudoedit_bypass_priv_esc:
     process: sudoedit_bypass_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_zpanel_zsudo:
+    process: zpanel_zsudo
     os: 'None'
     prob: 0.0
     cost: 100

@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T3_008
+  difficulty_tier: 3
+  avg_difficulty_score: 0.2165
+  cve_list:
+  - CVE-2022-21999
+  - CVE-2025-32463
+  - CVE-2000-0945
+  - CVE-2012-10060
+  - CVE-2006-2212
+  - CVE-2006-0441
+slot_assignments:
+  P4:
+    process: cve_2022_21999_spoolfool_privesc
+    privesc:
+      name: pe_cve_2022_21999_spoolfool_privesc
+      cve_id: CVE-2022-21999
+      prob: 0.6
+      cost: 3
+      access: root
+  P6:
+    process: sudo_chroot_cve_2025_32463
+    privesc:
+      name: pe_sudo_chroot_cve_2025_32463
+      cve_id: CVE-2025-32463
+      prob: 0.6
+      cost: 3
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2000-0945
+      prob: 0.6
+      cost: 3
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-10060
+      prob: 0.6
+      cost: 3
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-2212
+      prob: 0.6
+      cost: 3
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-0441
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P4: windows
+  P6: linux
+  S1: cisco
+  S2: windows
+  S3: windows
+  S5: windows

@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T2_006
+  difficulty_tier: 2
+  avg_difficulty_score: 0.1473
+  cve_list:
+  - CVE-2021-22555
+  - CVE-2016-3225
+  - CVE-2020-14295
+  - CVE-2018-18556
+  - CVE-2011-10005
+  - CVE-2010-2620
+slot_assignments:
+  P4:
+    process: netfilter_xtables_heap_oob_write_priv_esc
+    privesc:
+      name: pe_netfilter_xtables_heap_oob_write_priv_esc
+      cve_id: CVE-2021-22555
+      prob: 0.8
+      cost: 2
+      access: root
+  P6:
+    process: ms16_075_reflection_juicy
+    privesc:
+      name: pe_ms16_075_reflection_juicy
+      cve_id: CVE-2016-3225
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2020-14295
+      prob: 0.99
+      cost: 1
+      access: root
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2018-18556
+      prob: 0.8
+      cost: 2
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-10005
+      prob: 0.8
+      cost: 2
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-2620
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P4: linux
+  P6: windows
+  S1: unix
+  S2: linux
+  S3: windows
+  S5: windows

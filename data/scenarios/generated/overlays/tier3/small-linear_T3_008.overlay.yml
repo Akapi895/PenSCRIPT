@@ -1,0 +1,147 @@
+meta:
+  overlay_id: small-linear_T3_008
+  difficulty_tier: 3
+  avg_difficulty_score: 0.2128
+  cve_list:
+  - CVE-2011-1485
+  - CVE-2021-1732
+  - CVE-2021-40449
+  - CVE-2015-8660
+  - CVE-2000-0945
+  - CVE-2002-1059
+  - CVE-2006-5792
+  - CVE-2019-0232
+  - CVE-2012-10060
+  - CVE-2006-2212
+  - CVE-2006-0441
+  - CVE-2006-2407
+  - CVE-2014-3936
+  - CVE-2004-0695
+slot_assignments:
+  P12:
+    process: pkexec
+    privesc:
+      name: pe_pkexec
+      cve_id: CVE-2011-1485
+      prob: 0.8
+      cost: 2
+      access: root
+  P14:
+    process: cve_2022_21882_win32k
+    privesc:
+      name: pe_cve_2022_21882_win32k
+      cve_id: CVE-2021-1732
+      prob: 0.6
+      cost: 3
+      access: user
+  P4:
+    process: cve_2022_21882_win32k
+    privesc:
+      name: pe_cve_2022_21882_win32k
+      cve_id: CVE-2021-40449
+      prob: 0.6
+      cost: 3
+      access: user
+  P8:
+    process: overlayfs_priv_esc
+    privesc:
+      name: pe_overlayfs_priv_esc
+      cve_id: CVE-2015-8660
+      prob: 0.8
+      cost: 2
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2000-0945
+      prob: 0.6
+      cost: 3
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1059
+      prob: 0.6
+      cost: 3
+      access: root
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-5792
+      prob: 0.6
+      cost: 3
+      access: user
+  S13:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2019-0232
+      prob: 0.99
+      cost: 1
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2012-10060
+      prob: 0.6
+      cost: 3
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-2212
+      prob: 0.6
+      cost: 3
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2006-0441
+      prob: 0.6
+      cost: 3
+      access: user
+  S6:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S7:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2014-3936
+      prob: 0.6
+      cost: 3
+      access: root
+  S9:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-0695
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P12: linux
+  P14: windows
+  P4: windows
+  P8: linux
+  S1: cisco
+  S10: windows
+  S11: windows
+  S13: windows
+  S2: windows
+  S3: windows
+  S5: windows
+  S6: windows
+  S7: linux
+  S9: osx

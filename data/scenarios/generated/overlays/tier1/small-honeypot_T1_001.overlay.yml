@@ -1,0 +1,177 @@
+meta:
+  overlay_id: small-honeypot_T1_001
+  difficulty_tier: 1
+  avg_difficulty_score: 0.056
+  cve_list:
+  - CVE-2022-0847
+  - CVE-2019-13272
+  - CVE-2021-4034
+  - CVE-2024-1212
+  - CVE-2020-0796
+  - CVE-2020-15920
+  - CVE-2023-28458
+  - CVE-2010-20115
+  - CVE-2010-4221
+  - CVE-2017-9462
+  - CVE-2012-10055
+  - CVE-2017-7722
+  - CVE-2004-0330
+  - CVE-2011-10010
+  - CVE-2025-47812
+  - CVE-2012-10046
+  - CVE-2010-20007
+slot_assignments:
+  P11:
+    process: cve_2022_0847_dirtypipe
+    privesc:
+      name: pe_cve_2022_0847_dirtypipe
+      cve_id: CVE-2022-0847
+      prob: 0.99
+      cost: 1
+      access: root
+  P14:
+    process: ptrace_traceme_pkexec_helper
+    privesc:
+      name: pe_ptrace_traceme_pkexec_helper
+      cve_id: CVE-2019-13272
+      prob: 0.99
+      cost: 1
+      access: root
+  P17:
+    process: cve_2021_4034_pwnkit_lpe_pkexec
+    privesc:
+      name: pe_cve_2021_4034_pwnkit_lpe_pkexec
+      cve_id: CVE-2021-4034
+      prob: 0.99
+      cost: 1
+      access: root
+  P4:
+    process: progress_kemp_loadmaster_sudo_privesc_2024
+    privesc:
+      name: pe_progress_kemp_loadmaster_sudo_privesc_2024
+      cve_id: CVE-2024-1212
+      prob: 0.99
+      cost: 1
+      access: root
+  P8:
+    process: cve_2020_0796_smbghost
+    privesc:
+      name: pe_cve_2020_0796_smbghost
+      cve_id: CVE-2020-0796
+      prob: 0.8
+      cost: 2
+      access: user
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2020-15920
+      prob: 0.99
+      cost: 1
+      access: root
+  S10:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2023-28458
+      prob: 0.99
+      cost: 1
+      access: user
+  S12:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20115
+      prob: 0.8
+      cost: 2
+      access: user
+  S13:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-4221
+      prob: 0.8
+      cost: 2
+      access: user
+  S15:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-9462
+      prob: 0.99
+      cost: 1
+      access: user
+  S16:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2012-10055
+      prob: 0.8
+      cost: 2
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-7722
+      prob: 0.99
+      cost: 1
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-0330
+      prob: 0.8
+      cost: 2
+      access: user
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-10010
+      prob: 0.99
+      cost: 1
+      access: root
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2025-47812
+      prob: 0.99
+      cost: 1
+      access: root
+  S7:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2012-10046
+      prob: 0.99
+      cost: 1
+      access: root
+  S9:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20007
+      prob: 0.8
+      cost: 2
+      access: root
+os_assignments:
+  P11: linux
+  P14: linux
+  P17: linux
+  P4: linux
+  P8: windows
+  S1: linux
+  S10: linux
+  S12: windows
+  S13: linux
+  S15: linux
+  S16: windows
+  S2: linux
+  S3: windows
+  S5: windows
+  S6: windows
+  S7: linux
+  S9: windows

@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T4_007
+  difficulty_tier: 4
+  avg_difficulty_score: 0.33
+  cve_list:
+  - CVE-2019-15752
+  - CVE-2018-8453
+  - CVE-2014-0476
+  - CVE-2019-7609
+  - CVE-2002-1359
+  - CVE-2004-2111
+  - CVE-2006-2407
+  - CVE-2008-5106
+  - CVE-2011-5164
+  - CVE-2009-3976
+  - CVE-2018-11770
+slot_assignments:
+  P2:
+    process: docker_credential_wincred
+    privesc:
+      name: pe_docker_credential_wincred
+      cve_id: CVE-2019-15752
+      prob: 0.4
+      cost: 4
+      access: root
+  P5:
+    process: cve_2018_8453_win32k_priv_esc
+    privesc:
+      name: pe_cve_2018_8453_win32k_priv_esc
+      cve_id: CVE-2018-8453
+      prob: 0.4
+      cost: 4
+      access: root
+  P9:
+    process: chkrootkit
+    privesc:
+      name: pe_chkrootkit
+      cve_id: CVE-2014-0476
+      prob: 0.4
+      cost: 4
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2019-7609
+      prob: 0.4
+      cost: 4
+      access: root
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1359
+      prob: 0.6
+      cost: 3
+      access: user
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-2111
+      prob: 0.6
+      cost: 3
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2006-2407
+      prob: 0.6
+      cost: 3
+      access: user
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2008-5106
+      prob: 0.4
+      cost: 4
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2011-5164
+      prob: 0.6
+      cost: 3
+      access: user
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-3976
+      prob: 0.6
+      cost: 3
+      access: user
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2018-11770
+      prob: 0.99
+      cost: 1
+      access: user
+os_assignments:
+  P2: windows
+  P5: windows
+  P9: unix
+  S1: linux
+  S10: windows
+  S11: windows
+  S3: windows
+  S4: windows
+  S6: windows
+  S7: windows
+  S8: linux

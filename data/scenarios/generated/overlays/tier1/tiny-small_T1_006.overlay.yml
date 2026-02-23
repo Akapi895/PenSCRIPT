@@ -1,0 +1,117 @@
+meta:
+  overlay_id: tiny-small_T1_006
+  difficulty_tier: 1
+  avg_difficulty_score: 0.0662
+  cve_list:
+  - CVE-2019-13272
+  - CVE-2021-3156
+  - CVE-2022-0847
+  - CVE-2021-25281
+  - CVE-2016-1560
+  - CVE-2009-3023
+  - CVE-2017-9462
+  - CVE-2010-20108
+  - CVE-2010-20007
+  - CVE-2004-0330
+  - CVE-2007-0774
+slot_assignments:
+  P2:
+    process: ptrace_traceme_pkexec_helper
+    privesc:
+      name: pe_ptrace_traceme_pkexec_helper
+      cve_id: CVE-2019-13272
+      prob: 0.99
+      cost: 1
+      access: root
+  P5:
+    process: sudo_baron_samedit
+    privesc:
+      name: pe_sudo_baron_samedit
+      cve_id: CVE-2021-3156
+      prob: 0.99
+      cost: 1
+      access: root
+  P9:
+    process: cve_2022_0847_dirtypipe
+    privesc:
+      name: pe_cve_2022_0847_dirtypipe
+      cve_id: CVE-2022-0847
+      prob: 0.99
+      cost: 1
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2021-25281
+      prob: 0.99
+      cost: 1
+      access: user
+  S10:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2016-1560
+      prob: 0.99
+      cost: 1
+      access: root
+  S11:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2009-3023
+      prob: 0.8
+      cost: 2
+      access: user
+  S3:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2017-9462
+      prob: 0.99
+      cost: 1
+      access: user
+  S4:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20108
+      prob: 0.8
+      cost: 2
+      access: user
+  S6:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2010-20007
+      prob: 0.8
+      cost: 2
+      access: root
+  S7:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-0330
+      prob: 0.8
+      cost: 2
+      access: user
+  S8:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2007-0774
+      prob: 0.8
+      cost: 2
+      access: user
+os_assignments:
+  P2: linux
+  P5: linux
+  P9: linux
+  S1: linux
+  S10: linux
+  S11: windows
+  S3: linux
+  S4: windows
+  S6: windows
+  S7: windows
+  S8: windows

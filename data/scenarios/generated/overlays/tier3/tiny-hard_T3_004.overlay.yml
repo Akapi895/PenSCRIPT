@@ -1,0 +1,67 @@
+meta:
+  overlay_id: tiny-hard_T3_004
+  difficulty_tier: 3
+  avg_difficulty_score: 0.2248
+  cve_list:
+  - CVE-2021-40449
+  - CVE-2024-32019
+  - CVE-2016-6435
+  - CVE-2002-1059
+  - CVE-2013-10042
+  - CVE-2004-1626
+slot_assignments:
+  P4:
+    process: cve_2022_21882_win32k
+    privesc:
+      name: pe_cve_2022_21882_win32k
+      cve_id: CVE-2021-40449
+      prob: 0.6
+      cost: 3
+      access: user
+  P6:
+    process: ndsudo_cve_2024_32019
+    privesc:
+      name: pe_ndsudo_cve_2024_32019
+      cve_id: CVE-2024-32019
+      prob: 0.6
+      cost: 3
+      access: root
+  S1:
+    service: http
+    exploit:
+      name: e_http
+      cve_id: CVE-2016-6435
+      prob: 0.6
+      cost: 3
+      access: user
+  S2:
+    service: ssh
+    exploit:
+      name: e_ssh
+      cve_id: CVE-2002-1059
+      prob: 0.6
+      cost: 3
+      access: root
+  S3:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2013-10042
+      prob: 0.6
+      cost: 3
+      access: root
+  S5:
+    service: ftp
+    exploit:
+      name: e_ftp
+      cve_id: CVE-2004-1626
+      prob: 0.6
+      cost: 3
+      access: user
+os_assignments:
+  P4: windows
+  P6: linux
+  S1: cisco
+  S2: windows
+  S3: windows
+  S5: windows

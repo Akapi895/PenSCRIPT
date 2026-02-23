@@ -1,0 +1,497 @@
+subnets:
+- 2
+- 2
+- 6
+- 2
+- 2
+- 2
+topology:
+- - 1
+  - 1
+  - 0
+  - 0
+  - 1
+  - 1
+  - 1
+- - 1
+  - 1
+  - 1
+  - 1
+  - 0
+  - 0
+  - 0
+- - 0
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+- - 0
+  - 1
+  - 1
+  - 1
+  - 0
+  - 0
+  - 0
+- - 1
+  - 0
+  - 1
+  - 0
+  - 1
+  - 0
+  - 0
+- - 1
+  - 0
+  - 1
+  - 0
+  - 0
+  - 1
+  - 0
+- - 1
+  - 0
+  - 1
+  - 0
+  - 0
+  - 0
+  - 1
+sensitive_hosts:
+  (2, 1): 100
+  (3, 4): 100
+os:
+- cisco
+- linux
+- osx
+- unix
+- windows
+services:
+- ftp
+- http
+- samba
+- smtp
+- ssh
+processes:
+- bpf_priv_esc
+- bpf_sign_extension_priv_esc
+- chkrootkit
+- cve_2018_8453_win32k_priv_esc
+- cve_2020_0796_smbghost
+- cve_2021_3490_ebpf_alu32_bounds_check_lpe
+- cve_2021_3493_overlayfs
+- cve_2021_4034_pwnkit_lpe_pkexec
+- cve_2022_0847_dirtypipe
+- cve_2022_21882_win32k
+- cve_2022_21999_spoolfool_privesc
+- cve_2023_0386_overlayfs_priv_esc
+- docker_cgroup_escape
+- docker_credential_wincred
+- docker_runc_escape
+- exim4_deliver_message_priv_esc
+- libxpc_mitm_ssudo
+- mac_dirty_cow
+- ms16_075_reflection
+- ms16_075_reflection_juicy
+- ms18_8120_win32k_privesc
+- ndsudo_cve_2024_32019
+- netfilter_nft_set_elem_init_privesc
+- netfilter_priv_esc_ipv4
+- netfilter_xtables_heap_oob_write_priv_esc
+- overlayfs_priv_esc
+- pkexec
+- progress_flowmon_sudo_privesc_2024
+- progress_kemp_loadmaster_sudo_privesc_2024
+- ptrace_traceme_pkexec_helper
+- runc_cwd_priv_esc
+- sudo_baron_samedit
+- sudo_chroot_cve_2025_32463
+- sudo_password_bypass
+- sudoedit_bypass_priv_esc
+- vcenter_sudo_lpe
+- zpanel_zsudo
+exploits:
+  e_ssh:
+    service: ssh
+    os: 'None'
+    prob: 0.6
+    cost: 3
+    access: root
+  e_http:
+    service: http
+    os: 'None'
+    prob: 0.6
+    cost: 3
+    access: user
+  e_ftp:
+    service: ftp
+    os: 'None'
+    prob: 0.4
+    cost: 4
+    access: user
+  e_samba:
+    service: samba
+    os: 'None'
+    prob: 0.6
+    cost: 3
+    access: root
+  e_smtp:
+    service: smtp
+    os: 'None'
+    prob: 0.6
+    cost: 3
+    access: root
+privilege_escalation:
+  pe_cve_2018_8453_win32k_priv_esc:
+    process: cve_2018_8453_win32k_priv_esc
+    os: 'None'
+    prob: 0.4
+    cost: 4
+    access: root
+  pe_ms18_8120_win32k_privesc:
+    process: ms18_8120_win32k_privesc
+    os: 'None'
+    prob: 0.8
+    cost: 2
+    access: user
+  pe_chkrootkit:
+    process: chkrootkit
+    os: 'None'
+    prob: 0.4
+    cost: 4
+    access: root
+  pe_docker_credential_wincred:
+    process: docker_credential_wincred
+    os: 'None'
+    prob: 0.4
+    cost: 4
+    access: root
+  pe_sudo_password_bypass:
+    process: sudo_password_bypass
+    os: 'None'
+    prob: 0.6
+    cost: 3
+    access: root
+  pe_netfilter_nft_set_elem_init_privesc:
+    process: netfilter_nft_set_elem_init_privesc
+    os: 'None'
+    prob: 0.6
+    cost: 3
+    access: root
+  pe_cve_2022_21882_win32k:
+    process: cve_2022_21882_win32k
+    os: 'None'
+    prob: 0.6
+    cost: 3
+    access: user
+  pe_docker_runc_escape:
+    process: docker_runc_escape
+    os: 'None'
+    prob: 0.4
+    cost: 4
+    access: root
+  pe_mac_dirty_cow:
+    process: mac_dirty_cow
+    os: 'None'
+    prob: 0.99
+    cost: 1
+    access: root
+  pe_ms16_075_reflection:
+    process: ms16_075_reflection
+    os: 'None'
+    prob: 0.6
+    cost: 3
+    access: root
+  pe_bpf_priv_esc:
+    process: bpf_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_bpf_sign_extension_priv_esc:
+    process: bpf_sign_extension_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_cve_2020_0796_smbghost:
+    process: cve_2020_0796_smbghost
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_cve_2021_3490_ebpf_alu32_bounds_check_lpe:
+    process: cve_2021_3490_ebpf_alu32_bounds_check_lpe
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_cve_2021_3493_overlayfs:
+    process: cve_2021_3493_overlayfs
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_cve_2021_4034_pwnkit_lpe_pkexec:
+    process: cve_2021_4034_pwnkit_lpe_pkexec
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_cve_2022_0847_dirtypipe:
+    process: cve_2022_0847_dirtypipe
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_cve_2022_21999_spoolfool_privesc:
+    process: cve_2022_21999_spoolfool_privesc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_cve_2023_0386_overlayfs_priv_esc:
+    process: cve_2023_0386_overlayfs_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_docker_cgroup_escape:
+    process: docker_cgroup_escape
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_exim4_deliver_message_priv_esc:
+    process: exim4_deliver_message_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_libxpc_mitm_ssudo:
+    process: libxpc_mitm_ssudo
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_ms16_075_reflection_juicy:
+    process: ms16_075_reflection_juicy
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_ndsudo_cve_2024_32019:
+    process: ndsudo_cve_2024_32019
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_netfilter_priv_esc_ipv4:
+    process: netfilter_priv_esc_ipv4
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_netfilter_xtables_heap_oob_write_priv_esc:
+    process: netfilter_xtables_heap_oob_write_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_overlayfs_priv_esc:
+    process: overlayfs_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_pkexec:
+    process: pkexec
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_progress_flowmon_sudo_privesc_2024:
+    process: progress_flowmon_sudo_privesc_2024
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_progress_kemp_loadmaster_sudo_privesc_2024:
+    process: progress_kemp_loadmaster_sudo_privesc_2024
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_ptrace_traceme_pkexec_helper:
+    process: ptrace_traceme_pkexec_helper
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_runc_cwd_priv_esc:
+    process: runc_cwd_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_sudo_baron_samedit:
+    process: sudo_baron_samedit
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_sudo_chroot_cve_2025_32463:
+    process: sudo_chroot_cve_2025_32463
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_sudoedit_bypass_priv_esc:
+    process: sudoedit_bypass_priv_esc
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_vcenter_sudo_lpe:
+    process: vcenter_sudo_lpe
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+  pe_zpanel_zsudo:
+    process: zpanel_zsudo
+    os: 'None'
+    prob: 0.0
+    cost: 100
+    access: root
+service_scan_cost: 1
+os_scan_cost: 1
+subnet_scan_cost: 1
+process_scan_cost: 1
+host_configurations:
+  (1, 0):
+    os: windows
+    services:
+    - ssh
+    processes:
+    - chkrootkit
+  (1, 1):
+    os: windows
+    services:
+    - ssh
+    processes:
+    - docker_runc_escape
+  (2, 0):
+    os: linux
+    services:
+    - smtp
+    processes: []
+  (2, 1):
+    os: unix
+    services:
+    - smtp
+    processes:
+    - mac_dirty_cow
+  (3, 0):
+    os: windows
+    services:
+    - ssh
+    processes:
+    - ms16_075_reflection
+  (3, 1):
+    os: linux
+    services:
+    - ssh
+    - http
+    processes: []
+  (3, 2):
+    os: unix
+    services:
+    - ssh
+    processes: []
+  (3, 3):
+    os: linux
+    services:
+    - ssh
+    processes: []
+  (3, 4):
+    os: linux
+    services:
+    - ssh
+    processes:
+    - cve_2018_8453_win32k_priv_esc
+  (3, 5):
+    os: windows
+    services:
+    - ssh
+    processes: []
+  (4, 0):
+    os: windows
+    services:
+    - ftp
+    processes:
+    - ms18_8120_win32k_privesc
+  (4, 1):
+    os: windows
+    services:
+    - ftp
+    processes:
+    - docker_credential_wincred
+  (5, 0):
+    os: windows
+    services:
+    - ftp
+    processes:
+    - sudo_password_bypass
+    - netfilter_nft_set_elem_init_privesc
+  (5, 1):
+    os: windows
+    services:
+    - ftp
+    - http
+    processes: []
+  (6, 0):
+    os: linux
+    services:
+    - ssh
+    processes:
+    - cve_2022_21882_win32k
+  (6, 1):
+    os: linux
+    services:
+    - ssh
+    - samba
+    processes: []
+firewall:
+  (0, 1): []
+  (1, 0): []
+  (0, 4): []
+  (4, 0): []
+  (0, 5):
+  - http
+  (5, 0): []
+  (0, 6):
+  - samba
+  (6, 0): []
+  (1, 2): []
+  (2, 1):
+  - ssh
+  (1, 3): []
+  (3, 1):
+  - ssh
+  (2, 3):
+  - http
+  (3, 2):
+  - smtp
+  (2, 4):
+  - ftp
+  (4, 2):
+  - smtp
+  (2, 5):
+  - ftp
+  (5, 2):
+  - smtp
+  (2, 6):
+  - ftp
+  - ssh
+  (6, 2):
+  - smtp
+step_limit: 2000
