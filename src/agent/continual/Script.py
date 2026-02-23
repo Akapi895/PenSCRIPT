@@ -6,7 +6,7 @@ from tqdm import tqdm
 import wandb
 import copy
 import torch
-from torch.optim import Adam, SGD
+from torch.optim import Adam
 
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
@@ -35,59 +35,6 @@ from src.agent.policy.config import *
 
 expert_Transition = namedtuple('pd_Transition',
                                ('state', 'action_prob', 'action', 'done'))
-
-
-def gather_samples(player: Agent, target: HOST, batch_size, determinate=True):
-    memory = Memory(
-        Transition=namedtuple('pd_Transition', ('state', 'action_prob',
-                                                'action', 'done')))
-    data_num = 0
-    episode = 0
-    with tqdm(range(int(batch_size)),
-              leave=False,
-              desc=f"{color.color_str('Generate samples',c=color.CYAN)}"
-              ) as pbar:
-        while data_num < batch_size:
-            # for data_num in pbar:
-            steps = 0
-            done = 0
-            episode += 1
-            episode_return = 0
-            o = target.reset()
-            if player.use_state_norm:
-                o = player.state_norm(o, update=False)
-            while not done and steps < player.config.step_limit:
-                state = torch.tensor([o], dtype=torch.float).to(
-                    player.Policy.device)
-                with torch.no_grad():
-                    a_logit = player.Policy.actor.net(state)
-                    a_prob = F.softmax(a_logit, dim=-1)
-                if not determinate:
-                    dist = Categorical(probs=a_prob)
-                    action = torch.squeeze(dist.sample())
-                    a = int(action.item())
-                else:
-                    action = a_prob.argmax()
-                    a = int(action)
-
-                next_o, r, done, result = target.perform_action(a)
-                episode_return += r
-                if player.use_state_norm:
-                    next_o = player.state_norm(next_o, update=False)
-                o = next_o
-                steps += 1
-
-                memory.push(state, a_logit, action.unsqueeze(0), done)
-                data_num += 1
-
-                if data_num >= batch_size:
-                    break
-            pbar.update(steps)
-            pbar.set_postfix(
-                r=color.color_str(f"{episode_return}", c=color.PURPLE),
-                step=color.color_str(f"{steps}", c=color.GREEN),
-            )
-    return memory
 
 
 class ExplorePolicy(PPO_agent):
@@ -150,12 +97,19 @@ class ExplorePolicy(PPO_agent):
             with torch.no_grad():
                 a_prob_logit = guide_policy.actor.net(s_minibatch)
                 a_prob = F.softmax(a_prob_logit / temperature, dim=-1)
-            action_logprob_student = F.log_softmax(logits / temperature,
-                                                   dim=-1)
-            kl_loss = nn.KLDivLoss(reduction='batchmean')(
-                action_logprob_student, a_prob.detach()) * (temperature**2)
+            # Guard against NaN from corrupted guide policy
+            if torch.isnan(a_prob).any() or torch.isinf(a_prob).any():
+                logging.warning("Guide policy KL target has NaN/Inf — skipping KL loss")
+                auto_guide_kl_scale = 0
+                kl_loss = torch.tensor(0).float().to(self.device)
+                loss = actor_loss
+            else:
+                action_logprob_student = F.log_softmax(logits / temperature,
+                                                       dim=-1)
+                kl_loss = nn.KLDivLoss(reduction='batchmean')(
+                    action_logprob_student, a_prob.detach()) * (temperature**2)
 
-            loss = actor_loss + kl_loss * auto_guide_kl_scale
+                loss = actor_loss + kl_loss * auto_guide_kl_scale
         else:
             auto_guide_kl_scale = 0
             kl_loss = torch.tensor(0).float().to(self.device)
@@ -303,7 +257,16 @@ class KnowledgeExplorer(Agent):
         state = torch.tensor([observation],
                              dtype=torch.float).to(self.guide_policy.device)
         with torch.no_grad():
-            dist = Categorical(probs=self.guide_policy.actor(state))
+            probs = self.guide_policy.actor(state)
+            # Guard against NaN from corrupted guide policy weights
+            if torch.isnan(probs).any() or torch.isinf(probs).any():
+                logging.warning("Guide policy returned NaN/Inf probs — falling back to own policy")
+                probs = self.Policy.actor(state)
+                # If own policy is also NaN, use uniform distribution
+                if torch.isnan(probs).any() or torch.isinf(probs).any():
+                    logging.warning("Own policy also NaN — using uniform distribution")
+                    probs = torch.ones_like(probs) / probs.shape[-1]
+            dist = Categorical(probs=probs)
 
             sample_guide_action = dist.sample()
             guide_probs = torch.squeeze(
@@ -490,14 +453,14 @@ class KnowledgeExplorer(Agent):
                 failed_num += 1
                 # break
             target_id += 1
-        sucess_rate = float(format(success_num / len(target_list), '.3f'))
+        success_rate = float(format(success_num / len(target_list), '.3f'))
         if episode_return >= self.best_return:
             self.best_return = episode_return
             self.best_action_set = self.action_set
             self.best_reward_episode = self.reward_set
             self.best_episode = self.num_episodes
 
-        return episode_return, eps_steps, sucess_rate
+        return episode_return, eps_steps, success_rate
 
 
 class KnowledgeKeeper(Agent):
@@ -858,6 +821,23 @@ class OnlineEWC():
         else:
             raise ValueError("Wrong EWC mode.")
 
+    def discount_fisher(self, beta: float):
+        """Discount Fisher information for cross-domain transfer (Strategy C §5.3).
+
+        Multiplies all saved Fisher importance values by ``beta`` to relax
+        EWC constraints when transferring from simulation to PenGym.
+        Without discounting, Fisher values from sim may lock weights in
+        sim-optimal positions, preventing adaptation to PenGym.
+
+        Args:
+            beta: Discount factor ∈ [0.1, 0.5]. Lower values relax EWC more.
+        """
+        assert 0.0 < beta <= 1.0, f"beta must be in (0, 1], got {beta}"
+        for task_id in self.importances:
+            for name in self.importances[task_id]:
+                self.importances[task_id][name].data *= beta
+        logging.info(f"[OnlineEWC] Fisher discounted by β={beta}")
+
 
 class ScriptAgent():
 
@@ -918,7 +898,20 @@ class ScriptAgent():
                 self.explorer.reset()
 
             if self.use_curriculum_guide:
-                self.explorer.set_guide_policy(guide_policy=self.keeper.Policy)
+                # Validate keeper weights before using as guide
+                guide_ok = True
+                for p in self.keeper.Policy.actor.parameters():
+                    if torch.isnan(p).any() or torch.isinf(p).any():
+                        guide_ok = False
+                        break
+                if guide_ok:
+                    self.explorer.set_guide_policy(guide_policy=self.keeper.Policy)
+                else:
+                    logging.warning(
+                        f"Task {new_task_id}: Keeper policy has NaN/Inf weights — "
+                        "disabling curriculum guide for this task"
+                    )
+                    self.explorer.set_guide_policy(guide_policy=None)
         return self.explorer
 
     def save(self, path):

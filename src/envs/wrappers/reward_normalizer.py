@@ -118,3 +118,50 @@ class IdentityNormalizer(RewardNormalizer):
 
     def describe(self) -> str:
         return "IdentityNormalizer()"
+
+
+class UnifiedNormalizer(RewardNormalizer):
+    """Normalise rewards to [-1, +1] for cross-domain CL (Strategy C §4.1).
+
+    Both simulation (SCRIPT) and PenGym rewards are mapped into a common
+    ``[-1, +1]`` range so that Fisher information and EWC penalties are
+    comparable across domains.
+
+    Positive rewards are divided by ``max_reward`` and clamped to [0, 1].
+    Negative rewards are divided by ``|min_reward|`` and clamped to [-1, 0].
+
+    Args:
+        source: Domain identifier — ``'simulation'`` or ``'pengym'``.
+                Determines the default reward bounds.
+        max_reward: Override for the maximum expected positive reward.
+        min_reward: Override for the minimum (most negative) expected reward.
+    """
+
+    DEFAULTS = {
+        'simulation': {'max_reward': 1000.0, 'min_reward': -10.0},
+        'pengym':     {'max_reward': 100.0,  'min_reward': -3.0},
+    }
+
+    def __init__(
+        self,
+        source: str = 'pengym',
+        max_reward: float | None = None,
+        min_reward: float | None = None,
+    ):
+        defaults = self.DEFAULTS.get(source, self.DEFAULTS['pengym'])
+        self.source = source
+        self.max_reward = max_reward if max_reward is not None else defaults['max_reward']
+        self.min_reward = min_reward if min_reward is not None else defaults['min_reward']
+
+    def normalize(self, raw_reward: float) -> float:
+        if raw_reward > 0:
+            return min(raw_reward / self.max_reward, 1.0)
+        if raw_reward < 0:
+            return max(raw_reward / abs(self.min_reward), -1.0)
+        return 0.0
+
+    def describe(self) -> str:
+        return (
+            f"UnifiedNormalizer(source={self.source!r}, "
+            f"max={self.max_reward}, min={self.min_reward} → [-1, +1])"
+        )

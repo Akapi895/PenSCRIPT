@@ -55,6 +55,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from src.agent.policy.config import PPO_Config, Script_Config
 from src.agent.agent_continual import Agent_CL
+from src.agent.host import StateEncoder
+from src.agent.actions.service_action_space import ServiceActionSpace
 from src.envs.adapters.pengym_host_adapter import PenGymHostAdapter
 
 
@@ -94,8 +96,8 @@ class PenGymScriptTrainer:
         If provided, ``ppo_kwargs`` and ``script_kwargs`` are ignored.
     """
 
-    STATE_DIM = 1538
-    ACTION_DIM = 16
+    STATE_DIM = StateEncoder.state_space   # Canonical: 1538 (2+384+384+384+384)
+    ACTION_DIM = ServiceActionSpace.DEFAULT_ACTION_DIM  # Canonical: 16
 
     def __init__(
         self,

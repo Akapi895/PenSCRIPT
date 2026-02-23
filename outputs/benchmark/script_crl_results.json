@@ -1,0 +1,42 @@
+{
+  "signal": "finished",
+  "Rewards_initial_task": [
+    1900,
+    1900,
+    -1000,
+    -1000,
+    -1000
+  ],
+  "SR_previous_tasks": [
+    1.0,
+    0.5,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "Rewards_current_task": [
+    1900,
+    0,
+    -1000,
+    -1000,
+    -1000
+  ],
+  "last_task": 4,
+  "train_time_s": 544.22,
+  "scenario_list": [
+    "/Data/nckh/PenSCRIPT/data/scenarios/tiny.yml",
+    "/Data/nckh/PenSCRIPT/data/scenarios/small-linear.yml",
+    "/Data/nckh/PenSCRIPT/data/scenarios/medium.yml",
+    "/Data/nckh/PenSCRIPT/data/scenarios/medium-single-site.yml",
+    "/Data/nckh/PenSCRIPT/data/scenarios/medium-multi-site.yml"
+  ],
+  "task_names": [
+    "tiny",
+    "small-linear",
+    "medium",
+    "medium-single-site",
+    "medium-multi-site"
+  ],
+  "state_dim": 1538,
+  "action_dim": 16
+}

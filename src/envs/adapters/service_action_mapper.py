@@ -1,12 +1,9 @@
 """
-Service-Level Action Mapper for PenGym evaluation.
+Service-Level Action Mapper for PenGym.
 
-Replaces the old CVE-level ActionMapper with a direct service→PenGym mapping.
+Maps 16-dim service-level actions to PenGym NASim flat action indices.
 Because both the service action space and PenGym use service-level actions,
 the mapping is nearly 1:1 and achieves ~100% coverage.
-
-Old (CVE-level):   2064 actions → 3.4% coverage → 0% success
-New (service-level): 16 actions → ~100% coverage → meaningful transfer
 
 v2 fix: subnet_scan now routes FROM compromised hosts (not the target),
 matching NASim semantics where subnet_scan discovers *adjacent* subnets

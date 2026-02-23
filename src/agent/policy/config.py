@@ -149,6 +149,12 @@ class Script_Config(PolicyDistillation_Config):
             max_guide_episodes_rate=0.1,
             max_guide_step_rate=0.5,
             use_grad_clip=True,
+            # ── Strategy C domain-transfer parameters ───────────────
+            fisher_discount_beta=0.3,       # β ∈ [0.1, 0.5] — discount Fisher on cross-domain transfer
+            transfer_lr_factor=0.1,         # LR × factor for fine-tuning after transfer
+            norm_warmup_episodes=10,        # Random rollout episodes to warmup norm on new domain
+            norm_reset_on_transfer=True,    # Reset running stats when switching domain
+            transfer_strategy='conservative',  # 'aggressive' / 'conservative' / 'cautious'
             **kwargs):
         super().__init__(**kwargs)
         self.pd_lr = pd_lr
@@ -179,6 +185,14 @@ class Script_Config(PolicyDistillation_Config):
             "min_guide_step_rate": 0,
         }
         self.reset_teacher = reset_teacher
+
+        # Strategy C domain-transfer parameters
+        self.fisher_discount_beta = fisher_discount_beta
+        self.transfer_lr_factor = transfer_lr_factor
+        self.norm_warmup_episodes = norm_warmup_episodes
+        self.norm_reset_on_transfer = norm_reset_on_transfer
+        self.transfer_strategy = transfer_strategy
+
         self.name = "Script"
 
         if not self.use_curriculum_guide:

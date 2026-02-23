@@ -96,28 +96,7 @@ SCENARIO_CONFIGS = {
 #  Utility: TeeLogger (duplicate stdout to file)
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TeeLogger:
-    """Duplicate stdout/stderr to a log file."""
-    def __init__(self, path: str):
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        self.file = open(path, "w", encoding="utf-8", buffering=1)
-        self._stdout = sys.stdout
-        self._stderr = sys.stderr
-        sys.stdout = self
-        sys.stderr = self
-
-    def write(self, data):
-        self._stdout.write(data)
-        self.file.write(data)
-
-    def flush(self):
-        self._stdout.flush()
-        self.file.flush()
-
-    def close(self):
-        sys.stdout = self._stdout
-        sys.stderr = self._stderr
-        self.file.close()
+from src.utils.logging import TeeLogger
 
 
 # ═══════════════════════════════════════════════════════════════════════════

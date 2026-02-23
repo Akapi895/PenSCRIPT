@@ -117,7 +117,7 @@ SingleHostPenGymWrapper:
        privesc_tomcat, privesc_schtask, privesc_daclsvc]
 ```
 
-**Kết luận:** Cần 1 adapter class `PenGymHostAdapter` wrap `SingleHostPenGymWrapper` để expose đúng interface mà `ScriptAgent`, `KnowledgeExplorer`, `KnowledgeKeeper`, `gather_samples()` mong đợi.
+**Kết luận:** Cần 1 adapter class `PenGymHostAdapter` wrap `SingleHostPenGymWrapper` để expose đúng interface mà `ScriptAgent`, `KnowledgeExplorer`, `KnowledgeKeeper` mong đợi.
 
 ---
 
@@ -136,8 +136,6 @@ class PenGymHostAdapter:
 
     Callers:
     - KnowledgeExplorer.run_train_episode(target_list=[adapter])
-        → gọi adapter.reset(), adapter.perform_action(a)
-    - gather_samples(player, target=adapter, ...)
         → gọi adapter.reset(), adapter.perform_action(a)
     - KnowledgeKeeper.Evaluate(target_list=[adapter])
         → gọi adapter.reset(), adapter.perform_action(a)
@@ -848,8 +846,6 @@ def calculate_KL(self, train_batch, task_id):
 - `get_expert_samples()` gọi `adapter.reset()` và `adapter.perform_action(a)` ✅
 - KL loss computation chỉ dùng tensor operations, không phụ thuộc HOST ✅
 
-**Cần kiểm tra:** `gather_samples()` function cũng gọi `target.reset()` và `target.perform_action(a)` — adapter cần handle cả hai.
-
 ### Pillar 4: Retrospection
 
 **SCRIPT gốc:** `KnowledgeKeeper.calculate_retrospection()` lines 585-610
@@ -977,11 +973,9 @@ self.info.os = "pengym"
 self.env_data = {'vulnerability': f'pengym_{name}'}
 ```
 
-### R3: gather_samples() gọi target.perform_action() trực tiếp — ✅ ĐÃ GIẢI QUYẾT
+### R3: ~~gather_samples()~~ — ✅ ĐÃ XÓA (dead code)
 
-**Vấn đề:** `gather_samples()` (standalone function, line 40 Script.py) gọi `target.perform_action(a)` — cần adapter expose đúng method.
-
-**Giải pháp:** `PenGymHostAdapter.perform_action()` đã implement. ✅ Tự động tương thích.
+**Đã xóa:** `gather_samples()` (standalone function, cũ line 40 Script.py) là dead code — không được gọi bởi bất kỳ code path nào. Đã loại bỏ trong quá trình cleanup.
 
 ### R4: Reward scale khác nhau — ⚠️ CẦN THEO DÕI
 

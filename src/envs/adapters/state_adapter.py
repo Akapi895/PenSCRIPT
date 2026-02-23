@@ -1,25 +1,34 @@
 """
-State Adapter — Convert PenGym NASim observations → SCRIPT 1538-dim SBERT state vector.
+State Adapter — Convert PenGym NASim observations → SCRIPT SBERT state vector.
 
 PenGym NASim obs (flat mode, per-host segment):
   [subnet_onehot | host_onehot | compromised | reachable | discovered |
    value | discovery_value | access | OS_flags | service_flags | process_flags]
 
-SCRIPT StateEncoder (1538-dim):
+SCRIPT StateEncoder (state_space-dim, currently 1538):
   [access(2) | os_sbert(384) | port_sbert(384) | service_sbert(384) | web_fp_sbert(384)]
+
+Unified format (Strategy C, 1540-dim):
+  [access(3) | discovery(1) | os_sbert(384) | port_sbert(384) |
+   service_sbert(384) | aux_sbert(384)]
 
 This adapter extracts per-host info from the NASim flat observation,
 reconstructs text strings, then SBERT-encodes them to match SCRIPT's format.
+
+See also: ``src.envs.core.unified_state_encoder.UnifiedStateEncoder`` for
+the Strategy C unified encoder (1540-dim).
 """
 
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 
+from src.agent.host import StateEncoder
+
 
 class PenGymStateAdapter:
-    """Convert PenGym NASim observations to SCRIPT-compatible 1538-dim vectors."""
+    """Convert PenGym NASim observations to SCRIPT-compatible state vectors."""
 
-    STATE_DIM = 1538
+    STATE_DIM = StateEncoder.state_space  # Canonical: 1538 (2+384+384+384+384)
     ACCESS_DIM = 2
     SBERT_DIM = 384  # all-MiniLM-L12-v2 output dimension
 
@@ -211,6 +220,56 @@ class PenGymStateAdapter:
         result = {}
         for addr in self.host_num_map:
             result[addr] = self.convert(flat_obs, addr)
+        return result
+
+    # ---- Strategy C unified encoding (1540-dim) ----
+
+    def convert_unified(self, flat_obs: np.ndarray,
+                        host_addr: Tuple[int, int]) -> np.ndarray:
+        """Convert PenGym observation to a 1540-dim **unified** state vector.
+
+        Delegates to :class:`~src.envs.core.unified_state_encoder.UnifiedStateEncoder`
+        so that the same canonicalisation and layout are used across both
+        simulation and PenGym domains (Strategy C §2.2).
+
+        Args:
+            flat_obs: Flat NASim observation (1D array).
+            host_addr: ``(subnet_id, host_id)`` of the target host.
+
+        Returns:
+            1540-dim float32 vector.
+        """
+        from src.envs.core.unified_state_encoder import UnifiedStateEncoder
+
+        if not hasattr(self, '_unified_encoder'):
+            self._unified_encoder = UnifiedStateEncoder(encoder=self.encoder)
+
+        host_data = self.get_host_data(flat_obs, host_addr)
+        if host_data is None:
+            return np.zeros(UnifiedStateEncoder.TOTAL_DIM, dtype=np.float32)
+
+        return self._unified_encoder.encode_from_pengym(
+            compromised=host_data['compromised'],
+            reachable=host_data['reachable'],
+            discovered=host_data['discovered'],
+            access_level=host_data['access_level'],
+            os=host_data['os'],
+            services=host_data['services'],
+            ports=host_data['ports'],
+            processes=host_data['processes'],
+        )
+
+    def convert_all_hosts_unified(
+        self, flat_obs: np.ndarray,
+    ) -> Dict[Tuple[int, int], np.ndarray]:
+        """Convert observation for ALL hosts using the unified 1540-dim encoding.
+
+        Returns:
+            Dict mapping ``(subnet, host)`` → 1540-dim state vector.
+        """
+        result = {}
+        for addr in self.host_num_map:
+            result[addr] = self.convert_unified(flat_obs, addr)
         return result
 
     def get_sensitive_hosts(self) -> List[Tuple[int, int]]:

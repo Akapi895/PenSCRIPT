@@ -1,0 +1,224 @@
+#!/usr/bin/env python3
+"""
+run_strategy_c.py — CLI entry point for Strategy C dual training pipeline.
+
+Strategy C trains a SCRIPT CRL agent on simulation first, then transfers
+the policy to PenGym via controlled domain transfer and fine-tunes with
+EWC constraints.
+
+Usage
+-----
+Full pipeline (Phase 0→1→2→3→4):
+    python run_strategy_c.py \\
+        --sim-scenarios data/scenarios/chain/chain_1.json data/scenarios/chain/chain_2.json \\
+        --pengym-scenarios data/scenarios/tiny.yml data/scenarios/small-linear.yml
+
+With a specific transfer strategy:
+    python run_strategy_c.py \\
+        --sim-scenarios data/scenarios/chain/chain_1.json \\
+        --pengym-scenarios data/scenarios/tiny.yml \\
+        --transfer-strategy cautious
+
+Include θ_pengym_scratch baseline (for full 4-agent comparison):
+    python run_strategy_c.py \\
+        --sim-scenarios data/scenarios/chain/chain_1.json \\
+        --pengym-scenarios data/scenarios/tiny.yml \\
+        --train-scratch
+
+Design reference: docs/strategy_C_shared_state_dual_training.md
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+
+# Ensure project root on sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.utils.logging import TeeLogger
+
+# ── Paths ────────────────────────────────────────────────────────────
+OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+STRATEGY_C_DIR = OUTPUTS_DIR / "strategy_c"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Strategy C — Dual Training Pipeline (Sim → Transfer → PenGym)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
+    )
+
+    # ── Scenarios ────────────────────────────────────────────────────
+    parser.add_argument(
+        "--sim-scenarios", nargs="+", required=True,
+        help="Simulation scenario JSON files for Phase 1 training.",
+    )
+    parser.add_argument(
+        "--pengym-scenarios", nargs="+", required=True,
+        help="PenGym scenario YAML files for Phase 3 fine-tuning.",
+    )
+
+    # ── Transfer ─────────────────────────────────────────────────────
+    parser.add_argument(
+        "--transfer-strategy", type=str, default="conservative",
+        choices=["aggressive", "conservative", "cautious"],
+        help="Domain transfer strategy (default: conservative).",
+    )
+    parser.add_argument(
+        "--fisher-beta", type=float, default=0.3,
+        help="Fisher discount factor β for conservative/cautious transfer.",
+    )
+    parser.add_argument(
+        "--lr-factor", type=float, default=0.1,
+        help="Learning rate multiplier after domain transfer.",
+    )
+    parser.add_argument(
+        "--warmup-episodes", type=int, default=10,
+        help="Random-rollout episodes for normaliser warmup on PenGym.",
+    )
+
+    # ── Training ─────────────────────────────────────────────────────
+    parser.add_argument(
+        "--episodes", type=int, default=500,
+        help="Training episodes per task.",
+    )
+    parser.add_argument(
+        "--step-limit", type=int, default=100,
+        help="Max steps per episode.",
+    )
+    parser.add_argument(
+        "--eval-freq", type=int, default=5,
+        help="Evaluate every N episodes during training.",
+    )
+    parser.add_argument(
+        "--ewc-lambda", type=float, default=2000,
+        help="EWC regularisation strength.",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42,
+        help="Random seed.",
+    )
+
+    # ── Optional phases ──────────────────────────────────────────────
+    parser.add_argument(
+        "--skip-phase0", action="store_true",
+        help="Skip Phase 0 validation checks.",
+    )
+    parser.add_argument(
+        "--train-scratch", action="store_true",
+        help="Also train θ_pengym_scratch for full 4-agent comparison.",
+    )
+
+    # ── Output ───────────────────────────────────────────────────────
+    parser.add_argument(
+        "--output-dir", type=str, default=str(STRATEGY_C_DIR),
+        help="Output directory for logs, models, and results.",
+    )
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    # Set up logging
+    log_dir = Path(args.output_dir) / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    tee = TeeLogger(str(log_dir / "strategy_c.log"))
+
+    print("=" * 70)
+    print("  Strategy C — Dual Training Pipeline")
+    print("=" * 70)
+    print(f"  Sim scenarios:    {args.sim_scenarios}")
+    print(f"  PenGym scenarios: {args.pengym_scenarios}")
+    print(f"  Transfer:         {args.transfer_strategy} (β={args.fisher_beta}, LR×{args.lr_factor})")
+    print(f"  Training:         {args.episodes} eps, {args.step_limit} steps, EWC λ={args.ewc_lambda}")
+    print(f"  Seed:             {args.seed}")
+    print(f"  Output:           {args.output_dir}")
+    print("=" * 70)
+
+    from src.training.dual_trainer import DualTrainer
+
+    # Build DualTrainer
+    trainer = DualTrainer(
+        sim_scenarios=args.sim_scenarios,
+        pengym_scenarios=args.pengym_scenarios,
+        ppo_kwargs={
+            "train_eps": args.episodes,
+            "step_limit": args.step_limit,
+            "eval_step_limit": args.step_limit,
+        },
+        script_kwargs={
+            "ewc_lambda": args.ewc_lambda,
+            "fisher_discount_beta": args.fisher_beta,
+            "transfer_lr_factor": args.lr_factor,
+            "norm_warmup_episodes": args.warmup_episodes,
+            "transfer_strategy": args.transfer_strategy,
+        },
+        seed=args.seed,
+        output_dir=args.output_dir,
+    )
+
+    t0 = time.time()
+
+    # Run full pipeline
+    results = trainer.run_full_pipeline(
+        skip_phase0=args.skip_phase0,
+        eval_freq=args.eval_freq,
+    )
+
+    # Optionally train scratch baseline
+    if args.train_scratch:
+        print("\n" + "=" * 60)
+        print("  Training θ_pengym_scratch baseline...")
+        print("=" * 60)
+        scratch_results = trainer.train_pengym_scratch(eval_freq=args.eval_freq)
+        results["scratch"] = scratch_results
+
+        # Re-run Phase 4 with the scratch agent available
+        print("\n  Re-running Phase 4 with all 4 agents...")
+        results["phase4"] = trainer.phase4_evaluation()
+
+    elapsed = time.time() - t0
+
+    # Print summary
+    print("\n" + "=" * 70)
+    print("  Strategy C — Pipeline Complete")
+    print("=" * 70)
+    print(f"  Total time: {elapsed:.1f}s")
+
+    if "phase4" in results:
+        phase4 = results["phase4"]
+        for agent_name, data in phase4.get("agents", {}).items():
+            sr = data.get("success_rate", "N/A")
+            if isinstance(sr, float):
+                sr = f"{sr:.1%}"
+            print(f"    {agent_name}: SR={sr}")
+        transfer = phase4.get("transfer_metrics", {})
+        if transfer:
+            ft = transfer.get("forward_transfer")
+            bt = transfer.get("backward_transfer")
+            print(f"  Forward transfer:  {ft:+.2%}" if ft is not None else "")
+            print(f"  Backward transfer: {bt:+.2%}" if bt is not None else "")
+
+    # Save final results
+    results_path = Path(args.output_dir) / "strategy_c_results.json"
+    with open(results_path, "w") as f:
+        json.dump(results, f, indent=2, default=str)
+    print(f"\n  Results saved → {results_path}")
+
+    tee.close()
+
+
+if __name__ == "__main__":
+    main()

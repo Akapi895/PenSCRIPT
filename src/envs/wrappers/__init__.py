@@ -5,6 +5,7 @@ from src.envs.wrappers.reward_normalizer import (
     IdentityNormalizer,
     LinearNormalizer,
     RewardNormalizer,
+    UnifiedNormalizer,
 )
 from src.envs.wrappers.single_host_wrapper import SingleHostPenGymWrapper
 from src.envs.wrappers.target_selector import (
@@ -22,6 +23,7 @@ __all__ = [
     "LinearNormalizer",
     "ClipNormalizer",
     "IdentityNormalizer",
+    "UnifiedNormalizer",
     # Target selection
     "TargetSelector",
     "PrioritySensitiveSelector",

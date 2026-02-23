@@ -450,13 +450,13 @@ class Agent(BaseAgent):
                 failed_num += 1
                 # break
             target_id += 1
-        sucess_rate = float(format(success_num / len(target_list), '.3f'))
+        success_rate = float(format(success_num / len(target_list), '.3f'))
         if episode_return >= self.best_return:
             self.best_return = episode_return
             self.best_action_set = self.action_set
             self.best_reward_episode = self.reward_set
             self.best_episode = self.num_episodes
-        return episode_return, eps_steps, sucess_rate
+        return episode_return, eps_steps, success_rate
 
     def Evaluate(self,
                  target_list,
@@ -464,11 +464,11 @@ class Agent(BaseAgent):
                  manual=False,
                  interactive=False,
                  verbose=True):
-        sucess_rate = 0.0
+        success_rate = 0.0
         target_id = 0
         total_rewards = 0
-        sucess_list = []
-        faild_list = []
+        success_list = []
+        failed_list = []
         attack_path = []
         inference_times = []
         attack_path_key = ["target", "step", "action", "result", "reward"]
@@ -534,19 +534,19 @@ class Agent(BaseAgent):
                         logging.info("SUCCESS: " + host.ip)
                         logging.info(f"Total steps = {steps}")
                         logging.info(f"Total reward = {total_rewards}")
-                    sucess_list.append(host.ip)
+                    success_list.append(host.ip)
                     break
             if not done:
 
-                faild_list.append(host.ip)
+                failed_list.append(host.ip)
             host_attack_path['reward'] = task_return
             host_attack_path['success'] = done
             host_attack_path_ = EasyDict(host_attack_path)
             attack_path.append(host_attack_path)
             target_id += 1
-        sucess_rate = float(format(len(sucess_list) / len(target_list), '.3f'))
+        success_rate = float(format(len(success_list) / len(target_list), '.3f'))
         self.eval_rewards = total_rewards
-        self.eval_success_rate = sucess_rate
+        self.eval_success_rate = success_rate
         # Store inference timing stats
         self.last_eval_inference_times = inference_times
         self.last_eval_attack_path = attack_path

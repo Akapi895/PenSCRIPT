@@ -41,8 +41,6 @@ Usage:
     pengym_action_name = sas.to_pengym_action(service_action_idx)
 """
 
-import os
-import sys
 import json
 import random
 import numpy as np
@@ -50,11 +48,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 from collections import defaultdict
 from dataclasses import dataclass, field
-
-curr_path = os.path.dirname(os.path.abspath(__file__))
-parent_path = os.path.dirname(curr_path)
-sys.path.append(parent_path)
-sys.path.append(os.path.dirname(parent_path))
 
 
 # =============================================================================
@@ -152,6 +145,9 @@ class ServiceActionSpace:
     The action space dimension is always len(SERVICE_ACTION_DEFS) = 16,
     regardless of whether there are 2000 or 20000 CVEs.
     """
+
+    # Class-level constant for use without instantiation
+    DEFAULT_ACTION_DIM = len(SERVICE_ACTION_DEFS)  # 16
 
     def __init__(self, action_class=None):
         """
@@ -428,7 +424,7 @@ class ServiceActionSpace:
         return None
 
     # =========================================================================
-    # PenGym Mapping (for Strategy A / C evaluation)
+    # PenGym Mapping (for Strategy C evaluation)
     # =========================================================================
 
     def to_pengym_action(self, service_action_idx: int) -> Optional[str]:

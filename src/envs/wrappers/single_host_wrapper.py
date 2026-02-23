@@ -165,7 +165,7 @@ class SingleHostPenGymWrapper:
 
     @property
     def state_dim(self) -> int:
-        """Always ``1538``."""
+        """From ``PenGymStateAdapter.STATE_DIM`` (canonical: ``StateEncoder.state_space``)."""
         from src.envs.adapters.state_adapter import PenGymStateAdapter as _PSA
 
         return _PSA.STATE_DIM

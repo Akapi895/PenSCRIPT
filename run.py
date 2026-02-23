@@ -113,58 +113,6 @@ def load_scenario(scenario_path: Path) -> dict:
             return yaml.safe_load(f)
 
 
-def create_simulation_env(scenario_path: Path):
-    """Create simulation environment from JSON scenario file (Script's HOST class).
-    
-    Returns a simple wrapper that contains the list of HOST targets.
-    """
-    from src.agent.host import HOST
-    from src.agent.actions import Action
-    
-    # Load scenario data
-    with open(scenario_path, 'r', encoding='utf-8') as f:
-        environment_data = json.load(f)
-    
-    # Create HOST objects for each target in the scenario
-    target_list = []
-    for host in environment_data:
-        ip = host["ip"]
-        t = HOST(ip, env_data=host, env_file=scenario_path)
-        target_list.append(t)
-    
-    print(f"[ENV] Loaded {len(target_list)} targets from scenario")
-    
-    # Return simple environment wrapper
-    class SimulationEnv:
-        def __init__(self, targets):
-            self.targets = targets
-            self.current_target_idx = 0
-            self.current_target = targets[0] if targets else None
-            
-            # Environment interface
-            from src.agent.host import StateEncoder
-            self.state_dim = StateEncoder.state_space
-            self.action_dim = Action.action_space
-            
-        def reset(self):
-            self.current_target_idx = 0
-            self.current_target = self.targets[0] if self.targets else None
-            if self.current_target:
-                return self.current_target.reset()
-            return None
-            
-        def step(self, action):
-            if self.current_target:
-                return self.current_target.perform_action(action)
-            return None, 0, True, "No target"
-            
-        @property
-        def action_space(self):
-            return type('ActionSpace', (), {'sample': lambda: 0, 'n': self.action_dim})()
-    
-    return SimulationEnv(target_list)
-
-
 def create_pengym_env(scenario_path: Path, config_path: str = None, disable_real: bool = False):
     """Create PenGym environment."""
     try:

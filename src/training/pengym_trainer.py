@@ -55,9 +55,9 @@ class PenGymTrainer:
     Policy : PPO_agent
         Actor-critic policy.
     state_dim : int
-        Always 1538.
+        From StateEncoder.state_space (currently 1538).
     action_dim : int
-        Always 16.
+        From ServiceActionSpace (currently 16).
     """
 
     # -----------------------------------------------------------------

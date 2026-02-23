@@ -188,25 +188,15 @@ class StateEncoder:
     web_fingerprint_dim = encoder.SBERT_model_dim
     state_vector["web_fingerprint"] = web_fingerprint_dim
 
-    action_history_window = 5
-    # if Action_embedding.use_action_embedding:
-    #     action_dim = Action.action_embedding.vector_space.shape[1]
-    # else:
-    #     action_dim=1
-    # action_history_dim =action_history_window*action_dim
-    action_history_dim = 0  #弃用
-    # action_history_dim = 4
-    state_vector["action_history"] = action_history_dim  #弃用
-
     access = 2
     OS_vector_idx = access_dim
     port_vector_idx = access_dim + os_dim
     services_vector_idx = access_dim + os_dim + port_dim
     web_fingerprint_idx = access_dim + os_dim + port_dim + service_dim
     action_history_idx = access_dim + os_dim + port_dim + service_dim + web_fingerprint_dim
-    
+
     state_space = access_dim + os_dim + port_dim + \
-        service_dim+ web_fingerprint_dim + action_history_dim
+        service_dim + web_fingerprint_dim
 
     def __init__(self, ip):
         self.ip = ip
