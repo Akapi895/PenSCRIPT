@@ -42,6 +42,7 @@ desktop.ini
 outputs/models/
 outputs/logs/
 outputs/tensorboard/
+outputs/strategy_c/
 runs/
 
 # ===========================

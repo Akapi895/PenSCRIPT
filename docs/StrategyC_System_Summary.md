@@ -1,663 +1,524 @@
-# Strategy C — Phân Tích Khoảng Cách & Tổng Kết Hệ Thống
+﻿# Strategy C — Đánh Giá Mức Độ Hoàn Thiện Hệ Thống
 
-> **Tác giả:** Senior Engineer / Architect Review  
-> **Ngày:** 2025-02-23  
-> **Phạm vi:** So sánh đặc tả Strategy C (`docs/strategy_C_shared_state_dual_training.md`, 1211 dòng) với hiện trạng mã nguồn thực tế. Xác định: đã làm đúng những gì, thiếu gì, sai lệch gì, và đề xuất cải tiến.
+> **Cập nhật:** 2026-02-23 (dựa trên phân tích mã nguồn thực tế, branch `strC_1`)  
+> **Phạm vi:** Đánh giá toàn bộ implementation của Strategy C: Shared-State Dual Training  
+> **Phương pháp:** Phân tích trực tiếp từ source code — không dựa trên tài liệu thiết kế
 
 ---
 
 ## Mục Lục
 
-1. [Tóm Tắt Tổng Quan](#1-tóm-tắt-tổng-quan)
-2. [Những Gì Đã Triển Khai Đúng](#2-những-gì-đã-triển-khai-đúng)
-3. [Khoảng Cách Nghiêm Trọng (Bắt Buộc Sửa)](#3-khoảng-cách-nghiêm-trọng-bắt-buộc-sửa)
-4. [Khoảng Cách Trung Bình (Nên Sửa)](#4-khoảng-cách-trung-bình-nên-sửa)
-5. [Khoảng Cách Nhỏ (Có Thì Tốt)](#5-khoảng-cách-nhỏ-có-thì-tốt)
-6. [Phân Tích Theo Từng Thành Phần](#6-phân-tích-theo-từng-thành-phần)
-7. [Đề Xuất Cải Tiến (Xếp Hạng Ưu Tiên)](#7-đề-xuất-cải-tiến-xếp-hạng-ưu-tiên)
-8. [Lộ Trình Triển Khai](#8-lộ-trình-triển-khai)
-9. [Phụ Lục: Ánh Xạ File → Yêu Cầu](#9-phụ-lục-ánh-xạ-file--yêu-cầu)
+1. [Tổng Quan Trạng Thái Hệ Thống](#1-tổng-quan-trạng-thái-hệ-thống)
+2. [Kiến Trúc Pipeline](#2-kiến-trúc-pipeline)
+3. [Thành Phần Đã Triển Khai Đầy Đủ](#3-thành-phần-đã-triển-khai-đầy-đủ)
+4. [Thành Phần Triển Khai Một Phần](#4-thành-phần-triển-khai-một-phần)
+5. [Thành Phần Chưa Tích Hợp Vào Pipeline](#5-thành-phần-chưa-tích-hợp-vào-pipeline)
+6. [Ánh Xạ File → Chức Năng](#6-ánh-xạ-file--chức-năng)
+7. [Khoảng Cách So Với Thiết Kế Ban Đầu](#7-khoảng-cách-so-với-thiết-kế-ban-đầu)
+8. [Hướng Phát Triển Tiếp Theo](#8-hướng-phát-triển-tiếp-theo)
 
 ---
 
-## 1. Tóm Tắt Tổng Quan
+## 1. Tổng Quan Trạng Thái Hệ Thống
 
-### Kết luận: **Nền Tảng Vững Chắc, Thiếu Pipeline Chuyển Giao**
+### Kết luận: **Pipeline Hoạt Động End-to-End, Còn 1 Khoảng Cách Chính**
 
-Mã nguồn hiện tại đã xây dựng thành công **lớp hạ tầng** mà Strategy C yêu cầu: cầu nối adapter/wrapper giữa SCRIPT và PenGym, không gian hành động mức service, và huấn luyện CRL trên các kịch bản PenGym. Tuy nhiên, **yếu tố cốt lõi tạo sự khác biệt** của Strategy C — bộ mã hóa trạng thái thống nhất và pipeline huấn luyện kép (Phase 0→1→2→3→4) — **hoàn toàn chưa có**.
+Hệ thống đã triển khai **đầy đủ pipeline 5 giai đoạn** (Phase 0→1→2→3→4) với tất cả các thành phần cốt lõi: huấn luyện CRL trên sim, chuyển giao domain có kiểm soát, fine-tune trên PenGym, và đánh giá đa-agent. Kiến trúc hành động phân cấp (hierarchical action space) đã được tích hợp xuyên suốt.
 
-| Hạng mục                                | Yêu cầu Strategy C                 | Trạng thái mã nguồn   |
-| ---------------------------------------- | ----------------------------------- | ---------------------- |
-| Wrapper PenGym đơn-host                  | Option 1 (khuyến nghị)             | ✅ Đã triển khai đầy đủ |
-| Không gian hành động mức service         | Semantic grouping (khuyến nghị)     | ✅ Đã triển khai (16 chiều) |
-| Mã hóa SBERT cho cả hai môi trường      | Bắt buộc                           | ✅ Đang hoạt động      |
-| CRL 5 trụ cột trên PenGym               | Yêu cầu Phase 3                    | ✅ Đang hoạt động      |
-| Unified State Encoder (1540 chiều)       | Yêu cầu cốt lõi                    | ❌ Chưa triển khai     |
-| Chuẩn hóa OS/Service (canonicalization)  | Bắt buộc cho chuyển giao liên miền | ❌ Chưa triển khai     |
-| Pipeline huấn luyện kép                  | Kiến trúc cốt lõi                  | ❌ Chưa triển khai     |
-| DomainTransferManager                    | Yêu cầu Phase 2                    | ❌ Chưa triển khai     |
-| Reset/khởi động chuẩn hóa trạng thái    | Thiết yếu cho chuyển giao          | ❌ Chưa triển khai     |
-| Giảm Fisher cho chuyển giao liên miền    | Yêu cầu Phase 2                    | ❌ Chưa triển khai     |
-| Ma trận đánh giá 4 agent                 | Yêu cầu Phase 4                    | ❌ Chưa triển khai     |
-| Chuẩn hóa reward về [-1,+1]             | Khuyến nghị                        | ⚠️ Một phần (sai khoảng) |
+**Khoảng cách duy nhất có ý nghĩa:** `UnifiedStateEncoder` (1540-dim) đã được triển khai code hoàn chỉnh nhưng **chưa được tích hợp vào luồng huấn luyện thực tế** — cả sim và PenGym đều sử dụng encoding 1538-dim legacy. Điều này có nghĩa chuyển giao sim→PenGym đang dựa vào sự tương đồng cấu trúc giữa hai bộ mã hóa riêng biệt, thay vì một bộ mã hóa thống nhất đảm bảo căn chỉnh ngữ nghĩa.
 
-**Kết luận cuối:** Hệ thống có thể huấn luyện agent SCRIPT CRL trên PenGym (≈ Phase 3 của Strategy C chạy đơn lẻ), nhưng không thể thực hiện **chuyển giao sim→PenGym** — đóng góp chính của Strategy C. Pipeline huấn luyện kép — giá trị cốt lõi — chưa tồn tại.
-
----
-
-## 2. Những Gì Đã Triển Khai Đúng
-
-### 2.1 SingleHostPenGymWrapper ✅
-
-**Strategy C §3.3 khuyến nghị Option 1:** Bọc PenGym để hoạt động ở chế độ đơn-host, giữ nguyên mô hình của SCRIPT: 1 agent → 1 mục tiêu.
-
-**Triển khai:** `src/envs/wrappers/single_host_wrapper.py` (543 dòng)
-
-| Khía cạnh                  | Đặc tả Strategy C                | Triển khai thực tế                               | Khớp |
-| -------------------------- | -------------------------------- | ------------------------------------------------ | ---- |
-| Chế độ đơn-host            | Có                               | Có — `step()` thao tác trên `current_target`     | ✅   |
-| Xoay vòng mục tiêu        | Duyệt qua các sensitive host     | Tự động tiến + xoay vòng khi thất bại (ngưỡng=5) | ✅+  |
-| Đầu ra trạng thái          | 1540 chiều (unified)             | 1538 chiều tương thích SCRIPT (qua StateAdapter)  | ⚠️   |
-| Ngữ nghĩa episode         | Chiếm 1 mục tiêu = kết thúc     | `_check_target_compromised()` → done=True         | ✅   |
-| Chứa PenGym env            | Có, được bọc                     | `self._env = PenGymEnv(scenario)`                 | ✅   |
-
-**Đánh giá:** Wrapper được thiết kế tốt, có thêm tính năng ngoài đặc tả (xoay vòng khi thất bại, khám phá subnet_scan, ưu tiên mục tiêu). Sai lệch duy nhất là số chiều trạng thái (1538 thay vì 1540).
-
-### 2.2 PenGymStateAdapter ✅ (Về Cấu Trúc)
-
-**Strategy C §2.2:** Mã hóa quan sát PenGym bằng SBERT để khớp định dạng SCRIPT.
-
-**Triển khai:** `src/envs/adapters/state_adapter.py` (361 dòng)
-
-| Khía cạnh                  | Đặc tả Strategy C                | Triển khai thực tế                  | Khớp |
-| -------------------------- | -------------------------------- | ----------------------------------- | ---- |
-| SBERT cho OS/Service/Port  | Có                               | Có — dùng chung encoder             | ✅   |
-| Trích xuất từng host       | Có                               | Có — `_get_host_segment()`          | ✅   |
-| Số chiều đầu ra cố định   | 1540                             | 1538                                | ⚠️   |
-| Cache SBERT                | Khuyến nghị                      | Có — dict `_sbert_cache`            | ✅   |
-| Suy luận port              | Từ service qua CONFIG.yml        | Có — `DEFAULT_SERVICE_PORT_MAP`     | ✅   |
-| Web FP → Process thay thế | Option A (slot web_fp)           | Dùng thông tin process thay thế     | ✅   |
-
-**Đánh giá:** Adapter chuyển đổi đúng quan sát PenGym sang vector SBERT. Tuân theo triết lý mã hóa Strategy C nhưng thiếu định dạng thống nhất 3 chiều access + 1 chiều discovery.
-
-### 2.3 Không Gian Hành Động Mức Service (Semantic Grouping) ✅
-
-**Strategy C §3.2 khuyến nghị SEMANTIC GROUPING:** Gom các exploit theo CVE thành exploit theo service.
-
-**Triển khai:** `src/agent/actions/service_action_space.py` (516 dòng)
-
-| Khía cạnh                    | Đặc tả Strategy C                          | Triển khai thực tế                      | Khớp |
-| ---------------------------- | ------------------------------------------ | --------------------------------------- | ---- |
-| Phương pháp                  | Semantic grouping                          | 16 hành động mức service                | ✅   |
-| Hành động quét               | PORT_SCAN, SERVICE_SCAN, OS_SCAN, WEB_SCAN | 4 quét + SUBNET_SCAN                   | ✅+  |
-| Hành động khai thác          | Theo service (ssh, ftp, http, ...)         | 9 exploit theo service                  | ✅   |
-| Hành động leo thang          | pe_tomcat, pe_proftpd, pe_cron             | 3 hành động privesc                     | ✅   |
-| Chọn CVE trong nhóm          | CVESelector (Tier 2)                       | Có — rank/random/round_robin/match      | ✅   |
-
-**Đánh giá:** Hoàn toàn phù hợp với khuyến nghị Strategy C. Thiết kế 16 hành động ánh xạ 1:1 với bảng hành động thống nhất đề xuất.
-
-### 2.4 PenGymHostAdapter (Duck-Typing) ✅
-
-**Strategy C §5.4:** Coi mỗi host mục tiêu PenGym như một task CRL.
-
-**Triển khai:** `src/envs/adapters/pengym_host_adapter.py` (273 dòng)
-
-| Khía cạnh                     | Đặc tả Strategy C                | Triển khai thực tế                          | Khớp |
-| ----------------------------- | -------------------------------- | ------------------------------------------- | ---- |
-| Duck-typing giao diện HOST    | Có (PenGym tasks = HOST tasks)   | Composition với lazy wrapper                | ✅   |
-| Mỗi host = 1 CRL task         | Có                               | Phương thức factory `from_scenario()`       | ✅   |
-| Khởi tạo lười                 | Không đặc tả                     | `_ensure_wrapper()` + `_active_scenario`    | ✅+  |
-
-### 2.5 PenGymScriptTrainer (CRL trên PenGym) ✅
-
-**Strategy C §5.4:** Sử dụng framework CL của SCRIPT trên PenGym.
-
-**Triển khai:** `src/training/pengym_script_trainer.py` (376 dòng)
-
-| Khía cạnh                  | Đặc tả Strategy C                | Triển khai thực tế                      | Khớp |
-| -------------------------- | -------------------------------- | --------------------------------------- | ---- |
-| Đầy đủ 5 trụ cột SCRIPT   | Bắt buộc                         | Đầy đủ qua Agent_CL(method="script")   | ✅   |
-| STATE_DIM/ACTION_DIM       | 1540/16                          | 1538/16                                 | ⚠️   |
-| Task list = PenGym hosts   | Có                               | Có — danh sách PenGymHostAdapter        | ✅   |
-| Train + evaluate + save    | Có                               | API đầy đủ train/evaluate/save/load     | ✅   |
-
-**Đánh giá:** Đây là Phase 3 của Strategy C về mặt khái niệm, nhưng chạy đơn lẻ (không có Phase 1-2 chuyển giao trước đó). Trainer hoạt động, nhưng ở chế độ "huấn luyện từ đầu trên PenGym" chứ không phải "tinh chỉnh mô hình đã transfer từ sim".
-
-### 2.6 Framework CRL của SCRIPT ✅ (Không thay đổi)
-
-Toàn bộ 5 trụ cột CRL gốc của SCRIPT vẫn nguyên vẹn và hoạt động:
-
-| Trụ cột                  | Vị trí triển khai                                           | Trạng thái |
-| ------------------------ | ----------------------------------------------------------- | ---------- |
-| Teacher Guidance         | `script.py` → `ScriptAgent.get_new_task_learner()` → set guide | ✅       |
-| KL Imitation             | `script.py` → `ExplorePolicy._update()` → `imi_loss`       | ✅         |
-| Knowledge Distillation   | `script.py` → `Keeper.compress()` → KD loss                | ✅         |
-| Retrospection            | `script.py` → `Keeper.compress()` → retro_loss             | ✅         |
-| EWC                      | `script.py` → class `OnlineEWC`                            | ✅         |
+| Thành phần                           | Trạng thái                        | File chính                                  |
+| ------------------------------------ | --------------------------------- | ------------------------------------------- |
+| CLI Entry Point                      | ✅ Hoàn chỉnh                     | `run_strategy_c.py`                         |
+| DualTrainer (Phase 0→4)              | ✅ Hoàn chỉnh                     | `src/training/dual_trainer.py`              |
+| Hierarchical Action Space (16-dim)   | ✅ Hoàn chỉnh + tích hợp          | `src/agent/actions/service_action_space.py` |
+| HOST + select_cve()                  | ✅ Hoàn chỉnh + tích hợp          | `src/agent/host.py`                         |
+| DomainTransferManager (3 strategies) | ✅ Hoàn chỉnh + tích hợp          | `src/training/domain_transfer.py`           |
+| OnlineEWC + discount_fisher()        | ✅ Hoàn chỉnh + tích hợp          | `src/agent/continual/Script.py`             |
+| Script_Config (Strategy C params)    | ✅ Hoàn chỉnh                     | `src/agent/policy/config.py`                |
+| StrategyCEvaluator (Phase 4)         | ✅ Hoàn chỉnh + tích hợp          | `src/evaluation/strategy_c_eval.py`         |
+| SingleHostPenGymWrapper              | ✅ Hoàn chỉnh                     | `src/envs/wrappers/single_host_wrapper.py`  |
+| PenGymHostAdapter (duck-typing HOST) | ✅ Hoàn chỉnh                     | `src/envs/adapters/pengym_host_adapter.py`  |
+| PenGymStateAdapter (1538-dim)        | ✅ Hoàn chỉnh                     | `src/envs/adapters/state_adapter.py`        |
+| SCRIPT CRL (5 trụ cột)               | ✅ Hoàn chỉnh                     | `src/agent/continual/Script.py`             |
+| UnifiedStateEncoder (1540-dim)       | ⚠️ Code hoàn chỉnh, chưa tích hợp | `src/envs/core/unified_state_encoder.py`    |
+| UnifiedNormalizer ([-1,+1])          | ⚠️ Code hoàn chỉnh, chưa tích hợp | `src/envs/wrappers/reward_normalizer.py`    |
 
 ---
 
-## 3. Khoảng Cách Nghiêm Trọng (Bắt Buộc Sửa)
+## 2. Kiến Trúc Pipeline
 
-### Gap C1: Thiếu UnifiedStateEncoder (1540 chiều)
+### 2.1 Luồng Thực Thi (đã triển khai)
 
-**Strategy C §2.2 đặc tả:**
 ```
-UnifiedStateEncoder.TOTAL_DIM = 1540
-= 3 (access) + 1 (discovery) + 384 (OS) + 384 (port) + 384 (service) + 384 (aux)
-```
-
-**Hiện trạng:**
-- `host.py` → `StateEncoder.state_space = 1538` (access 2 chiều, không có chiều discovery)
-- `state_adapter.py` → `STATE_DIM = 1538` (cùng định dạng access 2 chiều)
-- Tồn tại **hai đường mã hóa riêng biệt** — `StateEncoder` cho sim, `PenGymStateAdapter` cho PenGym
-- Không có lớp duy nhất nào mã hóa cho **cả hai** môi trường
-
-**Tác động:** Không có bộ mã hóa thống nhất, vector trạng thái từ sim và PenGym có bố cục ngữ nghĩa khác nhau. Trọng số policy huấn luyện trên sim (1538 chiều với access 2 chiều tại chỉ mục 0-1) không thể xử lý trực tiếp trạng thái PenGym, dù cả hai đều danh nghĩa 1538 chiều. 2 chiều bổ sung (access 3 chiều + discovery 1 chiều) cần thiết cho việc căn chỉnh liên miền đúng đắn.
-
-**Nguyên nhân gốc:** Strategy A được triển khai trước (phương pháp adapter — giữ riêng hai định dạng), và mã nguồn chưa bao giờ phát triển theo hướng thống nhất của Strategy C.
-
-### Gap C2: Thiếu Pipeline Huấn Luyện Kép (Phase 0→1→2→3→4)
-
-**Strategy C §5.1-5.4 đặc tả pipeline 4 giai đoạn:**
-
-| Phase | Việc cần làm                                                         | Trạng thái hiện tại |
-| ----- | -------------------------------------------------------------------- | ------------------- |
-| 0     | Kiểm chứng: tính nhất quán SBERT, ổn định PenGym, phân phối trạng thái | ❌ Chưa triển khai |
-| 1     | Huấn luyện lại SCRIPT trên sim với mã hóa thống nhất → θ_uni          | ❌ Chưa triển khai |
-| 2     | Chuyển θ_uni → PenGym (reset norm, giảm Fisher, giảm LR)             | ❌ Chưa triển khai |
-| 3     | Tinh chỉnh trên PenGym với ràng buộc EWC từ Phase 1                  | ⚠️ Một phần — PenGymScriptTrainer huấn luyện CRL trên PenGym nhưng **từ đầu**, không phải từ trọng số đã transfer |
-| 4     | Đánh giá 4 agent, tính toán metrics chuyển giao                       | ❌ Chưa triển khai |
-
-**Tác động:** Đây là **toàn bộ đóng góp nghiên cứu** của Strategy C. Không có pipeline, không có thí nghiệm chuyển giao sim→PenGym, không có agent huấn luyện kép, và không có chất lượng chuyển giao đo lường được.
-
-### Gap C3: Thiếu DomainTransferManager
-
-**Strategy C §5.3 đặc tả:**
-```python
-class DomainTransferManager:
-    def transfer(self, strategy='conservative'):
-        # 1. Sao chép trọng số từ sim agent
-        # 2. Reset chuẩn hóa trạng thái + khởi động nóng
-        # 3. Giảm ma trận Fisher theo hệ số β ∈ [0.1, 0.5]
-        # 4. Giảm tốc độ học ×0.1
+run_strategy_c.py
+  └─ DualTrainer(sim_scenarios, pengym_scenarios, ppo_kwargs, script_kwargs)
+      │
+      ├─ Phase 0: Validation
+      │   ├─ SBERT consistency (cosine > 0.99)
+      │   ├─ UnifiedStateEncoder dim check (1540)
+      │   ├─ Canonicalization check (ubuntu→linux, openssh→ssh)
+      │   ├─ Cross-domain SBERT similarity
+      │   └─ PenGym scenario loadability
+      │
+      ├─ Phase 1: Sim Training
+      │   ├─ ServiceActionSpace(action_class=Action) → 16 groups
+      │   ├─ HOST(ip, env_data, service_action_space=sas) per host
+      │   ├─ PPO_Config(action_dim=16) → PPO Actor outputs 16-dim
+      │   ├─ Agent_CL.train_continually(sim_tasks)
+      │   └─ → θ_sim_unified
+      │
+      ├─ Phase 2: Domain Transfer
+      │   ├─ deep copy θ_sim_unified → θ_dual
+      │   ├─ DomainTransferManager.transfer(θ_dual, pengym_tasks, strategy)
+      │   │   ├─ aggressive: giữ nguyên tất cả
+      │   │   ├─ conservative: reset norm + warmup + discount Fisher + giảm LR
+      │   │   └─ cautious: reset all trừ weights
+      │   └─ → θ_dual (sẵn sàng cho Phase 3)
+      │
+      ├─ Phase 3: PenGym Fine-tuning
+      │   ├─ PenGymHostAdapter.from_scenario() per scenario
+      │   ├─ θ_dual.train_continually(pengym_tasks)
+      │   └─ → θ_dual (fine-tuned)
+      │
+      └─ Phase 4: Evaluation
+          ├─ StrategyCEvaluator.evaluate_all()
+          ├─ Forward Transfer = SR(θ_dual) − SR(θ_scratch)
+          ├─ Backward Transfer = SR(θ_dual on sim) − SR(θ_uni on sim)
+          └─ Transfer Ratio = SR(θ_dual) / SR(θ_scratch)
 ```
 
-**Hiện trạng:** Không có class hay logic tương đương nào tồn tại trong toàn bộ mã nguồn.
+### 2.2 Luồng Hành Động Phân Cấp (đã triển khai)
 
-**Tác động:** Không có cơ chế chuyển giao có kiểm soát, không có cách di chuyển tri thức từ sim sang PenGym trong khi quản lý sự dịch chuyển phân phối. Ba thao tác thiết yếu (reset norm, giảm Fisher, giảm LR) đều thiếu.
-
-### Gap C4: Thiếu Reset/Khởi Động Chuẩn Hóa Trạng Thái
-
-**Strategy C §5.3 xác định đây là Rủi ro R3 (Tác động nghiêm trọng, Xác suất cao):**
-
-Class `Normalization` trong `common.py` sử dụng `RunningMeanStd` (thuật toán Welford). Sau 500 episode trên sim, `running_mean` và `running_std` đã hội tụ về phân phối trạng thái sim. Khi chuyển sang PenGym:
-- Nếu giữ nguyên thống kê: trạng thái PenGym bị chuẩn hóa bằng thống kê sai → đầu vào policy bị méo
-- Nếu reset thống kê: trọng số policy kỳ vọng đầu vào chuẩn hóa theo phân phối sim → đầu ra ban đầu vô nghĩa
-
-**Hiện trạng:**
-- Class `Normalization` không có phương thức `reset()`
-- `RunningMeanStd` không có cơ chế pha trộn (blend) hay khởi động nóng (warmup)
-- Sao chép norm từ Explorer→Keeper tồn tại (trong `script.py`), nhưng không xử lý liên miền
-- Thống kê chuẩn hóa trạng thái tồn tại xuyên suốt TẤT CẢ các task mà không reset
-
-**Tác động:** Bất kỳ nỗ lực chuyển giao sim→PenGym nào sẽ thất bại tại lớp chuẩn hóa trước khi đến được suy luận policy. Đây là khoảng cách gây hại kỹ thuật nặng nhất.
-
-### Gap C5: Thiếu Giảm Fisher cho Chuyển Giao Liên Miền
-
-**Strategy C §5.3 đặc tả:** Giảm thông tin Fisher theo hệ số β ∈ [0.1, 0.5] khi chuyển từ sim sang PenGym.
-
-**Hiện trạng:**
-- `OnlineEWC` trong `script.py` có `ewc_gamma` (mặc định 0.99), nhưng đây là cho tích lũy Fisher online **trong cùng miền** ($F_t = γ F_{t-1} + F_{current}$)
-- Không có cơ chế giảm Fisher **liên miền** (nhân tất cả giá trị Fisher với hệ số cố định β < 1)
-- `Script_Config` không có tham số `fisher_discount` hay `transfer_beta`
-
-**Tác động:** Không có giảm Fisher, ràng buộc EWC từ huấn luyện sim ở mức tối đa trên PenGym. Do sự dịch chuyển phân phối trạng thái, ma trận Fisher từ sim có thể khóa trọng số ở vị trí tối ưu cho sim nhưng không tối ưu cho PenGym → **agent không thể thích nghi**.
-
-### Gap C6: Thiếu Chuẩn Hóa OS/Service (Canonicalization)
-
-**Strategy C §2.3.1-2.3.4 đặc tả:**
-```python
-CANONICAL_MAP = {
-    'ubuntu': 'linux', 'debian': 'linux', 'centos': 'linux', ...
-}
-SERVICE_CANONICAL_MAP = {
-    'openssh': 'ssh', 'vsftpd': 'ftp', 'apache httpd': 'http', ...
-}
+```
+PPO Actor → service_action ∈ [0, 15]    (16-dim: 4 scan + 9 exploit + 3 privesc)
+    │
+HOST.perform_action(service_action)
+    │
+    └─ sas.select_cve(service_action, host_info, strategy='match', env_data)
+        │
+        ├─ Scan actions (0-3): → trả trực tiếp scan index
+        ├─ Exploit/Privesc (4-15):
+        │   ├─ Match strategy: tìm CVE khớp vulnerability thực của target
+        │   ├─ Rank strategy: chọn CVE rank cao nhất (excellent > great > ...)
+        │   ├─ Random strategy: chọn ngẫu nhiên trong group
+        │   └─ Round-robin strategy: xoay vòng
+        │
+        └─ → cve_index trong Action.legal_actions
+            │
+            HOST.step(cve_index)  → thực thi CVE exploit cụ thể
 ```
 
-**Hiện trạng:**
-- `PenGymStateAdapter._decode_os()` trả về tên OS thô (ví dụ: `"linux"`) không qua chuẩn hóa
-- `PenGymStateAdapter._decode_services()` trả về tên service thô không qua chuẩn hóa
-- `StateEncoder` trong `host.py` (phía sim) truyền chuỗi `env_data` thô vào SBERT
-- Không có lớp chuẩn hóa nào tồn tại ở bất kỳ đâu trong mã nguồn
+### 2.3 Luồng Trạng Thái (hiện tại: 1538-dim)
 
-**Tác động:** Khi cùng một OS/service có biểu diễn chuỗi khác nhau giữa sim và PenGym, SBERT tạo ra embedding khác nhau → trạng thái host "giống nhau" có vector biểu diễn khác nhau → policy không thể tổng quát hóa liên miền.
+```
+SIM path:  HOST.state_vector = StateEncoder
+           → access(2) + OS(384) + Port(384) + Service(384) + Aux(384) = 1538
+
+PenGym path: SingleHostPenGymWrapper → PenGymStateAdapter.convert()
+             → access(2) + OS(384) + Port(384) + Service(384) + Aux(384) = 1538
+
+PPO Actor/Critic input: state_dim = StateEncoder.state_space = 1538
+```
+
+**Thiết kế mong muốn (chưa tích hợp):**
+
+```
+UnifiedStateEncoder.encode_from_sim() hoặc encode_from_pengym()
+→ access(3) + discovery(1) + OS(384) + Port(384) + Service(384) + Aux(384) = 1540
+  + canonicalization: ubuntu→linux, openssh→ssh, ...
+```
 
 ---
 
-## 4. Khoảng Cách Trung Bình (Nên Sửa)
+## 3. Thành Phần Đã Triển Khai Đầy Đủ
 
-### Gap M1: Sai Khoảng Chuẩn Hóa Reward
+### 3.1 DualTrainer — Orchestrator Pipeline
 
-**Strategy C §4.1:** Chuẩn hóa tất cả reward về khoảng **[-1, +1]**.
+**File:** `src/training/dual_trainer.py` (592 dòng)
 
-**Hiện trạng:** `reward_normalizer.py` ánh xạ reward PenGym về **thang gốc của SCRIPT** [-10, 1000]:
-```python
-class LinearNormalizer(RewardNormalizer):
-    # Ánh xạ pengym [-1, 100] → script [-10, 1000]
-    # KHÔNG phải về [-1, +1] như Strategy C đặc tả
-```
+Bộ điều phối chính của Strategy C. Tất cả 5 phase đều được triển khai đầy đủ:
 
-**Tác động:** Thang reward ảnh hưởng đến độ lớn gradient → ảnh hưởng đến tính toán thông tin Fisher → ảnh hưởng đến cường độ ràng buộc EWC. Không có chuẩn hóa [-1, +1], việc tổng hợp CL liên miền sẽ bị thiên lệch về miền có reward lớn hơn.
+| Phase | Phương thức                  | Chức năng                                                          | Trạng thái |
+| ----- | ---------------------------- | ------------------------------------------------------------------ | ---------- |
+| 0     | `phase0_validation()`        | SBERT consistency, dim check, canonicalization, PenGym loadability | ✅         |
+| 1     | `phase1_sim_training()`      | Huấn luyện CRL trên sim với action_dim=16                          | ✅         |
+| 2     | `phase2_domain_transfer()`   | Chuyển giao sim→PenGym qua DomainTransferManager                   | ✅         |
+| 3     | `phase3_pengym_finetuning()` | Fine-tune trên PenGym với EWC constraints                          | ✅         |
+| 4     | `phase4_evaluation()`        | Đánh giá đa-agent qua StrategyCEvaluator                           | ✅         |
 
-### Gap M2: Thiếu Ma Trận Đánh Giá 4 Agent
+**Tích hợp đã được wiring:**
 
-**Strategy C §6.1 đặc tả so sánh 4 agent:**
+- `PPO_Config(action_dim=ServiceActionSpace.DEFAULT_ACTION_DIM)` → Actor output 16-dim
+- `ServiceActionSpace(action_class=Action)` được build trong Phase 1 và truyền vào mỗi HOST
+- `DomainTransferManager` được gọi trong Phase 2 với agent và PenGym tasks
+- `StrategyCEvaluator` được gọi trong Phase 4 với Forward/Backward Transfer metrics
+- Kết quả lưu vào `dual_trainer_results.json` + `strategy_c_eval_report.json`
 
-| Agent           | Mô tả                                          | Tồn tại? |
-| --------------- | ----------------------------------------------- | -------- |
-| θ_sim_baseline  | SCRIPT gốc (1538 chiều) trên sim                | ✅ Có thể huấn luyện |
-| θ_sim_unified   | SCRIPT huấn luyện lại với mã hóa thống nhất     | ❌ Không tạo được (chưa có unified encoder) |
-| θ_dual          | Huấn luyện kép (chuyển giao sim→PenGym)          | ❌ Không tạo được (chưa có pipeline chuyển giao) |
-| θ_pengym_scratch | Huấn luyện từ đầu trên PenGym                   | ✅ PenGymScriptTrainer có thể tạo |
+### 3.2 ServiceActionSpace — Không Gian Hành Động 16-dim
 
-**Bộ đánh giá hiện tại:** `sim_to_real_eval.py` triển khai đánh giá Strategy A (chuyển giao zero-shot mô hình đã huấn luyện). Không có bộ đánh giá riêng cho Strategy C.
+**File:** `src/agent/actions/service_action_space.py` (512 dòng)
 
-### Gap M3: Thiếu Framework Kiểm Chứng Phase 0
+Trừu tượng hóa ~2060 CVE thành 16 nhóm hành động mức service:
 
-**Strategy C §8 Phase 0 đặc tả:**
+| Index | Tên                                                 | Loại    | PenGym mapping                  |
+| ----- | --------------------------------------------------- | ------- | ------------------------------- |
+| 0     | port_scan                                           | scan    | subnet_scan                     |
+| 1     | service_scan                                        | scan    | service_scan                    |
+| 2     | os_scan                                             | scan    | os_scan                         |
+| 3     | web_scan                                            | scan    | process_scan                    |
+| 4-12  | exploit_ssh/ftp/http/smb/smtp/rdp/sql/java_rmi/misc | exploit | e_ssh/e_ftp/e_http/...          |
+| 13-15 | privesc_tomcat/schtask/daclsvc                      | privesc | pe_tomcat/pe_schtask/pe_daclsvc |
 
-| Bước | Kiểm chứng                                                    | Trạng thái |
-| ---- | -------------------------------------------------------------- | ---------- |
-| 0.1  | Kiểm tra tính nhất quán SBERT (sim vs PenGym, cosine > 0.9)   | ❌         |
-| 0.2  | Kiểm tra ổn định PenGym (< 5% episode lỗi)                    | ❌         |
-| 0.3  | Phân tích phân phối trạng thái (histogram, điểm KL)           | ❌         |
-| 0.4  | Phân tích trùng lặp kịch bản                                  | ❌         |
+**Tính năng chính:**
 
-**Tác động:** Không có Phase 0, ta không biết các giả định cốt lõi (G1-G7) của Strategy C có đúng không. Triển khai mà không kiểm chứng có nguy cơ lãng phí công sức.
+- `_build_cve_groups()`: Phân loại tự động CVE vào nhóm service bằng keyword + port fallback
+- `select_cve()`: Tier-2 selector với 4 strategies — **đã tích hợp vào `HOST.perform_action()`**
+- `to_pengym_action()` / `from_pengym_action()`: ánh xạ hai chiều với PenGym
+- Class constant `DEFAULT_ACTION_DIM = 16` dùng xuyên suốt pipeline
 
-### Gap M4: Thiếu Tham Số Cấu Hình Cho Chuyển Giao
+### 3.3 HOST — Simulation Host + Hierarchical Action
 
-**Strategy C ngầm yêu cầu các tham số cấu hình sau:**
+**File:** `src/agent/host.py` (366 dòng)
 
-| Tham số                   | Mục đích                                    | Có trong Script_Config? |
-| ------------------------- | ------------------------------------------- | ----------------------- |
-| `fisher_discount_beta`    | Giảm Fisher liên miền ∈ [0.1, 0.5]         | ❌                      |
-| `transfer_lr_factor`      | Giảm LR (×0.1) cho tinh chỉnh              | ❌                      |
-| `norm_warmup_episodes`    | Số episode chạy ngẫu nhiên trước tinh chỉnh | ❌                      |
-| `norm_reset_on_transfer`  | Có reset thống kê running khi đổi miền không | ❌                      |
-| `transfer_strategy`       | 'aggressive'/'conservative'/'cautious'      | ❌                      |
+Host mô phỏng — mỗi máy mục tiêu là một instance HOST. Đã tích hợp hierarchical action:
 
-### Gap M5: Chưa Sửa StateEncoder Phía Sim
+- `__init__(..., service_action_space=None)`: nhận `ServiceActionSpace` tùy chọn
+- `perform_action(action_mask)`: khi có `self.sas`, tự động gọi `select_cve()` để dịch action service-level (0..15) → CVE index trước khi thực thi
+- `step(cve_index)`: thực thi hành động CVE cụ thể trên simulation
+- Backward compatible: khi `sas=None` (gọi từ code cũ), hành vi không đổi
 
-**Strategy C §5.2 yêu cầu sửa `host.py` StateEncoder:**
-```python
-# CŨ: state_space = 1538 (2 access + 4×384)
-# MỚI: state_space = 1540 (3 access + 1 discovery + 4×384)
-```
+### 3.4 DomainTransferManager — Chuyển Giao Domain
 
-**Hiện trạng:** `StateEncoder` trong `host.py` **hoàn toàn chưa được sửa** so với bài báo SCRIPT gốc. Vẫn dùng mã hóa access 2 chiều và không có chiều discovery.
+**File:** `src/training/domain_transfer.py` (250 dòng)
 
-**Tác động:** Dù có xây unified encoder cho phía PenGym, phía sim vẫn tạo vector 1538 chiều. Cả hai phía phải tạo ra định dạng giống hệt nhau để chuyển giao hoạt động.
+Quản lý chuyển giao policy sim → PenGym với 3 chiến lược:
 
----
+| Strategy         | Norm Reset | Fisher Discount | LR Giảm | Warmup | Use case     |
+| ---------------- | ---------- | --------------- | ------- | ------ | ------------ |
+| aggressive       | ❌         | 1.0             | 1.0     | ❌     | Sim ≈ PenGym |
+| **conservative** | ✅         | β=0.3           | ×0.1    | ✅     | **Mặc định** |
+| cautious         | ✅         | 0.0 (clear)     | ×0.1    | ✅     | Sim ≠ PenGym |
 
-## 5. Khoảng Cách Nhỏ (Có Thì Tốt)
+**Cơ chế:**
 
-### Gap m1: Thiếu Action Masking / ActionCompatibilityLayer
+- `_reset_normalizer(agent)`: Reset running stats của normalizer
+- `_collect_warmup_states(tasks, episodes)`: Random rollout trên PenGym thu thập states để warmup
+- `_adjust_lr(agent, factor)`: Scale LR của actor/critic optimizers
+- Gọi `ewc.discount_fisher(beta)` để giảm trọng số Fisher từ sim
 
-Strategy C §3.2 đề cập `ActionCompatibilityLayer` để xử lý các hành động tồn tại ở một env nhưng không ở env kia. Chưa triển khai, nhưng ưu tiên thấp vì ServiceActionSpace 16 hành động đã là phần giao (intersection).
+### 3.5 OnlineEWC + discount_fisher()
 
-### Gap m2: Cấu Trúc Thư Mục Đầu Ra
+**File:** `src/agent/continual/Script.py` (dòng 748-840)
 
-Strategy C §9 đề xuất cấu trúc thư mục cụ thể (`outputs/logs/strategy_c/phase0_validation/`, v.v.). Các thư mục đầu ra hiện tại theo mô hình Strategy A.
+EWC (Elastic Weight Consolidation) cho continual learning:
 
-### Gap m3: Thiếu Framework Kiểm Định Thống Kê
+- `compute_importances()`: Tính Fisher Information Matrix cho task hiện tại
+- `before_backward()`: Thêm EWC penalty vào loss
+- `discount_fisher(beta)`: **Strategy C addition** — nhân tất cả Fisher values với β ∈ (0, 1] khi chuyển domain, nới lỏng ràng buộc EWC để agent thích nghi với PenGym
 
-Strategy C §6.3 đặc tả: Wilcoxon signed-rank test, Friedman test + Nemenyi post-hoc, Cohen's d cho effect size. Không có tiện ích kiểm định thống kê nào trong mã nguồn.
+### 3.6 ScriptAgent — CRL 5 Trụ Cột
 
-### Gap m4: Thiếu Giám Sát Phân Phối Trạng Thái
+**File:** `src/agent/continual/Script.py` (966 dòng)
 
-Strategy C §7.1 (giảm thiểu R3) khuyến nghị ghi log liên tục KL divergence của phân phối trạng thái giữa sim và PenGym. Không có giám sát như vậy.
+Kiến trúc Teacher-Student đầy đủ:
 
-### Gap m5: Chưa Ghim Phiên Bản Mô Hình SBERT
+| Trụ cột                | Component                                            | Vị trí                               |
+| ---------------------- | ---------------------------------------------------- | ------------------------------------ |
+| Teacher Guidance       | Keeper → Explorer via `set_guide_policy()`           | `ScriptAgent.get_new_task_learner()` |
+| KL Imitation           | `imi_loss` trong `ExplorePolicy.calcuate_ppo_loss()` | `ExplorePolicy._update()`            |
+| Knowledge Distillation | KD loss trong `KnowledgeKeeper.compress()`           | `Keeper.compress()`                  |
+| Retrospection          | `calculate_retrospection()`                          | `Keeper.compress()`                  |
+| EWC                    | `OnlineEWC.before_backward()`                        | Fisher penalty                       |
 
-Strategy C §10.1 cảnh báo về việc xác minh cùng checkpoint SBERT giữa các môi trường. Module `Encoder.py` tải mô hình theo tên nhưng không xác minh checksum.
+### 3.7 StrategyCEvaluator — Đánh Giá Đa-Agent
 
----
+**File:** `src/evaluation/strategy_c_eval.py` (252 dòng)
 
-## 6. Phân Tích Theo Từng Thành Phần
+Đánh giá và so sánh nhiều agent trên cả sim và PenGym:
 
-### 6.1 Pipeline Mã Hóa Trạng Thái
+- `register_agent(name, agent_cl)`: Đăng ký agent
+- `evaluate_all()`: Đánh giá tất cả agent trên tất cả domain
+- `_compute_transfer_metrics()`: Tính Forward Transfer, Backward Transfer, Transfer Ratio, Zero-shot SR
+- `print_report()`, `save_report()`: Xuất báo cáo
 
-```
-Tầm nhìn Strategy C:                  Thực tế hiện tại:
-─────────────────────                 ──────────────────
+**Đã tích hợp vào DualTrainer Phase 4** — output lưu tại `strategy_c_eval_report.json`.
 
-┌─────────────────────┐               ┌──────────────────┐
-│ UnifiedStateEncoder │               │ StateEncoder      │ (chỉ sim)
-│ 1540 chiều          │               │ 1538 chiều        │
-│ ┌─────────────────┐ │               │ [2 access         │
-│ │ 3d access       │ │               │  + 4×384 SBERT]   │
-│ │ 1d discovery    │ │               └──────────────────┘
-│ │ canonicalize()  │ │                      ↕ KHÔNG KẾT NỐI
-│ │ encode_both()   │ │               ┌──────────────────┐
-│ └─────────────────┘ │               │ PenGymStateAdapter│ (chỉ PenGym)
-└─────────────────────┘               │ 1538 chiều        │
- Dùng cho CẢ HAI env                  │ [2 access         │
-                                      │  + 4×384 SBERT]   │
-                                      └──────────────────┘
-                                       Tách rời khỏi sim encoder
-```
-
-**Vấn đề chính:** Hai đường mã hóa riêng biệt tạo ra vector 1538 chiều danh nghĩa giống nhau nhưng từ các luồng code khác nhau, không đảm bảo tính nhất quán qua chuẩn hóa. Strategy C yêu cầu MỘT bộ mã hóa dùng cho CẢ HAI môi trường.
-
-### 6.2 Pipeline Huấn Luyện
-
-```
-Tầm nhìn Strategy C:                  Thực tế hiện tại:
-─────────────────────                 ──────────────────
-
-Phase 0: Kiểm chứng giả định         ❌ Chưa triển khai
-    ↓
-Phase 1: Huấn luyện lại sim + enc     ❌ Chưa triển khai
-    ↓ θ_uni, Fisher_sim, norm_sim       thống nhất
-Phase 2: DomainTransferManager        ❌ Chưa triển khai
-    ↓ Reset norm, giảm Fisher, giảm LR
-Phase 3: Tinh chỉnh trên PenGym      ⚠️ PenGymScriptTrainer tồn tại
-    ↓ θ_dual                              nhưng chạy ĐƠN LẺ
-Phase 4: Đánh giá 4 agent            ❌ Chưa triển khai
-
-                                      Thực tế đang chạy:
-                                      PenGymScriptTrainer.train()
-                                      → Huấn luyện CRL từ đầu trên PenGym
-                                      → Không pre-train trên sim, không transfer
-```
-
-### 6.3 Xử Lý Chuẩn Hóa & Chuyển Giao
-
-```
-Tầm nhìn Strategy C:                  Thực tế hiện tại:
-─────────────────────                 ──────────────────
-
-Class Normalization với:               Class Normalization:
-├── reset()                            ├── __call__(x, update) → chuẩn hóa
-├── warmup(random_rollouts)            ├── RunningMeanStd(shape)
-├── blend(sim_stats, real_stats, α)    └── Không reset, warmup, hay blend
-└── save/load thống kê norm
-
-                                       Agent.save/load lưu thống kê norm
-DomainTransferManager:                 ❌ Không tồn tại
-├── _reset_normalizer()
-├── _warmup_normalizer(episodes=10)
-├── _discount_fisher(β=0.3)
-└── _adjust_lr(factor=0.1)
-
-Script_Config với:                     Script_Config:
-├── fisher_discount_beta               ├── ewc_lambda = 2000
-├── transfer_lr_factor                 ├── ewc_gamma = 0.99 (tích lũy online)
-├── norm_warmup_episodes               └── Không có tham số chuyển giao
-└── transfer_strategy
-```
-
-### 6.4 Phân Tích Triển Khai EWC
-
-Triển khai EWC hiện tại trong `script.py` được cấu trúc tốt cho học liên tục **trong cùng miền** nhưng thiếu khả năng liên miền:
-
-| Tính năng EWC         | Trong miền (các task sim) | Liên miền (Sim→PenGym) |
-| --------------------- | ------------------------ | ----------------------- |
-| Tính Fisher           | ✅ `compute_fisher()`    | Cùng code có thể dùng   |
-| Tích lũy Fisher       | ✅ Online: $F_t = γF_{t-1} + F_{current}$ | ❌ Không có cơ chế giảm |
-| Chuẩn hóa Fisher      | ✅ L2 theo từng tham số  | Cùng code có thể dùng   |
-| Lưu tham số cũ        | ✅ dict `saved_params`, xóa cũ | ❌ Không lưu trữ theo miền |
-| Phạt EWC              | ✅ $Σ F_i(θ_i - θ^*_i)^2$ | Cùng code có thể dùng  |
-
-**Đánh giá:** Hạ tầng EWC vững chắc. Thêm giảm Fisher liên miền chỉ cần ~20 dòng code trong class `OnlineEWC` + 1 tham số mới trong `Script_Config`.
-
----
-
-## 7. Đề Xuất Cải Tiến (Xếp Hạng Ưu Tiên)
-
-### Ưu tiên 1: Triển khai UnifiedStateEncoder (Tác động: Nghiêm trọng, Công sức: Trung bình)
-
-**Cần xây:**
-```
-src/envs/core/unified_state_encoder.py (file mới)
-```
-
-**Yêu cầu:**
-- Nhận đầu vào từ CẢ HAI `StateEncoder` (sim) và `PenGymStateAdapter` (PenGym)
-- Đầu ra vector 1540 chiều: [3 access + 1 discovery + 4×384 SBERT]
-- Bao gồm phương thức chuẩn hóa OS/service (canonicalization)
-- Dùng chung một instance mô hình SBERT
-- Cache SBERT dùng chung giữa các lời gọi
-
-**Cách triển khai:**
-1. Tạo class `UnifiedStateEncoder` với phương thức `encode_from_sim()` và `encode_from_pengym()`
-2. Cả hai phương thức đều: chuẩn hóa nội bộ → mã hóa SBERT → đóng gói vào vector 1540 chiều
-3. Sửa `host.py` để `StateEncoder.state_space` tham chiếu `UnifiedStateEncoder.TOTAL_DIM`
-4. Sửa `PenGymStateAdapter.STATE_DIM` thành 1540 và cập nhật mã hóa access/discovery
-
-**Ước tính công sức:** 200-300 dòng code, 2-3 ngày
-
-### Ưu tiên 2: Xây DomainTransferManager (Tác động: Nghiêm trọng, Công sức: Trung bình)
-
-**Cần xây:**
-```
-src/training/domain_transfer.py (file mới)
-```
-
-**Yêu cầu:**
-- `transfer(sim_agent, strategy='conservative')` → trả về agent PenGym đã cấu hình
-- Ba chiến lược: aggressive (sao chép tất cả), conservative (reset norm, giảm Fisher), cautious (reset tất cả, chỉ chuyển trọng số)
-- `_reset_normalizer()`: Reset `RunningMeanStd.n`, `.mean`, `.S`, `.std`
-- `_warmup_normalizer()`: Chạy N episode ngẫu nhiên trên PenGym, cập nhật thống kê norm
-- `_discount_fisher(β)`: Nhân tất cả giá trị Fisher với β
-- `_adjust_lr(factor)`: Giảm actor_lr và critic_lr
-
-**Phụ thuộc:** Cần thêm phương thức `reset()` vào class `Normalization` trong `common.py`.
-
-**Ước tính công sức:** 150-200 dòng, 2 ngày
-
-### Ưu tiên 3: Thêm Tham Số Cấu Hình Chuyển Giao vào Script_Config (Tác động: Cao, Công sức: Thấp)
-
-**Cần sửa:** `src/agent/policy/config.py`
+### 3.8 Configuration — Strategy C Parameters
+
+**File:** `src/agent/policy/config.py`
+
+`Script_Config` có đầy đủ tham số cho Strategy C:
 
 ```python
-class Script_Config(PolicyDistillation_Config):
-    def __init__(self, ...,
-                 # Tham số chuyển giao (Strategy C)
-                 fisher_discount_beta=0.3,       # β ∈ [0.1, 0.5]
-                 transfer_lr_factor=0.1,          # LR × 0.1 cho tinh chỉnh
-                 norm_warmup_episodes=10,          # Số episode ngẫu nhiên trước tinh chỉnh
-                 norm_reset_on_transfer=True,      # Reset running stats khi đổi miền
-                 transfer_strategy='conservative', # aggressive/conservative/cautious
-                 **kwargs):
+fisher_discount_beta = 0.3       # β ∈ [0.1, 0.5]
+transfer_lr_factor = 0.1         # LR × factor sau transfer
+norm_warmup_episodes = 10        # Episodes warmup normalizer
+norm_reset_on_transfer = True    # Reset running stats khi chuyển domain
+transfer_strategy = 'conservative'  # aggressive / conservative / cautious
 ```
 
-**Ước tính công sức:** 20 dòng, 30 phút
+`PPO_Config` hỗ trợ `state_dim=None` và `action_dim=None`:
 
-### Ưu tiên 4: Thêm Reset/Warmup cho Normalization (Tác động: Nghiêm trọng, Công sức: Thấp)
+- Khi set: PPO Actor/Critic dùng giá trị explicit
+- Khi None: fallback về `StateEncoder.state_space` / `Action.action_space`
+- DualTrainer set `action_dim=16`; `state_dim` fallback về 1538
 
-**Cần sửa:** `src/agent/policy/common.py`
+### 3.9 PenGym Integration Layer
 
-```python
-class RunningMeanStd:
-    def reset(self):
-        """Reset thống kê cho chuyển giao miền."""
-        self.n = 0
-        self.mean = np.zeros(self.shape)
-        self.S = np.zeros(self.shape)
-        self.std = np.sqrt(self.S)
+**SingleHostPenGymWrapper** (`src/envs/wrappers/single_host_wrapper.py`, 543 dòng):
 
-class Normalization:
-    def reset(self):
-        """Reset thống kê running cho chuyển giao miền."""
-        self.running_ms.reset()
+- Bọc PenGym multi-host thành giao diện single-host tương thích SCRIPT
+- Auto-advance qua các target, failure rotation (ngưỡng 5), subnet discovery
+- Output: 1538-dim state via `PenGymStateAdapter.convert()`
+- Reward: `LinearNormalizer` (PenGym [-1,100] → SCRIPT [-10,1000])
 
-    def warmup(self, states: np.ndarray):
-        """Cập nhật thống kê hàng loạt từ các trạng thái đã thu thập."""
-        for s in states:
-            self.running_ms.update(s)
+**PenGymHostAdapter** (`src/envs/adapters/pengym_host_adapter.py`, 253 dòng):
+
+- Duck-typing giao diện HOST cho CRL
+- Factory: `from_scenario(scenario_path, name, seed)`
+- Lazy wrapper creation — xử lý NASim class-level state corruption giữa scenarios
+- Interface: `reset() → state`, `perform_action(a) → (next_state, reward, done, result)`
+
+**PenGymStateAdapter** (`src/envs/adapters/state_adapter.py`, 420 dòng):
+
+- Chuyển đổi NASim flat observation → SBERT 1538-dim state vector
+- SBERT cache cho performance
+- Port inference từ service name
+- Có method `convert_unified()` → 1540-dim (tồn tại nhưng chưa được gọi)
+
+### 3.10 CLI Entry Point
+
+**File:** `run_strategy_c.py` (225 dòng)
+
+Entry point hoàn chỉnh với tất cả parameters:
+
+```bash
+python run_strategy_c.py \
+    --sim-scenarios data/scenarios/chain/chain_1.json \
+    --pengym-scenarios data/scenarios/tiny.yml \
+    --transfer-strategy conservative \
+    --fisher-beta 0.3 --lr-factor 0.1 \
+    --episodes 500 --step-limit 100 \
+    --train-scratch --seed 42
 ```
 
-**Ước tính công sức:** 15 dòng, 15 phút
-
-### Ưu tiên 5: Thêm Giảm Fisher vào OnlineEWC (Tác động: Cao, Công sức: Thấp)
-
-**Cần sửa:** `src/agent/continual/script.py` → class `OnlineEWC`
-
-```python
-def discount_fisher(self, beta: float):
-    """Giảm Fisher liên miền. Nhân tất cả giá trị Fisher với β."""
-    for task_id in self.saved_fisher:
-        for name in self.saved_fisher[task_id]:
-            self.saved_fisher[task_id][name] *= beta
-```
-
-**Ước tính công sức:** 10 dòng, 15 phút
-
-### Ưu tiên 6: Xây Bộ Điều Phối Huấn Luyện Kép (Tác động: Nghiêm trọng, Công sức: Cao)
-
-**Cần xây:**
-```
-src/training/dual_trainer.py (file mới)
-```
-
-**Yêu cầu:**
-- Điều phối Phase 0→1→2→3→4 thành một pipeline duy nhất
-- Phase 0: Chạy kiểm tra kiểm chứng (tính nhất quán SBERT, ổn định PenGym)
-- Phase 1: Huấn luyện trên sim với mã hóa thống nhất → lưu θ_uni
-- Phase 2: Gọi DomainTransferManager.transfer() → agent đã cấu hình
-- Phase 3: Tinh chỉnh trên PenGym (PenGymScriptTrainer đã sửa đổi)
-- Phase 4: Chạy ma trận đánh giá 4 agent
-
-**Phụ thuộc:** Yêu cầu Ưu tiên 1-5 đã triển khai trước.
-
-**Ước tính công sức:** 300-400 dòng, 3-5 ngày
-
-### Ưu tiên 7: Triển khai Chuẩn Hóa Reward về [-1, +1] (Tác động: Trung bình, Công sức: Thấp)
-
-**Cần sửa:** `src/envs/wrappers/reward_normalizer.py`
-
-Thêm class normalizer mới:
-```python
-class UnifiedNormalizer(RewardNormalizer):
-    """Chuẩn hóa reward về [-1, +1] cho CL liên miền."""
-    def __init__(self, source: str):
-        self.max_reward = 1000.0 if source == 'simulation' else 100.0
-        self.min_reward = -10.0 if source == 'simulation' else -3.0
-
-    def normalize(self, reward: float) -> float:
-        if reward > 0: return min(reward / self.max_reward, 1.0)
-        if reward < 0: return max(reward / abs(self.min_reward), -1.0)
-        return 0.0
-```
-
-**Ước tính công sức:** 20 dòng, 30 phút
-
-### Ưu tiên 8: Xây Framework Đánh Giá 4 Agent (Tác động: Trung bình, Công sức: Trung bình)
-
-**Cần xây:**
-```
-src/evaluation/strategy_c_eval.py (file mới)
-```
-
-**Yêu cầu:**
-- Tải/tạo tất cả 4 agent (θ_baseline, θ_unified, θ_dual, θ_scratch)
-- Đánh giá từng agent trên sim và PenGym (nếu áp dụng)
-- Tính toán metrics chuyển giao: forward transfer, backward transfer, transfer ratio
-- Tính toán metrics CL: mức tuân thủ ràng buộc EWC, giữ lại tri thức/tiếp thu tri thức
-- Xuất ma trận so sánh dưới dạng JSON + bảng console
-
-**Ước tính công sức:** 200-300 dòng, 2-3 ngày
+Output: `outputs/strategy_c/strategy_c_results.json` + TensorBoard logs + model checkpoints.
 
 ---
 
-## 8. Lộ Trình Triển Khai
+## 4. Thành Phần Triển Khai Một Phần
 
-### Sprint 1: Nền Tảng (3-4 ngày)
+### 4.1 UnifiedStateEncoder — Code Hoàn Chỉnh, Chưa Tích Hợp
 
-| Nhiệm vụ                                   | Ưu tiên | Công sức  | File                                                                          |
-| ------------------------------------------- | ------- | --------- | ----------------------------------------------------------------------------- |
-| Thêm Normalization.reset() + warmup()       | P4      | 15 phút   | `common.py`                                                                   |
-| Thêm giảm Fisher vào OnlineEWC              | P5      | 15 phút   | `script.py`                                                                   |
-| Thêm tham số chuyển giao vào Script_Config  | P3      | 30 phút   | `config.py`                                                                   |
-| Thêm UnifiedNormalizer                       | P7      | 30 phút   | `reward_normalizer.py`                                                        |
-| Triển khai UnifiedStateEncoder               | P1      | 2-3 ngày  | file mới `unified_state_encoder.py`, sửa `host.py`, `state_adapter.py`       |
+**File:** `src/envs/core/unified_state_encoder.py` (432 dòng)
 
-**Sprint 1 đạt được:** Tất cả khối xây dựng cho chuyển giao, cộng mã hóa thống nhất.
+**Đã triển khai code:**
 
-### Sprint 2: Pipeline Chuyển Giao (4-5 ngày)
+- `encode_from_sim()`: Mã hóa từ SCRIPT simulation → 1540-dim
+- `encode_from_pengym()`: Mã hóa từ PenGym observation → 1540-dim
+- `pad_legacy_state()`: Chuyển đổi 1538-dim → 1540-dim
+- Canonicalization maps: `CANONICAL_OS_MAP`, `CANONICAL_SERVICE_MAP`
+- SBERT caching + dimension safety
 
-| Nhiệm vụ                                    | Ưu tiên | Công sức | File                                     |
-| -------------------------------------------- | ------- | -------- | ---------------------------------------- |
-| Xây DomainTransferManager                    | P2      | 2 ngày   | file mới `domain_transfer.py`            |
-| Xây bộ điều phối DualTrainer                 | P6      | 3 ngày   | file mới `dual_trainer.py`               |
-| Tích hợp với PenGymScriptTrainer              | —       | 1 ngày   | sửa `pengym_script_trainer.py`           |
+**Cấu trúc 1540-dim:**
 
-**Sprint 2 đạt được:** Pipeline Phase 0→1→2→3 hoàn chỉnh.
+```
+access[0:3]         — 3-dim (none/user/root) thay vì 2-dim
+discovery[3:4]      — 1-dim (đã khám phá host?)
+os_embed[4:388]     — 384-dim SBERT embedding
+port_embed[388:772] — 384-dim SBERT embedding
+service_embed[772:1156]  — 384-dim SBERT embedding
+aux_embed[1156:1540]     — 384-dim SBERT embedding
+```
 
-### Sprint 3: Đánh Giá & Hoàn Thiện (3-4 ngày)
+**Chưa tích hợp:**
 
-| Nhiệm vụ                                    | Ưu tiên | Công sức  | File                                     |
-| -------------------------------------------- | ------- | --------- | ---------------------------------------- |
-| Xây framework đánh giá 4 agent               | P8      | 2-3 ngày  | file mới `strategy_c_eval.py`            |
-| Thêm script kiểm chứng Phase 0               | —       | 1 ngày    | script kiểm chứng mới                   |
-| Cấu trúc thư mục đầu ra                      | m2      | 30 phút   | thiết lập thư mục                        |
+- `encode_from_sim()` **không được gọi** ở bất kỳ đâu trong pipeline
+- `HOST.state_vector` vẫn dùng `StateEncoder` (1538-dim)
+- `SingleHostPenGymWrapper` gọi `state_adapter.convert()` (1538-dim), không gọi `convert_unified()` (1540-dim)
+- `PPO_Config.state_dim` không được set → fallback `StateEncoder.state_space = 1538`
+- `DualTrainer.__init__()` tạo `self.unified_encoder` nhưng chỉ dùng trong Phase 0 validation
 
-**Sprint 3 đạt được:** Khả năng đánh giá Strategy C hoàn chỉnh.
+**Tác động:** Chuyển giao sim→PenGym hoạt động nhưng dựa vào sự tương đồng cấu trúc giữa hai bộ mã hóa riêng biệt (`StateEncoder` cho sim, `PenGymStateAdapter` cho PenGym) thay vì một bộ mã hóa thống nhất đảm bảo căn chỉnh ngữ nghĩa chính xác.
 
-### Tổng ước tính công sức: 10-13 ngày phát triển tập trung
+### 4.2 UnifiedNormalizer — Code Hoàn Chỉnh, Chưa Tích Hợp
+
+**File:** `src/envs/wrappers/reward_normalizer.py` (dòng 123-168)
+
+- Chuẩn hóa reward về [-1, +1] cho cả hai domain
+- Simulation: max=1000, min=-10 → [-1, +1]
+- PenGym: max=100, min=-3 → [-1, +1]
+
+**Chưa tích hợp:** `SingleHostPenGymWrapper` mặc định dùng `LinearNormalizer` (PenGym → SCRIPT scale).
+
+**Tác động:** Fisher information từ sim và PenGym có magnitude khác nhau do thang reward khác nhau → EWC penalty có thể bị lệch.
+
+### 4.3 PenGymScriptTrainer — Standalone, Không Nằm Trong Dual Pipeline
+
+**File:** `src/training/pengym_script_trainer.py` (378 dòng)
+
+Trainer độc lập cho PenGym (không qua DualTrainer):
+
+- `STATE_DIM = 1538`, `ACTION_DIM = 16`
+- Dùng cho `run_pengym_train.py` — huấn luyện SCRIPT CRL từ đầu trên PenGym
+- **Không** được DualTrainer sử dụng (Phase 3 dùng `Agent_CL.train_continually()` trực tiếp)
 
 ---
 
-## 9. Phụ Lục: Ánh Xạ File → Yêu Cầu
+## 5. Thành Phần Chưa Tích Hợp Vào Pipeline
 
-### File Hiện Có vs Yêu Cầu Strategy C
+Các module dưới đây đã có code hoàn chỉnh nhưng chưa ảnh hưởng đến luồng training thực tế:
 
-| File                                            | Vai trò trong Strategy C                         | Trạng thái     | Hành động cần thiết                                       |
-| ----------------------------------------------- | ------------------------------------------------ | -------------- | --------------------------------------------------------- |
-| `src/agent/host.py`                             | StateEncoder → UnifiedStateEncoder                | ⚠️ Chưa sửa   | Sửa `state_space`, dùng unified encoder                   |
-| `src/agent/policy/common.py`                    | Reset/warmup chuẩn hóa                           | ⚠️ Thiếu method | Thêm `reset()`, `warmup()` vào Normalization              |
-| `src/agent/policy/config.py`                    | Tham số cấu hình chuyển giao                     | ⚠️ Thiếu tham số | Thêm fisher_discount_beta, transfer_lr_factor, v.v.      |
-| `src/agent/policy/PPO.py`                       | Input dim 1540                                    | ⚠️ Dùng StateEncoder.state_space | Sẽ tự cập nhật khi StateEncoder thay đổi |
-| `src/agent/continual/script.py`                 | Giảm Fisher, EWC liên miền                       | ⚠️ Thiếu giảm  | Thêm `discount_fisher(β)` vào OnlineEWC                  |
-| `src/agent/agent_continual.py`                  | Điều phối CRL                                    | ✅ Hoạt động   | Không cần thay đổi                                        |
-| `src/envs/adapters/state_adapter.py`            | PenGym → trạng thái thống nhất                   | ⚠️ 1538 chiều, không canon | Nâng lên 1540 chiều, thêm canonicalization   |
-| `src/envs/adapters/service_action_mapper.py`    | Ánh xạ hành động                                 | ✅ Hoạt động   | Không cần thay đổi                                        |
-| `src/envs/adapters/pengym_host_adapter.py`      | Duck-typing giao diện HOST                       | ✅ Hoạt động   | Không cần thay đổi                                        |
-| `src/envs/wrappers/single_host_wrapper.py`      | PenGym đơn-host                                  | ✅ Hoạt động   | Cập nhật thuộc tính state_dim nếu có unified encoder      |
-| `src/envs/wrappers/reward_normalizer.py`        | Chuẩn hóa reward                                 | ⚠️ Sai khoảng  | Thêm UnifiedNormalizer ([-1, +1])                         |
-| `src/training/pengym_script_trainer.py`         | Tinh chỉnh Phase 3                               | ⚠️ Chạy đơn lẻ | Sửa để nhận mô hình đã pre-train từ Phase 2              |
-| `src/training/pengym_trainer.py`                | Huấn luyện PPO trên PenGym                       | ✅ Hoạt động   | Không cần thay đổi                                        |
-| `src/evaluation/sim_to_real_eval.py`            | Bộ đánh giá Strategy A                           | ✅ Hoạt động   | Tách biệt khỏi Strategy C                                |
-| `src/agent/actions/service_action_space.py`     | Không gian hành động thống nhất                  | ✅ Hoạt động   | Không cần thay đổi                                        |
-
-### File Mới Cần Tạo Cho Strategy C
-
-| File mới                                    | Mục đích                                     | Ưu tiên            |
-| ------------------------------------------- | -------------------------------------------- | ------------------- |
-| `src/envs/core/unified_state_encoder.py`    | Bộ mã hóa duy nhất cho cả hai môi trường    | P1 (Nghiêm trọng)  |
-| `src/training/domain_transfer.py`           | DomainTransferManager                         | P2 (Nghiêm trọng)  |
-| `src/training/dual_trainer.py`              | Bộ điều phối Phase 0-4                       | P6 (Nghiêm trọng)  |
-| `src/evaluation/strategy_c_eval.py`         | Ma trận đánh giá 4 agent                     | P8 (Trung bình)    |
-| `scripts/phase0_validation.py`              | Thí nghiệm kiểm chứng Phase 0               | P3 (Trung bình)    |
+| Module                                       | Lý do chưa tích hợp                                                           | Ưu tiên                                  |
+| -------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------- |
+| `UnifiedStateEncoder` (1540-dim)             | HOST dùng StateEncoder (1538-dim), wrapper dùng PenGymStateAdapter (1538-dim) | P0 — Cần cho căn chỉnh ngữ nghĩa         |
+| `UnifiedNormalizer` ([-1,+1])                | Wrapper mặc định LinearNormalizer, sim không normalize reward                 | P1 — Ảnh hưởng EWC Fisher quality        |
+| `convert_unified()` trong PenGymStateAdapter | Wrapper gọi `convert()` thay vì `convert_unified()`                           | Tự động khi tích hợp UnifiedStateEncoder |
+| `pad_legacy_state()`                         | Không cần nếu chuyển hoàn toàn sang 1540-dim                                  | Phụ thuộc UnifiedStateEncoder            |
 
 ---
 
-## Tổng Kết: Phân Bố Mức Độ Khoảng Cách
+## 6. Ánh Xạ File → Chức Năng
 
+### Core Pipeline (tích hợp đầy đủ)
+
+| File                                | Dòng | Chức năng                                    | Phase |
+| ----------------------------------- | ---- | -------------------------------------------- | ----- |
+| `run_strategy_c.py`                 | 225  | CLI entry point, parse args, gọi DualTrainer | —     |
+| `src/training/dual_trainer.py`      | 592  | Orchestrator Phase 0→4                       | 0-4   |
+| `src/training/domain_transfer.py`   | 250  | DomainTransferManager (3 strategies)         | 2     |
+| `src/evaluation/strategy_c_eval.py` | 252  | StrategyCEvaluator (transfer metrics)        | 4     |
+
+### Agent & Policy (tích hợp đầy đủ)
+
+| File                            | Dòng | Chức năng                                     | Phase |
+| ------------------------------- | ---- | --------------------------------------------- | ----- |
+| `src/agent/host.py`             | 366  | HOST + hierarchical action via select_cve()   | 1     |
+| `src/agent/agent_continual.py`  | 499  | Agent_CL — CRL task orchestrator              | 1, 3  |
+| `src/agent/continual/Script.py` | 966  | ScriptAgent, EWC, discount_fisher()           | 1-3   |
+| `src/agent/policy/PPO.py`       | 349  | PPO Actor/Critic (state_dim, action_dim)      | 1, 3  |
+| `src/agent/policy/config.py`    | 218  | PPO_Config, Script_Config + Strategy C params | Init  |
+
+### Action Space (tích hợp đầy đủ)
+
+| File                                        | Dòng | Chức năng                                 | Phase |
+| ------------------------------------------- | ---- | ----------------------------------------- | ----- |
+| `src/agent/actions/service_action_space.py` | 512  | ServiceActionSpace (16-dim, CVE selector) | 1     |
+| `src/agent/actions/Action.py`               | 181  | Action space gốc (~2064 = 4 scan + N CVE) | 1     |
+
+### PenGym Integration (tích hợp đầy đủ)
+
+| File                                       | Dòng | Chức năng                              | Phase |
+| ------------------------------------------ | ---- | -------------------------------------- | ----- |
+| `src/envs/wrappers/single_host_wrapper.py` | 543  | Wrapper PenGym → single-host interface | 3     |
+| `src/envs/adapters/pengym_host_adapter.py` | 253  | Duck-typing HOST for PenGym            | 2-4   |
+| `src/envs/adapters/state_adapter.py`       | 420  | PenGym obs → SBERT 1538-dim state      | 3     |
+
+### Chưa tích hợp vào pipeline
+
+| File                                     | Dòng | Chức năng                                   | Trạng thái    |
+| ---------------------------------------- | ---- | ------------------------------------------- | ------------- |
+| `src/envs/core/unified_state_encoder.py` | 432  | Unified 1540-dim encoder + canonicalization | Phase 0 only  |
+| `src/envs/wrappers/reward_normalizer.py` | 168  | UnifiedNormalizer ([-1,+1])                 | Defined only  |
+| `src/training/pengym_script_trainer.py`  | 378  | Standalone PenGym trainer                   | Separate tool |
+
+---
+
+## 7. Khoảng Cách So Với Thiết Kế Ban Đầu
+
+### So sánh với đặc tả (`docs/strategy_C_shared_state_dual_training.md`)
+
+| #   | Yêu cầu thiết kế                     | Trạng thái thực tế                                 | Mức độ   |
+| --- | ------------------------------------ | -------------------------------------------------- | -------- |
+| 1   | Pipeline Phase 0→1→2→3→4             | ✅ Hoàn chỉnh, tất cả phases functional            | Đầy đủ   |
+| 2   | Unified State Encoder (1540-dim)     | ⚠️ Code xong, chưa tích hợp vào training           | Một phần |
+| 3   | Hierarchical Action Space (16-dim)   | ✅ Hoàn chỉnh + select_cve() tích hợp              | Đầy đủ   |
+| 4   | DomainTransferManager (3 strategies) | ✅ Hoàn chỉnh + tích hợp Phase 2                   | Đầy đủ   |
+| 5   | Fisher Discount (β)                  | ✅ `discount_fisher(beta)` trong OnlineEWC         | Đầy đủ   |
+| 6   | Normalizer Reset + Warmup            | ✅ reset stats + collect warmup states             | Đầy đủ   |
+| 7   | SBERT Canonicalization               | ⚠️ Code xong trong UnifiedStateEncoder, chưa dùng  | Một phần |
+| 8   | Reward Normalization [-1,+1]         | ⚠️ UnifiedNormalizer code xong, chưa dùng          | Một phần |
+| 9   | 4-Agent Evaluation Matrix            | ✅ StrategyCEvaluator + DualTrainer Phase 4        | Đầy đủ   |
+| 10  | Forward/Backward Transfer            | ✅ StrategyCEvaluator.\_compute_transfer_metrics() | Đầy đủ   |
+| 11  | SBERT Consistency Check (Phase 0)    | ✅ Cosine similarity test                          | Đầy đủ   |
+| 12  | PenGym Stability Check (Phase 0)     | ✅ Scenario loadability test                       | Đầy đủ   |
+| 13  | CRL 5 Trụ Cột                        | ✅ Không thay đổi, hoạt động trên cả sim và PenGym | Đầy đủ   |
+| 14  | Black/Grey/White-box modes           | ❌ Không triển khai (đã loại bỏ khỏi scope)        | N/A      |
+
+### Chi tiết khoảng cách còn lại
+
+**Gap 1: UnifiedStateEncoder chưa tích hợp vào luồng training**
+
+Tất cả components sử dụng 1538-dim thay vì 1540-dim:
+
+- `HOST.state_vector` = `StateEncoder` (2 + 4×384 = 1538)
+- `SingleHostPenGymWrapper.step()` → `state_adapter.convert()` → 1538
+- `PPO_Config.state_dim` = None → fallback `StateEncoder.state_space` = 1538
+
+Để tích hợp cần:
+
+1. HOST sim: Thay `StateEncoder` bằng `UnifiedStateEncoder.encode_from_sim()` hoặc tạo wrapper
+2. PenGym: Wrapper gọi `convert_unified()` thay vì `convert()`
+3. PPO: Set `state_dim=1540` trong DualTrainer
+4. DomainTransfer warmup fallback: Đã sửa sang dynamic (dùng `StateEncoder.state_space`)
+
+**Gap 2: UnifiedNormalizer chưa dùng**
+
+Cần inject `UnifiedNormalizer` vào:
+
+1. `SingleHostPenGymWrapper` (thay `LinearNormalizer`)
+2. Sim training HOST (chuẩn hóa reward trước khi truyền cho agent)
+
+**Gap 3: Canonicalization chưa active**
+
+`UnifiedStateEncoder` có `CANONICAL_OS_MAP` và `CANONICAL_SERVICE_MAP` nhưng chỉ được sử dụng bên trong `encode_from_sim()` / `encode_from_pengym()` — vốn chưa được gọi.
+
+---
+
+## 8. Hướng Phát Triển Tiếp Theo
+
+### Ưu Tiên P0: Tích Hợp UnifiedStateEncoder
+
+**Mục tiêu:** Cả sim và PenGym sử dụng cùng bộ mã hóa 1540-dim.
+
+**Phạm vi thay đổi:**
+
+1. `host.py` — HOST sử dụng UnifiedStateEncoder thay vì StateEncoder cho state vector
+2. `single_host_wrapper.py` — Gọi `convert_unified()` thay vì `convert()`
+3. `dual_trainer.py` — Set `state_dim=1540`
+4. Verify: PPO_agent properly receives 1540 input dim
+
+### Ưu Tiên P1: Tích Hợp UnifiedNormalizer
+
+**Mục tiêu:** Reward scale đồng nhất [-1, +1] cho cả hai domain.
+
+**Phạm vi thay đổi:**
+
+1. `single_host_wrapper.py` — Default normalizer = `UnifiedNormalizer(source='pengym')`
+2. `host.py` — Normalize reward trước khi trả về (hoặc trong training loop)
+
+### Ưu Tiên P2: Chạy Thử Nghiệm End-to-End
+
+```bash
+# Test nhanh
+python run_strategy_c.py \
+    --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
+    --pengym-scenarios data/scenarios/tiny.yml \
+    --episodes 50 --step-limit 30 --eval-freq 10 \
+    --skip-phase0 --train-scratch
+
+# Full run
+python run_strategy_c.py \
+    --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
+    --pengym-scenarios data/scenarios/tiny.yml data/scenarios/small-linear.yml \
+    --train-scratch
 ```
-Nghiêm trọng (chặn Strategy C):    6 gap  (C1-C6)
-Trung bình (giảm chất lượng):      5 gap  (M1-M5)
-Nhỏ (hoàn thiện):                  5 gap  (m1-m5)
-                                   ─────
-Tổng cộng:                         16 gap
 
-Đã triển khai đúng:                6 thành phần chính
-Khớp một phần:                     3 thành phần (sai chiều hoặc chạy đơn lẻ)
-```
+### Ưu Tiên P3: Thu Thập và Phân Tích Kết Quả
 
-**Mã nguồn đã xây ~60% hạ tầng Strategy C (lớp cầu nối), nhưng 0% đổi mới cốt lõi (pipeline chuyển giao).** Sprint 1-2 (7-9 ngày) sẽ đưa hệ thống đến mức prototype Strategy C hoạt động được.
+Sau khi chạy, kiểm tra:
+
+- `phase4.transfer_metrics.forward_transfer > 0` → sim pre-training giúp ích
+- `phase4.transfer_metrics.backward_transfer ≈ 0` → không quên sim
+- So sánh `conservative` vs `cautious` vs `aggressive`

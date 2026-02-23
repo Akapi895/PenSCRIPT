@@ -43,6 +43,7 @@ from src.agent.agent_continual import Agent_CL
 from src.agent.host import HOST, StateEncoder
 from src.envs.core.unified_state_encoder import UnifiedStateEncoder
 from src.training.domain_transfer import DomainTransferManager
+from src.agent.actions.service_action_space import ServiceActionSpace
 
 
 class DualTrainer:
@@ -88,6 +89,7 @@ class DualTrainer:
             "step_limit": 100,
             "eval_step_limit": 100,
             "use_state_norm": True,
+            "action_dim": ServiceActionSpace.DEFAULT_ACTION_DIM,  # 16
             **(ppo_kwargs or {}),
         }
         self.ppo_config = PPO_Config(**ppo_args)
@@ -266,6 +268,11 @@ class DualTrainer:
 
         time_flag = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+        # Build service-level action space for hierarchical action selection
+        sas = ServiceActionSpace(action_class=Action)
+        logging.info(f"  ServiceActionSpace: {sas.action_dim} groups, "
+                     f"{sum(len(a.cve_indices) for a in sas.actions)} CVEs mapped")
+
         # Build sim task list from JSON scenarios
         sim_tasks = []
         for sc_path in self.sim_scenarios:
@@ -278,7 +285,8 @@ class DualTrainer:
                 if vul not in Action.Vul_cve_set:
                     logging.warning(f"Skipping host {ip}: vuln {vul} not in Vul_cve_set")
                     continue
-                t = HOST(ip, env_data=host_data, env_file=sc_path)
+                t = HOST(ip, env_data=host_data, env_file=sc_path,
+                         service_action_space=sas)
                 sim_tasks.append(t)
         logging.info(f"  Sim tasks: {len(sim_tasks)} hosts from {len(self.sim_scenarios)} scenarios")
 
@@ -435,76 +443,69 @@ class DualTrainer:
     # ==================================================================
 
     def phase4_evaluation(self) -> Dict[str, Any]:
-        """Phase 4 — Evaluate all available agents.
+        """Phase 4 — Evaluate all available agents via StrategyCEvaluator.
 
         Possible agents:
         - θ_sim_unified : SCRIPT trained on sim (Phase 1)
         - θ_dual        : Dual-trained (Phase 1 → Phase 2 → Phase 3)
         - θ_pengym_scratch : SCRIPT trained from scratch on PenGym (if available)
 
-        Each agent is evaluated on PenGym tasks.
+        Each agent is evaluated on PenGym tasks. Transfer metrics
+        (Forward Transfer, Backward Transfer, Transfer Ratio) are
+        computed automatically by StrategyCEvaluator.
         """
         logging.info("\n" + "=" * 60)
         logging.info("[Phase 4] Multi-Agent Evaluation")
         logging.info("=" * 60)
 
-        results = {"agents": {}}
+        from src.evaluation.strategy_c_eval import StrategyCEvaluator
 
         pengym_tasks = getattr(self, '_pengym_tasks', None)
         if not pengym_tasks:
             logging.warning("[Phase 4] No PenGym tasks for evaluation")
-            return results
+            return {"agents": {}}
 
-        agents_to_eval = {}
+        step_limit = getattr(self.ppo_config, 'eval_step_limit',
+                             self.ppo_config.step_limit)
+        evaluator = StrategyCEvaluator(
+            pengym_tasks=pengym_tasks,
+            step_limit=step_limit,
+        )
+
         if self._theta_sim_unified is not None:
-            agents_to_eval["theta_sim_unified"] = self._theta_sim_unified
+            evaluator.register_agent("theta_sim_unified", self._theta_sim_unified)
         if self._theta_dual is not None:
-            agents_to_eval["theta_dual"] = self._theta_dual
+            evaluator.register_agent("theta_dual", self._theta_dual)
         if self._theta_pengym_scratch is not None:
-            agents_to_eval["theta_pengym_scratch"] = self._theta_pengym_scratch
+            evaluator.register_agent("theta_pengym_scratch", self._theta_pengym_scratch)
 
-        for name, agent_cl in agents_to_eval.items():
-            logging.info(f"  Evaluating {name}...")
-            try:
-                evaluator = agent_cl.cl_agent.get_task_evaluator(on_train=False)
-                step_limit = getattr(self.ppo_config, 'eval_step_limit',
-                                     self.ppo_config.step_limit)
-                attack_path, total_rewards, sr = evaluator.Evaluate(
-                    target_list=pengym_tasks,
-                    step_limit=step_limit,
-                    verbose=False,
-                )
-                per_task = []
-                for i, ap in enumerate(attack_path):
-                    per_task.append({
-                        "task": pengym_tasks[i].ip if i < len(pengym_tasks) else f"task_{i}",
-                        "reward": ap.get("reward", 0),
-                        "success": ap.get("success", False),
-                    })
-                results["agents"][name] = {
-                    "total_rewards": total_rewards,
-                    "success_rate": sr,
-                    "per_task": per_task,
-                }
-                logging.info(f"    {name}: SR={sr:.2%}, reward={total_rewards}")
-            except Exception as e:
-                results["agents"][name] = {"error": str(e)}
-                logging.error(f"    {name}: evaluation failed — {e}")
+        report = evaluator.evaluate_all()
+        evaluator.print_report(report)
 
-        # Compute transfer metrics if both sim and dual agents exist
-        if "theta_sim_unified" in results["agents"] and "theta_dual" in results["agents"]:
-            sim_sr = results["agents"]["theta_sim_unified"].get("success_rate", 0)
-            dual_sr = results["agents"]["theta_dual"].get("success_rate", 0)
-            results["transfer_metrics"] = {
-                "sim_sr_on_pengym": sim_sr,
-                "dual_sr_on_pengym": dual_sr,
-                "transfer_gain": dual_sr - sim_sr,
-                "transfer_ratio": dual_sr / max(sim_sr, 1e-8),
+        # Save detailed evaluation report
+        eval_report_path = self.output_dir / "strategy_c_eval_report.json"
+        evaluator.save_report(report, str(eval_report_path))
+
+        # Flatten for backward-compatible results format
+        results = {"agents": {}, "transfer_metrics": report.get("metrics", {})}
+        for name, domains in report.get("agents", {}).items():
+            pengym_data = domains.get("pengym", {})
+            results["agents"][name] = {
+                "success_rate": pengym_data.get("success_rate", 0),
+                "total_rewards": pengym_data.get("total_rewards", 0),
+                "per_task": pengym_data.get("per_task", []),
             }
-            logging.info(
-                f"  Transfer gain: {results['transfer_metrics']['transfer_gain']:.2%}, "
-                f"ratio: {results['transfer_metrics']['transfer_ratio']:.2f}"
-            )
+            sr = pengym_data.get("success_rate", "N/A")
+            logging.info(f"    {name}: SR={sr:.2%}" if isinstance(sr, float) else f"    {name}: {sr}")
+
+        metrics = results["transfer_metrics"]
+        if metrics:
+            ft = metrics.get("forward_transfer")
+            bt = metrics.get("backward_transfer")
+            if ft is not None:
+                logging.info(f"  Forward Transfer: {ft:+.2%}")
+            if bt is not None:
+                logging.info(f"  Backward Transfer: {bt:+.2%}")
 
         return results
 

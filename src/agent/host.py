@@ -32,8 +32,10 @@ class HOST:
                  prior_node=None,
                  pivot=0,
                  env_data: dict = None,
-                 env_file:Path=None):
+                 env_file:Path=None,
+                 service_action_space=None):
         self.ip = ip
+        self.sas = service_action_space
         self.state_vector = StateEncoder(ip=self.ip)
         self.info = Host_info(ip=self.ip)
         self.action = Action()
@@ -52,6 +54,14 @@ class HOST:
         return self.state_vector.reset()
 
     def perform_action(self, action_mask):
+        # Hierarchical: translate service-level action (0..15) → CVE index
+        if self.sas is not None and isinstance(action_mask, int):
+            action_mask = self.sas.select_cve(
+                action_mask,
+                host_info=self.info,
+                strategy='match',
+                env_data=self.env_data,
+            )
         if Action.test_action(action_mask):
             if type(action_mask) == str:
                 for id in range(len(Action.legal_actions)):

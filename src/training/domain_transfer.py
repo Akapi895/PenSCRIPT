@@ -27,11 +27,16 @@ Usage::
 from __future__ import annotations
 
 import copy
-from typing import List, Optional
+import logging
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
-from loguru import logger as logging
+
+try:
+    from loguru import logger as logging  # type: ignore[assignment]
+except ImportError:
+    pass  # fall back to stdlib logging
 
 from src.agent.policy.config import Script_Config
 
@@ -59,7 +64,7 @@ class DomainTransferManager:
         sim_agent,
         pengym_tasks: list,
         strategy: Optional[str] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """Execute domain transfer from sim → PenGym.
 
         Modifies *sim_agent* **in-place** so that it is ready for Phase 3
@@ -76,7 +81,7 @@ class DomainTransferManager:
         strategy = strategy or self.cfg.transfer_strategy
         logging.info(f"[DomainTransfer] Starting transfer, strategy='{strategy}'")
 
-        meta = {"strategy": strategy}
+        meta: Dict[str, Any] = {"strategy": strategy}
 
         script_agent = sim_agent.cl_agent  # ScriptAgent
         explorer = script_agent.explorer   # KnowledgeExplorer (Agent)
@@ -187,12 +192,14 @@ class DomainTransferManager:
             opt = getattr(policy, opt_name, None)
             if opt is None:
                 continue
+            old_lr = None
             for pg in opt.param_groups:
                 old_lr = pg['lr']
                 pg['lr'] = old_lr * factor
-            logging.info(
-                f"[DomainTransfer] {opt_name} LR: {old_lr:.2e} → {old_lr * factor:.2e}"
-            )
+            if old_lr is not None:
+                logging.info(
+                    f"[DomainTransfer] {opt_name} LR: {old_lr:.2e} → {old_lr * factor:.2e}"
+                )
 
     @staticmethod
     def _collect_warmup_states(
@@ -242,4 +249,10 @@ class DomainTransferManager:
 
         if all_states:
             return np.stack(all_states)
-        return np.zeros((1, 1538), dtype=np.float32)  # fallback
+        # Fallback: infer state dim from StateEncoder (default 1538)
+        try:
+            from src.agent.host import StateEncoder
+            state_dim = StateEncoder.state_space
+        except Exception:
+            state_dim = 1538
+        return np.zeros((1, state_dim), dtype=np.float32)
