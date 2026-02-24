@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+from pathlib import Path
 from loguru import logger as logging
 import time
 from tqdm import tqdm, trange
@@ -563,6 +564,7 @@ class Agent(BaseAgent):
         return attack_path, total_rewards, self.eval_success_rate
 
     def save(self, path):
+        path = Path(path)
         if not os.path.exists(path):
             os.makedirs(path)
         assert os.path.exists(path), f"{path} does not exist"
@@ -576,6 +578,7 @@ class Agent(BaseAgent):
         self.Policy.save(path)
 
     def load(self, path):
+        path = Path(path)
         if self.use_state_norm:
             mean_checkpoint = path / f"{self.policy_name}-norm_mean.pt"
             std_checkpoint = path / f"{self.policy_name}-norm_std.pt"

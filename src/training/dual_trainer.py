@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re as _re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -70,6 +71,7 @@ class DualTrainer:
         self,
         sim_scenarios: List[str],
         pengym_scenarios: List[str],
+        heldout_scenarios: Optional[List[str]] = None,
         ppo_kwargs: Optional[Dict] = None,
         script_kwargs: Optional[Dict] = None,
         seed: int = 42,
@@ -82,6 +84,7 @@ class DualTrainer:
 
         self.sim_scenarios = [str(p) for p in sim_scenarios]
         self.pengym_scenarios = [str(p) for p in pengym_scenarios]
+        self.heldout_scenarios = [str(p) for p in (heldout_scenarios or [])]
         self.episode_config = episode_config  # per-scenario episode rules
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -116,6 +119,16 @@ class DualTrainer:
 
         # Results
         self.results: Dict[str, Any] = {}
+
+    # ==================================================================
+    # Utilities
+    # ==================================================================
+
+    @staticmethod
+    def _extract_tier(scenario_path: str) -> str:
+        """Extract tier (T1/T2/T3/T4) from scenario filename."""
+        m = _re.search(r'_T(\d+)_', Path(scenario_path).stem)
+        return f"T{m.group(1)}" if m else "T0"
 
     # ==================================================================
     # Episode Schedule Resolution
@@ -482,7 +495,12 @@ class DualTrainer:
     # ==================================================================
 
     def phase3_pengym_finetuning(self, eval_freq: int = 5) -> Dict[str, Any]:
-        """Phase 3 — Fine-tune the transferred agent on PenGym with EWC constraints."""
+        """Phase 3 — Fine-tune the transferred agent on PenGym with EWC constraints.
+
+        Training is split by tier groups (T1→T2→T3→T4) with a model
+        checkpoint saved after each tier boundary.  Per-task episode
+        rewards are collected for downstream learning-speed metrics.
+        """
         logging.info("\n" + "=" * 60)
         logging.info("[Phase 3] PenGym Fine-tuning → θ_dual")
         logging.info("=" * 60)
@@ -503,23 +521,68 @@ class DualTrainer:
         # Resolve per-task episode schedule
         episode_schedule = self._resolve_episode_schedule(self.pengym_scenarios)
 
-        # Reset task counter so the agent treats PenGym tasks as continuation
-        # but with the transferred weights and discounted Fisher
-        cl_matrix = self._theta_dual.train_continually(
-            task_list=self._pengym_tasks,
-            eval_freq=eval_freq,
-            save_agent=False,
-            verbose=True,
-            episode_schedule=episode_schedule,
-        )
+        # ── Group tasks by tier for inter-tier checkpoints ──
+        tier_groups: List[tuple] = []  # (tier_name, [global_task_indices])
+        current_tier = None
+        for idx, sc_path in enumerate(self.pengym_scenarios):
+            tier = self._extract_tier(sc_path)
+            if tier != current_tier:
+                tier_groups.append((tier, []))
+                current_tier = tier
+            tier_groups[-1][1].append(idx)
+
+        checkpoint_dir = self.output_dir / "models" / "tier_checkpoints"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        tier_checkpoints: Dict[str, str] = {}
+        per_task_rewards: Dict[str, list] = {}  # task_name → episode rewards
+
+        for tier_name, task_indices in tier_groups:
+            tier_tasks = [self._pengym_tasks[i] for i in task_indices]
+            # Build local episode schedule (0-indexed within this tier)
+            tier_schedule = None
+            if episode_schedule:
+                tier_schedule = {
+                    local: episode_schedule[task_indices[local]]
+                    for local in range(len(task_indices))
+                    if task_indices[local] in episode_schedule
+                }
+
+            cl_matrix = self._theta_dual.train_continually(
+                task_list=tier_tasks,
+                eval_freq=eval_freq,
+                save_agent=False,
+                verbose=True,
+                episode_schedule=tier_schedule,
+            )
+
+            # Collect per-task episode rewards from CL_Train_matrix
+            for local_idx, global_idx in enumerate(task_indices):
+                task_obj = self._pengym_tasks[global_idx]
+                task_name = getattr(task_obj, 'ip', f'task_{global_idx}')
+                per_task_rewards[task_name] = (
+                    cl_matrix.Rewards_current_task[local_idx:local_idx + 1]
+                    if hasattr(cl_matrix, 'Rewards_current_task')
+                    else []
+                )
+
+            # Checkpoint after each tier
+            ckpt_path = checkpoint_dir / f"after_{tier_name}"
+            self._theta_dual.save(path=ckpt_path)
+            tier_checkpoints[tier_name] = str(ckpt_path)
+            logging.info(f"[Phase 3] Checkpoint saved after {tier_name} → {ckpt_path}")
+
         phase3_time = time.time() - t0
 
-        # Save Phase 3 model
+        # Save Phase 3 final model
         phase3_model_dir = self.output_dir / "models" / "phase3_dual"
         phase3_model_dir.mkdir(parents=True, exist_ok=True)
         self._theta_dual.save(path=phase3_model_dir)
 
         tb_phase3.close()
+
+        # Store for Phase 4 downstream metrics
+        self._tier_checkpoints = tier_checkpoints
+        self._dual_per_task_rewards = per_task_rewards
 
         results = {
             "num_tasks": len(self._pengym_tasks),
@@ -527,6 +590,7 @@ class DualTrainer:
             "final_sr": self._theta_dual.eval_success_rate,
             "final_reward": self._theta_dual.eval_rewards,
             "model_dir": str(phase3_model_dir),
+            "tier_checkpoints": tier_checkpoints,
         }
         logging.info(f"[Phase 3] Complete: SR={results['final_sr']:.2%}, "
                       f"time={results['train_time_s']}s")
@@ -570,7 +634,7 @@ class DualTrainer:
 
         # Create fresh PenGym adapters per agent (isolated eval environments)
         per_agent_pengym_tasks = {
-            name: self._create_eval_pengym_tasks()
+            name: self._create_eval_tasks_from(self.pengym_scenarios)
             for name in agent_names
         }
 
@@ -651,27 +715,128 @@ class DualTrainer:
                 if val is not None:
                     logging.info(f"  {key}: {val:.6f}")
 
+        # ── Heldout evaluation (D) ──
+        if self.heldout_scenarios:
+            logging.info("[Phase 4] Evaluating on heldout scenarios...")
+            per_agent_heldout = {
+                name: self._create_eval_tasks_from(self.heldout_scenarios)
+                for name in agent_names
+            }
+            heldout_evaluator = StrategyCEvaluator(
+                pengym_tasks=per_agent_heldout,
+                step_limit=step_limit,
+                eval_episodes=20,
+                optimal_rewards=optimal_rewards,
+                optimal_steps=optimal_steps,
+            )
+            for name in agent_names:
+                agent = (
+                    self._theta_sim_unified if name == "theta_sim_unified"
+                    else self._theta_dual if name == "theta_dual"
+                    else self._theta_pengym_scratch
+                )
+                if agent is not None:
+                    heldout_evaluator.register_agent(name, agent)
+            heldout_report = heldout_evaluator.evaluate_all()
+            results["heldout"] = heldout_report
+            results["heldout_transfer_metrics"] = heldout_report.get("metrics", {})
+            logging.info(f"[Phase 4] Heldout FT_SR: "
+                         f"{results['heldout_transfer_metrics'].get('FT_SR', 'N/A')}")
+
+        # ── Tier checkpoint eval + Forgetting / Zero-Shot (A+B) ──
+        tier_checkpoints = getattr(self, '_tier_checkpoints', {})
+        tier_eval_results: Dict[str, Dict[str, Any]] = {}
+        if tier_checkpoints and self._theta_dual is not None:
+            logging.info("[Phase 4] Evaluating tier checkpoints for F/Z matrices...")
+            for tier_name, ckpt_path in tier_checkpoints.items():
+                agent_copy = copy.deepcopy(self._theta_dual)
+                agent_copy.load(path=ckpt_path)
+                ckpt_agent_name = f"ckpt_{tier_name}"
+                ckpt_tasks = self._create_eval_tasks_from(self.pengym_scenarios)
+                evaluator.register_agent(ckpt_agent_name, agent_copy)
+                tier_eval_results[tier_name] = evaluator.evaluate_agent(
+                    ckpt_agent_name, ckpt_tasks, domain="pengym",
+                )
+            fz = evaluator.compute_forgetting_matrix(tier_eval_results)
+            results["forgetting_matrix"] = fz
+            logging.info(f"[Phase 4] F/Z summary: "
+                         f"mean_F={fz['summary'].get('mean_forgetting', 'N/A')}, "
+                         f"mean_Z={fz['summary'].get('mean_zero_shot_transfer', 'N/A')}")
+
+        # ── Learning-speed transfer (C) ──
+        dual_rewards = getattr(self, '_dual_per_task_rewards', {})
+        scratch_rewards = getattr(self, '_scratch_per_task_rewards', {})
+        if dual_rewards and scratch_rewards:
+            speed = StrategyCEvaluator.compute_learning_speed(
+                dual_rewards, scratch_rewards,
+            )
+            results["learning_speed"] = speed
+            logging.info(f"[Phase 4] Learning speed: "
+                         f"TTT speedup={speed['aggregate'].get('mean_ttt_speedup', 'N/A'):.2f}, "
+                         f"AUC ratio={speed['aggregate'].get('mean_auc_ratio', 'N/A'):.2f}")
+
+        # ── MetricStore: persist structured metrics (E+F+G) ──
+        from src.evaluation.metric_store import MetricStore, FZComputer, CECurveGenerator
+
+        store = MetricStore(seed=self.seed, output_dir=str(self.output_dir))
+
+        # Populate from tier checkpoint evals
+        if tier_eval_results:
+            for tier_name, tier_result in tier_eval_results.items():
+                store.add_checkpoint(f"after_{tier_name}", tier_result)
+
+        # Final eval for theta_dual
+        if self._theta_dual is not None:
+            final_tasks = self._create_eval_tasks_from(self.pengym_scenarios)
+            final_eval = evaluator.evaluate_agent(
+                "theta_dual", final_tasks, domain="pengym",
+            )
+            store.add_checkpoint("final", final_eval)
+
+        # Training curves
+        dual_rewards = getattr(self, '_dual_per_task_rewards', {})
+        for task_name, rewards in dual_rewards.items():
+            ttt = next((i for i, r in enumerate(rewards) if r > 0), len(rewards))
+            store.add_training_curve(task_name, rewards, ttt)
+
+        # Transfer + forgetting
+        store.set_transfer(results.get("transfer_metrics", {}))
+        if "forgetting_matrix" in results:
+            store.set_forgetting(results["forgetting_matrix"])
+
+        store.save()
+        logging.info(f"[Phase 4] MetricStore saved → {self.output_dir / 'metric_store.json'}")
+
+        # Export F/Z CSV
+        if "forgetting_matrix" in results:
+            fz_csv_path = str(self.output_dir / "forgetting_matrix.csv")
+            FZComputer.save_csv(results["forgetting_matrix"], fz_csv_path)
+            logging.info(f"[Phase 4] F/Z CSV → {fz_csv_path}")
+
+        # Export CE curves CSV
+        curves = CECurveGenerator.extract_curves(store)
+        ce_csv = CECurveGenerator.to_csv(curves, metric="nr")
+        if ce_csv:
+            ce_path = self.output_dir / "ce_curves_nr.csv"
+            with open(ce_path, "w", newline="") as f:
+                f.write(ce_csv)
+            logging.info(f"[Phase 4] CE curves CSV → {ce_path}")
+
         return results
 
     # ==================================================================
     # Convenience: fresh PenGym adapter factory for eval isolation
     # ==================================================================
 
-    def _create_eval_pengym_tasks(self):
-        """Create a fresh set of PenGym adapters for evaluation.
-
-        Each call returns new adapter objects with the same seed, ensuring
-        deterministic initial state and no residual state from training.
-        """
+    def _create_eval_tasks_from(self, scenario_paths: List[str]) -> list:
+        """Create fresh PenGym adapters from given scenario paths."""
         from src.envs.adapters.pengym_host_adapter import PenGymHostAdapter
-
-        tasks = []
-        for sc_path in self.pengym_scenarios:
-            adapter = PenGymHostAdapter.from_scenario(
-                sc_path, seed=self.seed, use_unified_encoding=True,
+        return [
+            PenGymHostAdapter.from_scenario(
+                p, seed=self.seed, use_unified_encoding=True,
             )
-            tasks.append(adapter)
-        return tasks
+            for p in scenario_paths
+        ]
 
     # ==================================================================
     # Policy-level backward transfer metrics
@@ -833,6 +998,17 @@ class DualTrainer:
         train_time = time.time() - t0
 
         self._theta_pengym_scratch = scratch_agent
+
+        # Collect per-task rewards for learning-speed metric (C)
+        scratch_per_task_rewards: Dict[str, list] = {}
+        for idx, task_obj in enumerate(pengym_tasks):
+            task_name = getattr(task_obj, 'ip', f'task_{idx}')
+            scratch_per_task_rewards[task_name] = (
+                cl_matrix.Rewards_current_task[idx:idx + 1]
+                if hasattr(cl_matrix, 'Rewards_current_task')
+                else []
+            )
+        self._scratch_per_task_rewards = scratch_per_task_rewards
 
         scratch_model_dir = self.output_dir / "models" / "pengym_scratch"
         scratch_model_dir.mkdir(parents=True, exist_ok=True)

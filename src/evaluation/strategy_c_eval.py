@@ -395,3 +395,157 @@ class StrategyCEvaluator:
         with open(out, "w") as f:
             json.dump(results, f, indent=2, default=str)
         logging.info(f"[StrategyCEval] Report saved → {out}")
+
+    # ------------------------------------------------------------------
+    # Forgetting Matrix & Zero-Shot Transfer Vector (Improvement B)
+    # ------------------------------------------------------------------
+
+    def compute_forgetting_matrix(
+        self,
+        tier_checkpoint_results: Dict[str, Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Compute Forgetting matrix F and Zero-Shot Transfer vector Z.
+
+        Parameters
+        ----------
+        tier_checkpoint_results : dict
+            Maps tier_name → ``evaluate_agent()`` result dict.
+            Each result must contain a ``per_task`` list with
+            ``"task"`` and ``"normalized_reward"`` keys.
+
+        Returns
+        -------
+        dict with keys ``F_matrix``, ``Z_vector``, ``nr_after``,
+        ``task_names``, ``tier_names``, ``summary``.
+        """
+        tier_names = sorted(tier_checkpoint_results.keys())
+
+        # Collect all unique task names in order of first appearance
+        all_tasks: List[str] = []
+        for tier in tier_names:
+            for t in tier_checkpoint_results[tier].get("per_task", []):
+                if t["task"] not in all_tasks:
+                    all_tasks.append(t["task"])
+
+        n = len(all_tasks)
+        m = len(tier_names)
+
+        # NR matrix: nr_after[task_idx][tier_idx]
+        nr_after = np.full((n, m), np.nan)
+        for j, tier in enumerate(tier_names):
+            task_nr = {
+                t["task"]: t.get("normalized_reward")
+                for t in tier_checkpoint_results[tier].get("per_task", [])
+            }
+            for i, task_name in enumerate(all_tasks):
+                val = task_nr.get(task_name)
+                if val is not None:
+                    nr_after[i][j] = val
+
+        # F[i][j] = NR_i_after_own_tier - NR_i_after_tier_j  (j > own tier)
+        F_matrix = np.full((n, m), np.nan)
+        for i in range(n):
+            own_tier_idx = None
+            for j in range(m):
+                if not np.isnan(nr_after[i][j]) and own_tier_idx is None:
+                    own_tier_idx = j
+            if own_tier_idx is None:
+                continue
+            for j in range(own_tier_idx + 1, m):
+                if not np.isnan(nr_after[i][own_tier_idx]) and not np.isnan(nr_after[i][j]):
+                    F_matrix[i][j] = nr_after[i][own_tier_idx] - nr_after[i][j]
+
+        # Z[i] = NR_task_i_before_own_tier - baseline(≈0)
+        Z_vector = np.full(n, np.nan)
+        for i in range(n):
+            own_tier_idx = None
+            for j in range(m):
+                if not np.isnan(nr_after[i][j]):
+                    own_tier_idx = j
+                    break
+            if own_tier_idx is not None and own_tier_idx > 0:
+                nr_before = nr_after[i][own_tier_idx - 1]
+                if not np.isnan(nr_before):
+                    Z_vector[i] = nr_before  # baseline NR ≈ 0 (random)
+
+        # Summary statistics
+        f_vals = F_matrix[~np.isnan(F_matrix)]
+        z_vals = Z_vector[~np.isnan(Z_vector)]
+        summary = {
+            "mean_forgetting": float(np.mean(f_vals)) if len(f_vals) > 0 else None,
+            "max_forgetting": float(np.max(f_vals)) if len(f_vals) > 0 else None,
+            "mean_zero_shot_transfer": float(np.mean(z_vals)) if len(z_vals) > 0 else None,
+            "tasks_with_positive_transfer": int(np.sum(z_vals > 0)) if len(z_vals) > 0 else 0,
+        }
+
+        return {
+            "F_matrix": F_matrix.tolist(),
+            "Z_vector": Z_vector.tolist(),
+            "nr_after": nr_after.tolist(),
+            "task_names": all_tasks,
+            "tier_names": tier_names,
+            "summary": summary,
+        }
+
+    # ------------------------------------------------------------------
+    # TTT + AUC Learning-Speed Transfer (Improvement C)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def compute_learning_speed(
+        dual_training_data: Dict[str, list],
+        scratch_training_data: Dict[str, list],
+    ) -> Dict[str, Any]:
+        """Compute Time-To-Threshold and AUC learning-speed transfer.
+
+        Parameters
+        ----------
+        dual_training_data : dict
+            Maps task_name → list of per-episode rewards (θ_dual).
+        scratch_training_data : dict
+            Maps task_name → list of per-episode rewards (θ_scratch).
+
+        Returns
+        -------
+        dict with ``per_task`` list and ``aggregate`` summary.
+        """
+        results: Dict[str, Any] = {"per_task": [], "aggregate": {}}
+
+        for task_name in dual_training_data:
+            dual_rewards = dual_training_data[task_name]
+            scratch_rewards = scratch_training_data.get(task_name, [])
+
+            dual_auc = float(np.mean(dual_rewards)) if dual_rewards else 0.0
+            scratch_auc = float(np.mean(scratch_rewards)) if scratch_rewards else 0.0
+
+            # TTT: first episode with reward > 0 (successful penetration)
+            dual_ttt = next(
+                (i for i, r in enumerate(dual_rewards) if r > 0),
+                len(dual_rewards),
+            )
+            scratch_ttt = next(
+                (i for i, r in enumerate(scratch_rewards) if r > 0),
+                len(scratch_rewards),
+            )
+
+            results["per_task"].append({
+                "task": task_name,
+                "dual_ttt": dual_ttt,
+                "scratch_ttt": scratch_ttt,
+                "ttt_speedup": scratch_ttt / max(dual_ttt, 1),
+                "dual_auc": dual_auc,
+                "scratch_auc": scratch_auc,
+                "auc_ratio": dual_auc / max(abs(scratch_auc), 1e-8),
+            })
+
+        if results["per_task"]:
+            results["aggregate"] = {
+                "mean_ttt_speedup": float(np.mean(
+                    [t["ttt_speedup"] for t in results["per_task"]]
+                )),
+                "mean_auc_ratio": float(np.mean(
+                    [t["auc_ratio"] for t in results["per_task"]]
+                )),
+            }
+
+        return results

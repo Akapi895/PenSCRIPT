@@ -96,7 +96,7 @@ SCENARIO_CONFIGS = {
 #  Utility: TeeLogger (duplicate stdout to file)
 # ═══════════════════════════════════════════════════════════════════════════
 
-from src.utils.logging import TeeLogger
+from src.utils.logging import TeeLogger, ENV_NOISE_PATTERNS
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -821,7 +821,7 @@ def cmd_train(args):
         print(f"  Log: {log_path}")
         print(f"{'='*60}")
 
-        tee = TeeLogger(log_path)
+        tee = TeeLogger(log_path, console_suppress=ENV_NOISE_PATTERNS)
 
         try:
             ppo_config = PPO_Config(
@@ -1550,7 +1550,7 @@ def main():
     BENCHMARK_DIR.mkdir(parents=True, exist_ok=True)
     log_name = f"{args.command}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     global_log_path = str(BENCHMARK_DIR / log_name)
-    tee = TeeLogger(global_log_path)
+    tee = TeeLogger(global_log_path, console_suppress=ENV_NOISE_PATTERNS)
     print(f"[LOG] All output is being saved to: {global_log_path}\n")
 
     try:

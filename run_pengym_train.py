@@ -30,7 +30,7 @@ from pathlib import Path
 
 import numpy as np
 
-from src.utils.logging import TeeLogger
+from src.utils.logging import TeeLogger, ENV_NOISE_PATTERNS
 
 # Ensure project root on sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -143,7 +143,7 @@ def main():
             log_path = str(
                 LOGS_DIR / f"{scenario_stem}_{args.mode}_{ts}.log"
             )
-        tee = TeeLogger(log_path)
+        tee = TeeLogger(log_path, console_suppress=ENV_NOISE_PATTERNS)
         print(f"[LOG] All output is being saved to: {log_path}")
 
     # eval_step_limit defaults to --max-steps when not explicitly set
