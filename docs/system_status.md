@@ -404,3 +404,89 @@ python run_strategy_c.py `
 | 6   | optimal_rewards chỉ có 4/8          | Cao        | ✅ Done    | `dual_trainer.py`                       |
 | 7   | Per-task episode schedule           | Cao        | ✅ Done    | `agent_continual.py`, `dual_trainer.py` |
 | 8   | min_reward/max_reward hardcode      | Thấp       | Chưa       | `reward_normalizer.py`                  |
+
+---
+
+## 4. Ánh Xạ File → Chức Năng
+
+> _Merged từ StrategyC_System_Summary.md §6 — bản đồ code-level của toàn bộ Strategy C._
+
+### Core Pipeline
+
+| File                                | LOC | Chức năng                                    | Phase |
+| ----------------------------------- | --- | -------------------------------------------- | ----- |
+| `run_strategy_c.py`                 | 225 | CLI entry point, parse args, gọi DualTrainer | —     |
+| `src/training/dual_trainer.py`      | 592 | Orchestrator Phase 0→4                       | 0-4   |
+| `src/training/domain_transfer.py`   | 250 | DomainTransferManager (3 strategies)         | 2     |
+| `src/evaluation/strategy_c_eval.py` | 252 | StrategyCEvaluator (transfer metrics)        | 4     |
+
+### Agent & Policy
+
+| File                            | LOC | Chức năng                                     | Phase |
+| ------------------------------- | --- | --------------------------------------------- | ----- |
+| `src/agent/host.py`             | 394 | HOST + unified encoder + reward norm          | 1     |
+| `src/agent/agent_continual.py`  | 499 | Agent_CL — CRL task orchestrator              | 1, 3  |
+| `src/agent/continual/Script.py` | 966 | ScriptAgent, EWC, discount_fisher()           | 1-3   |
+| `src/agent/policy/PPO.py`       | 349 | PPO Actor/Critic (state_dim, action_dim)      | 1, 3  |
+| `src/agent/policy/config.py`    | 218 | PPO_Config, Script_Config + Strategy C params | Init  |
+
+### Action Space
+
+| File                                        | LOC | Chức năng                                 | Phase |
+| ------------------------------------------- | --- | ----------------------------------------- | ----- |
+| `src/agent/actions/service_action_space.py` | 512 | ServiceActionSpace (16-dim, CVE selector) | 1     |
+| `src/agent/actions/Action.py`               | 181 | Action space gốc (~2064 = 4 scan + N CVE) | 1     |
+
+### PenGym Integration
+
+| File                                       | LOC | Chức năng                           | Phase |
+| ------------------------------------------ | --- | ----------------------------------- | ----- |
+| `src/envs/wrappers/single_host_wrapper.py` | 561 | Wrapper PenGym + unified encoding   | 3     |
+| `src/envs/adapters/pengym_host_adapter.py` | 277 | Duck-typing HOST + float reward     | 2-4   |
+| `src/envs/adapters/state_adapter.py`       | 420 | PenGym obs → 1538/1540-dim state    | 3     |
+| `src/envs/core/unified_state_encoder.py`   | 432 | Unified 1540-dim + canonicalization | 0-3   |
+| `src/envs/wrappers/reward_normalizer.py`   | 168 | UnifiedNormalizer [-1,+1] + others  | 1, 3  |
+
+### Backward Compatibility
+
+| Luồng         | HOST dim | PenGym dim | Reward norm     | Kích hoạt bởi                                   |
+| ------------- | -------- | ---------- | --------------- | ----------------------------------------------- |
+| DualTrainer   | 1540     | 1540       | [-1,+1] unified | `unified_encoder` + `use_unified_encoding=True` |
+| run.py        | 1538     | —          | N/A (raw int)   | Mặc định (không flag)                           |
+| run_benchmark | 1538     | —          | N/A (raw int)   | Mặc định                                        |
+| run*pengym*\* | —        | 1538       | Linear          | Mặc định                                        |
+
+---
+
+## 5. Remaining Roadmap Items
+
+> _Merged từ roadmap-and-design.md — chỉ giữ lại các đầu việc chưa hoàn thành._
+
+### Data
+
+| #   | Việc cần làm                                     | Lý do                                                                                  |
+| --- | ------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| D1  | Chuẩn hóa schema `actions.json`                  | Trường không nhất quán (`exp_info` dạng list/dict/missing) gây fail khi phân loại CVE. |
+| D2  | Bổ sung `target_service` tường minh cho mỗi CVE  | Keyword matching chỉ đạt ~78%. Trường tường minh → 100% coverage.                      |
+| D3  | Pipeline tự động thu thập CVE metadata (NVD/MSF) | CVE tăng > 5000 thì thu thập thủ công không khả thi.                                   |
+
+### Environment
+
+| #   | Việc cần làm                              | Lý do                                              |
+| --- | ----------------------------------------- | -------------------------------------------------- |
+| E4  | Kiểm chứng PenGym real execution trên KVM | Chưa xác nhận end-to-end với CyRIS vulnerable VMs. |
+
+### Agent
+
+| #   | Việc cần làm                          | Lý do                                                                                 |
+| --- | ------------------------------------- | ------------------------------------------------------------------------------------- |
+| A5  | Formal benchmark 16-dim vs 2064-dim   | Evidence hiện tại (10× faster convergence) cần formal comparison trên nhiều scenario. |
+| A6  | Khảo sát CVE selector strategy impact | So sánh `match` (oracle) vs `rank` vs `random` — gap = "CVE selection loss".          |
+
+### Infra
+
+| #   | Việc cần làm                        | Lý do                                                                           |
+| --- | ----------------------------------- | ------------------------------------------------------------------------------- |
+| S2  | CI/CD (lint, type check, unit test) | Codebase thiếu test. Đặc biệt `_classify_exploit()` cần unit test.              |
+| S3  | Unified config / Hydra              | Hyperparameter rải rác (`PPO_Config`, `config.ini`, YAML). Cần 1 file duy nhất. |
+| S4  | Dockerize training environment      | PenGym dependency phức tạp. Docker giúp reproduce.                              |
