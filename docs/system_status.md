@@ -342,7 +342,7 @@ cd d:\NCKH\fusion\pentest
 
 # Build ordered scenario list: T1→T2→T3→T4
 $bases = @("tiny","tiny-hard","tiny-small","small-linear","small-honeypot","medium-single-site","medium","medium-multi-site")
-$sc = @(); foreach ($t in @("T1","T2","T3","T4")) { foreach ($b in $bases) { foreach ($v in @("001","002","003")) { $sc += "data/scenarios/generated/compiled/${b}_${t}_${v}.yml" } } }
+$sc = @(); foreach ($t in @("T1","T2","T3","T4")) { foreach ($b in $bases) { foreach ($v in @("001","002")) { $sc += "data/scenarios/generated/compiled/${b}_${t}_${v}.yml" } } }
 
 python run_strategy_c.py `
     --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json `
