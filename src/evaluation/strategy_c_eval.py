@@ -41,9 +41,24 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+import re
+
 import numpy as np
 import torch
 from loguru import logger as logging
+
+
+def _resolve_base_scenario(task_name: str) -> str:
+    """Extract base scenario name from an overlay task name.
+
+    Examples:
+        "tiny"               → "tiny"
+        "tiny_T1_001"        → "tiny"
+        "medium-multi-site_T3_005" → "medium-multi-site"
+        "small-linear_T4_002"     → "small-linear"
+    """
+    m = re.match(r'^(.+?)_T\d+_\d+$', task_name)
+    return m.group(1) if m else task_name
 
 
 class StrategyCEvaluator:
@@ -182,12 +197,15 @@ class StrategyCEvaluator:
             mean_reward = float(np.mean(data["rewards"]))
             std_reward = float(np.std(data["rewards"]))
 
+            # Resolve base scenario for optimal value lookup
+            base_t = _resolve_base_scenario(t)
+
             # Normalized Reward
-            opt_r = self.optimal_rewards.get(t)
+            opt_r = self.optimal_rewards.get(t) or self.optimal_rewards.get(base_t)
             nr = mean_reward / opt_r if opt_r else None
 
             # Step Efficiency
-            opt_s = self.optimal_steps.get(t)
+            opt_s = self.optimal_steps.get(t) or self.optimal_steps.get(base_t)
             succ_steps = data["steps_on_success"]
             if opt_s and succ_steps:
                 eta = float(np.mean([opt_s / s for s in succ_steps]))

@@ -1,6 +1,6 @@
 # Strategy C — Trạng Thái Hệ Thống
 
-> Cập nhật: 2026-02-23 (rev.4). Dựa trên kết quả chạy thực tế `strategy_c_results.json`. Rev.4: Loại bỏ stress-test, implement code changes.
+> Cập nhật: 2026-02-24 (rev.5). Rev.5: Calibration results, per-task episode schedule, curriculum T1→T4 support, optimal_rewards/steps fix.
 
 ---
 
@@ -271,41 +271,93 @@ StrategyCEvaluator(
 # Saved params:         agent_cl.cl_agent.ewc.saved_params[task_id][param_name]
 ```
 
-### 3.4 Experiment protocol — quy trình chạy thí nghiệm đúng
+### 3.4 Calibration results (2026-02-24)
 
-**Bước 1: Calibration run** — Xác định `train_eps` phù hợp:
+**32 calibration runs** (8 base scenarios × 4 episode counts, `--scratch-only`, step_limit=150, K=20 eval):
+
+| Scenario           |     | A      |                          | Opt R/Steps             | 500 eps           | 1000 eps   | 2000 eps | 3000 eps |
+| ------------------ | --- | ------ | ------------------------ | ----------------------- | ----------------- | ---------- | -------- | -------- |
+| tiny               | 42  | 195/6  | SR=1.0 η=0.60 NR=−0.004  | ← same                  | ← same            | ← same     |
+| tiny-hard          | 42  | 192/5  | SR=1.0 η=1.25 NR=+0.002  | ← same                  | ← same            | ← same     |
+| tiny-small         | 64  | 189/7  | SR=1.0 η=0.64 NR=−0.013  | ← same                  | ← same            | ← same     |
+| small-linear       | 96  | 179/12 | SR=1.0 η=0.52 NR=−0.063  | ← same                  | ← same            | ← same     |
+| small-honeypot     | 96  | 186/8  | **SR=0.0**               | SR=1.0 η=0.53 NR=−0.025 | ← same            | ← same     |
+| medium-single-site | 192 | 191/4  | SR=1.0 η=0.087 NR=−0.128 | η=0.08 NR=−0.100        | η=0.095 NR=−0.082 | ← same     |
+| medium             | 192 | 185/8  | **SR=0.0**               | **SR=0.0**              | **SR=0.0**        | **SR=0.0** |
+| medium-multi-site  | 192 | 187/7  | **SR=0.0**               | **SR=0.0**              | **SR=0.0**        | **SR=0.0** |
+
+**Nhận xét:**
+
+- **saturated ngay** (tiny, tiny-hard, tiny-small, small-linear): SR=1.0 deterministic tại mọi eps. 500 eps đã đủ.
+- **small-honeypot**: Honeypot exploration challenge → min 1000 eps.
+- **medium-single-site**: SR=1.0 nhưng η rất thấp (~0.09, agent mất 42–50 steps vs optimal 4). Quality cải thiện đến 2000 eps rồi saturate.
+- **medium, medium-multi-site**: SR=0.0 tại mọi eps → |A|=192 + multi-subnet quá khó cho DQN exploration budget 3000 eps. **Cần curriculum training T1→T4** với overlay để giảm dần difficulty.
+
+**Bug fix:** `optimal_rewards` và `optimal_steps` trong `dual_trainer.py` chỉ có 4/8 scenarios → NR/η null cho 4 scenarios còn lại. **Đã fix rev.5** — bổ sung đủ 8 scenarios.
+
+### 3.5 Per-task episode schedule — đã implement
+
+**File thay đổi:** `agent_continual.py`, `dual_trainer.py`, `run_strategy_c.py`
+
+**Vấn đề:** `train_eps` là global (cùng giá trị cho mọi task trong `train_continually()`). Curriculum T1→T4 cần episode khác nhau: tiny_T1 cần 500 eps nhưng medium_T4 cần 15000.
+
+**Giải pháp:**
+
+1. **`agent_continual.py`**: `train_continually()` nhận `episode_schedule: Optional[Dict[int, int]]` — mapping task_index → episode_count. `learn_new_task()` nhận `max_episodes` override.
+2. **`dual_trainer.py`**: `_resolve_episode_schedule()` hỗ trợ 2 mode:
+   - **Multiplier mode**: `episodes = base_episodes[base_name] × tier_multiplier["T{n}"]`. Parse tên file scenario.
+   - **Rules mode**: Regex pattern matching, first match wins.
+3. **`run_strategy_c.py`**: `--episode-config path/to/config.json`
+
+**Config file:** `data/config/curriculum_episodes.json`
+
+### 3.6 Experiment protocol — quy trình chạy thí nghiệm
+
+**Bước 1: Calibration** — ✅ Đã hoàn thành (§3.4)
+
+**Bước 2: Curriculum T1→T4 training** — sử dụng compiled overlay scenarios:
 
 ```bash
-# Chạy scratch agent trên từng scenario riêng, tìm ngưỡng SR ≥ 50%
-$scenarios = @("tiny","tiny-hard","tiny-small","small-linear")
-$episodes = @(500,1000,2000,3000)
-foreach ($scenario in $scenarios) {
-    foreach ($eps in $episodes) {
-        $outDir = "outputs/strategy_c/calibration/${scenario}_${eps}eps"
-        python run_strategy_c.py `
-            --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json `
-            --pengym-scenarios data/scenarios/$scenario.yml `
-            --scratch-only `
-            --episodes $eps `
-            --step-limit 150 `
-            --output-dir $outDir
-    }
-}
-```
-
-**Tiêu chí:** Chọn `train_eps` nhỏ nhất sao cho `theta_scratch` đạt SR ≥ 0.3 (30%) trên scenario đó qua multi-episode eval (20 eps). Nếu không đạt ở 3000 eps → loại scenario khỏi benchmark.
-
-**Bước 2: Main experiment** — Chạy full pipeline:
-
-```bash
+# Ví dụ: chạy full pipeline cho tiny với curriculum T1→T4 (3 training variants mỗi tier)
 python run_strategy_c.py \
     --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
-    --pengym-scenarios data/scenarios/tiny.yml \
-                       data/scenarios/tiny-hard.yml \
-                       data/scenarios/tiny-small.yml \
-                       data/scenarios/small-linear.yml \
-    --train-scratch --episodes <calibrated_eps> --step-limit 150
+    --pengym-scenarios \
+        data/scenarios/generated/compiled/tiny_T1_001.yml \
+        data/scenarios/generated/compiled/tiny_T1_002.yml \
+        data/scenarios/generated/compiled/tiny_T1_003.yml \
+        data/scenarios/generated/compiled/tiny_T2_001.yml \
+        data/scenarios/generated/compiled/tiny_T2_002.yml \
+        data/scenarios/generated/compiled/tiny_T2_003.yml \
+        data/scenarios/generated/compiled/tiny_T3_001.yml \
+        data/scenarios/generated/compiled/tiny_T3_002.yml \
+        data/scenarios/generated/compiled/tiny_T3_003.yml \
+        data/scenarios/generated/compiled/tiny_T4_001.yml \
+        data/scenarios/generated/compiled/tiny_T4_002.yml \
+        data/scenarios/generated/compiled/tiny_T4_003.yml \
+    --episode-config data/config/curriculum_episodes.json \
+    --train-scratch --step-limit 150
 ```
+
+**Episode budget (từ curriculum_episodes.json, multiplier mode):**
+
+| Base scenario      | T1   | T2   | T3    | T4    | Total/variant | Total (×3) |
+| ------------------ | ---- | ---- | ----- | ----- | ------------- | ---------- |
+| tiny               | 500  | 500  | 1000  | 1500  | 3,500         | 10,500     |
+| tiny-hard          | 500  | 500  | 1000  | 1500  | 3,500         | 10,500     |
+| tiny-small         | 500  | 500  | 1000  | 1500  | 3,500         | 10,500     |
+| small-linear       | 600  | 750  | 1500  | 2250  | 5,100         | 15,300     |
+| small-honeypot     | 1200 | 1500 | 3000  | 4500  | 10,200        | 30,600     |
+| medium-single-site | 2000 | 2500 | 5000  | 7500  | 17,000        | 51,000     |
+| medium             | 4000 | 5000 | 10000 | 15000 | 34,000        | 102,000    |
+| medium-multi-site  | 4000 | 5000 | 10000 | 15000 | 34,000        | 102,000    |
+
+**Lưu ý:** `--episodes` trên CLI vẫn cần set (dùng làm fallback), nhưng khi `--episode-config` có, mỗi task dùng episode từ config.
+
+**Dataset split:**
+
+- `_000`: calibration (đã dùng)
+- `_001`, `_002`, `_003`: training
+- `_004`–`_009`: held-out evaluation
 
 **Bước 3: Đánh giá** — Tiêu chí pass/fail:
 
@@ -329,5 +381,7 @@ python run_strategy_c.py \
 | 2   | Thiếu NR và step efficiency         | Cao        | ✅ Done    | `strategy_c_eval.py`                    |
 | 3   | Fresh adapter per agent             | Cao        | ✅ Done    | `dual_trainer.py`, `strategy_c_eval.py` |
 | 4   | BT ceiling effect + thiếu sim_tasks | Cao        | ✅ Done    | `dual_trainer.py`, `strategy_c_eval.py` |
-| 5   | Quá ít scenarios (2)                | Trung bình | Chưa       | `run_strategy_c.py` args                |
-| 6   | min_reward/max_reward hardcode      | Thấp       | Chưa       | `reward_normalizer.py`                  |
+| 5   | Quá ít scenarios (2)                | Trung bình | ✅ Done    | curriculum config, `run_strategy_c.py`  |
+| 6   | optimal_rewards chỉ có 4/8          | Cao        | ✅ Done    | `dual_trainer.py`                       |
+| 7   | Per-task episode schedule           | Cao        | ✅ Done    | `agent_continual.py`, `dual_trainer.py` |
+| 8   | min_reward/max_reward hardcode      | Thấp       | Chưa       | `reward_normalizer.py`                  |

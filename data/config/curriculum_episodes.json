@@ -1,0 +1,35 @@
+{
+  "_description": [
+    "Per-scenario episode configuration for curriculum training T1→T4.",
+    "",
+    "Multiplier mode: episodes = ceil(base_episodes[base] × tier_multiplier[T{n}]).",
+    "base_episodes derived from calibration (scratch-only, 2025-02-24).",
+    "Tier multipliers account for overlay difficulty scaling:",
+    "  T1 (prob≈0.99, cost=1) = easiest → 0.8× base",
+    "  T2 (prob≈0.80, cost=2) = moderate → 1.0× base",
+    "  T3 (prob≈0.60, cost=3) = hard    → 2.0× base",
+    "  T4 (prob≈0.40, cost=4) = expert  → 3.0× base",
+    "",
+    "medium & medium-multi-site: base SR=0.0 at 3000 eps standalone.",
+    "With T1 overlay (prob=0.99), topology is preserved but exploits trivialised",
+    "→ agent only needs to learn routing/path. Estimated 5000 base eps.",
+    "Curriculum transfer should reduce higher-tier requirements vs standalone."
+  ],
+  "base_episodes": {
+    "tiny":               500,
+    "tiny-hard":          500,
+    "tiny-small":         500,
+    "small-linear":       750,
+    "small-honeypot":    1500,
+    "medium-single-site": 2500,
+    "medium":             5000,
+    "medium-multi-site":  5000
+  },
+  "tier_multiplier": {
+    "T1": 0.8,
+    "T2": 1.0,
+    "T3": 2.0,
+    "T4": 3.0
+  },
+  "default_episodes": 1000
+}

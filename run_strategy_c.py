@@ -122,6 +122,13 @@ def parse_args() -> argparse.Namespace:
         "--scratch-only", action="store_true",
         help="Only train θ_pengym_scratch and evaluate it (calibration mode). Skips Phases 0-3.",
     )
+    parser.add_argument(
+        "--episode-config", type=str, default=None,
+        help="JSON file with per-scenario episode configuration. "
+             "Supports multiplier mode (base_episodes × tier_multiplier) "
+             "or rules mode (regex patterns → episodes). "
+             "See data/config/curriculum_episodes.json for format.",
+    )
 
     # ── Output ───────────────────────────────────────────────────────
     parser.add_argument(
@@ -149,10 +156,20 @@ def main():
     print(f"  Training:         {args.episodes} eps, {args.step_limit} steps, EWC λ={args.ewc_lambda}")
     print(f"  Seed:             {args.seed}")
     print(f"  Mode:             {'scratch-only (calibration)' if args.scratch_only else 'full pipeline'}")
+    print(f"  Episode config:   {args.episode_config or '(uniform ' + str(args.episodes) + ' eps)'}")
     print(f"  Output:           {args.output_dir}")
     print("=" * 70)
 
     from src.training.dual_trainer import DualTrainer
+
+    # Load episode config if provided
+    episode_config = None
+    if args.episode_config:
+        with open(args.episode_config, "r") as f:
+            episode_config = json.load(f)
+        # Strip description keys (comments)
+        episode_config.pop("_description", None)
+        print(f"  Loaded episode config: {list(episode_config.keys())}")
 
     # Build DualTrainer
     trainer = DualTrainer(
@@ -172,6 +189,7 @@ def main():
         },
         seed=args.seed,
         output_dir=args.output_dir,
+        episode_config=episode_config,
     )
 
     t0 = time.time()

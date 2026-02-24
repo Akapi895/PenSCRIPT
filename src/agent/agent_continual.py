@@ -133,7 +133,8 @@ class Agent_CL():
                           eval_freq=5,
                           eval_all_task=False,
                           save_agent=False,
-                          verbose=False):
+                          verbose=False,
+                          episode_schedule=None):
 
         CL_Train_matrix = EasyDict({
             "signal": Matrix.Finished,
@@ -158,12 +159,18 @@ class Agent_CL():
             new_task_learner = self.cl_agent.get_new_task_learner(
                 new_task_id=i)
             _new_task_learner_ = copy.deepcopy(new_task_learner)
+            # Per-task episode override
+            task_eps = None
+            if episode_schedule and i in episode_schedule:
+                task_eps = episode_schedule[i]
+
             start = time.time()
             result, Task_Train_matrix = self.learn_new_task(
                 player=new_task_learner,
                 all_task=task_list,
                 eval_freq=eval_freq,
-                eval_all_task=eval_all_task)
+                eval_all_task=eval_all_task,
+                max_episodes=task_eps)
             end = time.time()
             run_time = float(end - start)
             # early terminated if the agent failed to learn a new task
@@ -308,7 +315,8 @@ class Agent_CL():
                        player: Agent,
                        all_task,
                        eval_freq,
-                       eval_all_task=False):
+                       eval_all_task=False,
+                       max_episodes=None):
 
         eval_first_task_rewards, eval_current_task_rewards, previous_tasks_sr = 0, 0, 0
         task_total_steps = 0
@@ -326,11 +334,12 @@ class Agent_CL():
 
         task = [all_task[self.current_task_id]]
         self.reset_player_for_newtask(player=player)
+        num_eps = max_episodes if max_episodes is not None else self.config.train_eps
         with tqdm(
-                range(self.config.train_eps),
+                range(num_eps),
                 colour='green',
                 desc=
-                f"{color.color_str(f'{self.method}-Training Task {self.current_task_id}',c=color.RED)}"
+                f"{color.color_str(f'{self.method}-Training Task {self.current_task_id} ({num_eps} eps)',c=color.RED)}"
         ) as tbar:
             for _ in tbar:
                 start = time.time()
@@ -371,7 +380,7 @@ class Agent_CL():
                 if self.use_wandb:
                     wandb.log({
                         "Total_Episode_per_Task":
-                        player.num_episodes / player.config.train_eps,
+                        player.num_episodes / num_eps,
                         "Total_Episode":
                         player.num_episodes,
                         "Train/Train_Episode_Rewards":

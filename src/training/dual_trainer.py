@@ -74,6 +74,7 @@ class DualTrainer:
         script_kwargs: Optional[Dict] = None,
         seed: int = 42,
         output_dir: str = "outputs/strategy_c",
+        episode_config: Optional[Dict] = None,
     ):
         self.seed = seed
         torch.manual_seed(seed)
@@ -81,6 +82,7 @@ class DualTrainer:
 
         self.sim_scenarios = [str(p) for p in sim_scenarios]
         self.pengym_scenarios = [str(p) for p in pengym_scenarios]
+        self.episode_config = episode_config  # per-scenario episode rules
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -114,6 +116,84 @@ class DualTrainer:
 
         # Results
         self.results: Dict[str, Any] = {}
+
+    # ==================================================================
+    # Episode Schedule Resolution
+    # ==================================================================
+
+    def _resolve_episode_schedule(self, scenario_paths: List[str]) -> Optional[Dict[int, int]]:
+        """Build a task_index → episode_count mapping from episode_config.
+
+        The episode_config dict supports two modes:
+
+        1) Multiplier mode (recommended):
+           {
+             "base_episodes": {"tiny": 500, "medium": 5000, ...},
+             "tier_multiplier": {"T1": 1.0, "T2": 1.5, "T3": 2.0, "T4": 3.0},
+             "default_episodes": 1000
+           }
+           Scenario filename is parsed as ``{base}_T{tier}_{variant}`` and
+           episodes = ceil(base_episodes[base] * tier_multiplier["T{tier}"]).
+
+        2) Rules mode (explicit patterns):
+           {
+             "rules": [
+               {"pattern": "tiny_T[12]", "episodes": 500},
+               {"pattern": "medium_T4", "episodes": 12000}
+             ],
+             "default_episodes": 1000
+           }
+           First regex match wins.
+
+        Returns None if episode_config is not set → caller uses ppo_config.train_eps.
+        """
+        import re, math
+
+        if not self.episode_config:
+            return None
+
+        schedule = {}
+        default_eps = self.episode_config.get("default_episodes", self.ppo_config.train_eps)
+
+        if "rules" in self.episode_config:
+            # ── Rules mode ──
+            rules = self.episode_config["rules"]
+            for idx, sc_path in enumerate(scenario_paths):
+                stem = Path(sc_path).stem  # e.g. "medium_T4_003"
+                matched = False
+                for rule in rules:
+                    if re.search(rule["pattern"], stem, re.IGNORECASE):
+                        schedule[idx] = int(rule["episodes"])
+                        matched = True
+                        break
+                if not matched:
+                    schedule[idx] = default_eps
+        else:
+            # ── Multiplier mode ──
+            base_eps = self.episode_config.get("base_episodes", {})
+            tier_mult = self.episode_config.get("tier_multiplier", {})
+
+            for idx, sc_path in enumerate(scenario_paths):
+                stem = Path(sc_path).stem  # e.g. "medium-multi-site_T3_002"
+
+                # Parse: try to extract base name and tier
+                tier_match = re.search(r'_T(\d+)_', stem)
+                if tier_match:
+                    tier_key = f"T{tier_match.group(1)}"
+                    base_name = stem[:tier_match.start()]
+                else:
+                    tier_key = None
+                    base_name = stem  # base scenario without tier
+
+                b_eps = base_eps.get(base_name, default_eps)
+                t_mult = tier_mult.get(tier_key, 1.0) if tier_key else 1.0
+                schedule[idx] = max(500, int(math.ceil(b_eps * t_mult)))
+
+        if schedule:
+            logging.info(f"[DualTrainer] Episode schedule: "
+                         f"min={min(schedule.values())}, max={max(schedule.values())}, "
+                         f"total={sum(schedule.values())} across {len(schedule)} tasks")
+        return schedule if schedule else None
 
     # ==================================================================
     # Full Pipeline
@@ -420,6 +500,9 @@ class DualTrainer:
 
         t0 = time.time()
 
+        # Resolve per-task episode schedule
+        episode_schedule = self._resolve_episode_schedule(self.pengym_scenarios)
+
         # Reset task counter so the agent treats PenGym tasks as continuation
         # but with the transferred weights and discounted Fisher
         cl_matrix = self._theta_dual.train_continually(
@@ -427,6 +510,7 @@ class DualTrainer:
             eval_freq=eval_freq,
             save_agent=False,
             verbose=True,
+            episode_schedule=episode_schedule,
         )
         phase3_time = time.time() - t0
 
@@ -497,10 +581,14 @@ class DualTrainer:
         optimal_rewards = {
             "tiny": 195, "tiny-hard": 192,
             "tiny-small": 189, "small-linear": 179,
+            "small-honeypot": 186, "medium": 185,
+            "medium-single-site": 191, "medium-multi-site": 187,
         }
         optimal_steps = {
             "tiny": 6, "tiny-hard": 5,
             "tiny-small": 7, "small-linear": 12,
+            "small-honeypot": 8, "medium": 8,
+            "medium-single-site": 4, "medium-multi-site": 7,
         }
 
         evaluator = StrategyCEvaluator(
@@ -734,11 +822,13 @@ class DualTrainer:
         )
 
         t0 = time.time()
+        episode_schedule = self._resolve_episode_schedule(self.pengym_scenarios)
         cl_matrix = scratch_agent.train_continually(
             task_list=pengym_tasks,
             eval_freq=eval_freq,
             save_agent=False,
             verbose=True,
+            episode_schedule=episode_schedule,
         )
         train_time = time.time() - t0
 
