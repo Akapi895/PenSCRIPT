@@ -1,0 +1,20 @@
+{
+  "_description": "Lite experiment: 2 scenarios/tier, reduced episodes for CPU-only runs (~3-4h)",
+  "base_episodes": {
+    "tiny":                100,
+    "tiny-small":          120,
+    "tiny-hard":           150,
+    "small-linear":        150,
+    "small-honeypot":      180,
+    "medium-single-site":  200,
+    "medium-multi-site":   250,
+    "medium":              200
+  },
+  "tier_multiplier": {
+    "T1": 1.0,
+    "T2": 1.5,
+    "T3": 2.0,
+    "T4": 2.5
+  },
+  "default_episodes": 150
+}

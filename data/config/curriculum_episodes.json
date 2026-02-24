@@ -22,8 +22,8 @@
     "small-linear":       750,
     "small-honeypot":    1500,
     "medium-single-site": 2500,
-    "medium":             5000,
-    "medium-multi-site":  5000
+    "medium":             8000,
+    "medium-multi-site":  10000
   },
   "tier_multiplier": {
     "T1": 0.8,
