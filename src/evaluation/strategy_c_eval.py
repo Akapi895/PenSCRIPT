@@ -72,7 +72,10 @@ class StrategyCEvaluator:
     sim_tasks : list, optional
         List of HOST targets for simulation-side evaluation.
     step_limit : int
-        Max steps per evaluation episode.
+        Default max steps per evaluation episode.
+    step_limit_map : dict, optional
+        Map base scenario name → step_limit.  Overrides *step_limit*
+        for matching tasks (resolved via ``_resolve_base_scenario``).
     eval_episodes : int
         Number of episodes per task for multi-episode SR estimation.
     optimal_rewards : dict, optional
@@ -86,6 +89,7 @@ class StrategyCEvaluator:
         pengym_tasks: Union[Dict[str, list], list],
         sim_tasks: Optional[list] = None,
         step_limit: int = 100,
+        step_limit_map: Optional[Dict[str, int]] = None,
         eval_episodes: int = 20,
         optimal_rewards: Optional[Dict[str, float]] = None,
         optimal_steps: Optional[Dict[str, int]] = None,
@@ -99,10 +103,21 @@ class StrategyCEvaluator:
 
         self.sim_tasks = sim_tasks or []
         self.step_limit = step_limit
+        self.step_limit_map = step_limit_map or {}
         self.eval_episodes = eval_episodes
         self.optimal_rewards = optimal_rewards or {}
         self.optimal_steps = optimal_steps or {}
         self._agents: Dict[str, Any] = {}
+
+    def _get_task_step_limit(self, task_name: str) -> int:
+        """Resolve step_limit for a task: check map by exact name,
+        then by base scenario, then fall back to default."""
+        if task_name in self.step_limit_map:
+            return self.step_limit_map[task_name]
+        base = _resolve_base_scenario(task_name)
+        if base in self.step_limit_map:
+            return self.step_limit_map[base]
+        return self.step_limit
 
     def _get_pengym_tasks(self, agent_name: str) -> list:
         """Return PenGym tasks for a specific agent."""
@@ -157,8 +172,10 @@ class StrategyCEvaluator:
                 done = 0
                 steps = 0
                 ep_reward = 0.0
+                task_name = getattr(task, 'ip', f'task_{id(task)}')
+                task_sl = self._get_task_step_limit(task_name)
 
-                while not done and steps < self.step_limit:
+                while not done and steps < task_sl:
                     with torch.no_grad():
                         a = evaluator.Policy.evaluate(o)
                     next_o, r, done, _ = task.perform_action(a)
@@ -168,7 +185,6 @@ class StrategyCEvaluator:
                     ep_reward += r
                     steps += 1
 
-                task_name = getattr(task, 'ip', f'task_{id(task)}')
                 all_episodes.append({
                     "task": task_name,
                     "success": bool(done),

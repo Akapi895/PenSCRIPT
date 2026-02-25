@@ -344,6 +344,8 @@ class Agent_CL():
         task = [all_task[self.current_task_id]]
         self.reset_player_for_newtask(player=player)
         num_eps = max_episodes if max_episodes is not None else self.config.train_eps
+        # Expose effective episode count to player for LR decay calibration
+        player._task_train_eps = num_eps
         with tqdm(
                 range(num_eps),
                 colour='green',

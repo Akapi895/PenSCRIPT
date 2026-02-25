@@ -442,9 +442,11 @@ class KnowledgeExplorer(Agent):
                         use_grad_clip=self.use_grad_clip)
                     if self.use_lr_decay:
                         #NOTE Only support PPO
+                        # Use per-task episode count when available (set by learn_new_task)
+                        effective_eps = getattr(self, '_task_train_eps', self.config.train_eps)
                         rate = (
-                            1 - self.task_num_episodes / self.config.train_eps
-                        ) if self.task_num_episodes < self.config.train_eps else 1
+                            1 - self.task_num_episodes / effective_eps
+                        ) if self.task_num_episodes < effective_eps else 1
                         if rate <= self.config.min_decay_lr:
                             rate = self.config.min_decay_lr
                         self.Policy.lr_decay(rate=rate)

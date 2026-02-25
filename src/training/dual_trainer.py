@@ -682,6 +682,13 @@ class DualTrainer:
         step_limit = getattr(self.ppo_config, 'eval_step_limit',
                              self.ppo_config.step_limit)
 
+        # Per-scenario step_limit for eval (from episode_config)
+        step_limit_map: Dict[str, int] = {}
+        if self.episode_config:
+            base_sl = self.episode_config.get("base_step_limit", {})
+            step_limit_map = dict(base_sl)  # base_name → step_limit
+            logging.info(f"[Phase 4] Eval step_limit_map: {step_limit_map}")
+
         # Optimal rewards and steps per scenario (from YAML comments)
         optimal_rewards = {
             "tiny": 195, "tiny-hard": 192,
@@ -700,6 +707,7 @@ class DualTrainer:
             pengym_tasks=per_agent_pengym_tasks,
             sim_tasks=getattr(self, '_sim_tasks', None),
             step_limit=step_limit,
+            step_limit_map=step_limit_map,
             eval_episodes=20,
             optimal_rewards=optimal_rewards,
             optimal_steps=optimal_steps,
@@ -766,6 +774,7 @@ class DualTrainer:
             heldout_evaluator = StrategyCEvaluator(
                 pengym_tasks=per_agent_heldout,
                 step_limit=step_limit,
+                step_limit_map=step_limit_map,
                 eval_episodes=20,
                 optimal_rewards=optimal_rewards,
                 optimal_steps=optimal_steps,
