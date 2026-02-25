@@ -77,6 +77,7 @@ class DualTrainer:
         seed: int = 42,
         output_dir: str = "outputs/strategy_c",
         episode_config: Optional[Dict] = None,
+        training_mode: str = "intra_topology",
     ):
         self.seed = seed
         torch.manual_seed(seed)
@@ -86,6 +87,7 @@ class DualTrainer:
         self.pengym_scenarios = [str(p) for p in pengym_scenarios]
         self.heldout_scenarios = [str(p) for p in (heldout_scenarios or [])]
         self.episode_config = episode_config  # per-scenario episode rules
+        self.training_mode = training_mode    # 'intra_topology' or 'cross_topology'
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -239,6 +241,49 @@ class DualTrainer:
                          f"min={min(schedule.values())}, max={max(schedule.values())} "
                          f"across {len(schedule)} tasks")
         return schedule if schedule else None
+
+    # ==================================================================
+    # Topology Stream Grouping (Intra-Topology CRL)
+    # ==================================================================
+
+    def _build_topology_streams(
+        self, scenario_paths: List[str],
+    ) -> Dict[str, List[tuple]]:
+        """Group scenarios by base topology name into independent CRL streams.
+
+        Parameters
+        ----------
+        scenario_paths : list[str]
+            Scenario file paths (may be overlay or base).
+
+        Returns
+        -------
+        dict[str, list[tuple[int, str, str]]]
+            Mapping ``topology_name → [(global_index, tier_key, path), ...]``.
+            Each list is sorted by tier (T0 < T1 < T2 < T3 < T4), then by
+            variant index within the same tier.
+        """
+        from collections import defaultdict
+
+        streams: Dict[str, list] = defaultdict(list)
+        tier_order = {"T0": 0, "T1": 1, "T2": 2, "T3": 3, "T4": 4}
+
+        for idx, sc_path in enumerate(scenario_paths):
+            stem = Path(sc_path).stem
+            tier_match = _re.search(r'_T(\d+)_', stem)
+            if tier_match:
+                tier_key = f"T{tier_match.group(1)}"
+                base_name = stem[:tier_match.start()]
+            else:
+                tier_key = "T0"
+                base_name = stem
+            streams[base_name].append((idx, tier_key, str(sc_path)))
+
+        # Sort within each stream by tier then variant path
+        for topo in streams:
+            streams[topo].sort(key=lambda x: (tier_order.get(x[1], 99), x[2]))
+
+        return dict(streams)
 
     # ==================================================================
     # Full Pipeline
@@ -527,14 +572,182 @@ class DualTrainer:
     # ==================================================================
 
     def phase3_pengym_finetuning(self, eval_freq: int = 5) -> Dict[str, Any]:
-        """Phase 3 — Fine-tune the transferred agent on PenGym with EWC constraints.
+        """Phase 3 — Dispatch to intra-topology or cross-topology CRL.
+
+        The ``training_mode`` attribute (set from episode_config or CLI)
+        controls which strategy is used:
+
+        - ``intra_topology`` (default) — per-topology independent CRL streams.
+        - ``cross_topology`` — legacy tier-grouped CRL across all topologies.
+        """
+        mode = getattr(self, 'training_mode', 'intra_topology')
+        if mode == 'cross_topology':
+            return self._phase3_cross_topology(eval_freq=eval_freq)
+        return self._phase3_intra_topology(eval_freq=eval_freq)
+
+    # ── Intra-Topology CRL (default) ─────────────────────────────────
+
+    def _phase3_intra_topology(self, eval_freq: int = 5) -> Dict[str, Any]:
+        """Phase 3 — Fine-tune via Intra-Topology CRL.
+
+        Each topology gets an independent CRL stream forked from the
+        Phase 2 transferred agent.  Tasks within a stream are ordered
+        T1→T2→T3→T4 (intra-topology curriculum).  The best-performing
+        stream's agent becomes θ_dual for Phase 4.
+        """
+        logging.info("\n" + "=" * 60)
+        logging.info("[Phase 3] Intra-Topology CRL Fine-tuning → θ_dual")
+        logging.info("=" * 60)
+
+        if self._theta_dual is None:
+            logging.error("[Phase 3] No transferred agent from Phase 2")
+            return {"error": "no_phase2_agent"}
+
+        if not hasattr(self, '_pengym_tasks') or not self._pengym_tasks:
+            logging.error("[Phase 3] No PenGym tasks")
+            return {"error": "no_pengym_tasks"}
+
+        t0 = time.time()
+
+        # Resolve per-task schedules (global indices)
+        episode_schedule = self._resolve_episode_schedule(self.pengym_scenarios)
+        step_limit_schedule = self._resolve_step_limit_schedule(self.pengym_scenarios)
+
+        # ── Build per-topology streams ──
+        topology_streams = self._build_topology_streams(self.pengym_scenarios)
+        logging.info(f"[Phase 3] Topology streams: {list(topology_streams.keys())} "
+                     f"({sum(len(v) for v in topology_streams.values())} total tasks)")
+
+        checkpoint_dir = self.output_dir / "models" / "stream_checkpoints"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+        stream_results: Dict[str, Dict[str, Any]] = {}
+        all_per_task_rewards: Dict[str, list] = {}
+
+        # ── Sequential stream training ──
+        for topo_name, stream_entries in topology_streams.items():
+            logging.info(f"\n{'─' * 50}")
+            logging.info(f"[Phase 3] Stream '{topo_name}': "
+                         f"{len(stream_entries)} tasks "
+                         f"({', '.join(e[1] for e in stream_entries)})")
+            logging.info(f"{'─' * 50}")
+
+            # Fork transferred agent for this stream
+            stream_agent = copy.deepcopy(self._theta_dual)
+            stream_tb = SummaryWriter(
+                log_dir=str(self.tb_dir / f"phase3_stream_{topo_name}")
+            )
+            stream_agent.tf_logger = stream_tb
+
+            # Build local task list & schedules
+            global_indices = [e[0] for e in stream_entries]
+            stream_tasks = [self._pengym_tasks[gi] for gi in global_indices]
+
+            local_ep_schedule = None
+            if episode_schedule:
+                local_ep_schedule = {
+                    local_i: episode_schedule[gi]
+                    for local_i, gi in enumerate(global_indices)
+                    if gi in episode_schedule
+                }
+
+            local_sl_schedule = None
+            if step_limit_schedule:
+                local_sl_schedule = {
+                    local_i: step_limit_schedule[gi]
+                    for local_i, gi in enumerate(global_indices)
+                    if gi in step_limit_schedule
+                }
+
+            # Train CRL within this topology stream
+            cl_matrix = stream_agent.train_continually(
+                task_list=stream_tasks,
+                eval_freq=eval_freq,
+                save_agent=False,
+                verbose=True,
+                episode_schedule=local_ep_schedule,
+                step_limit_schedule=local_sl_schedule,
+            )
+
+            # Collect per-task rewards
+            for local_i, gi in enumerate(global_indices):
+                task_obj = self._pengym_tasks[gi]
+                task_name = getattr(task_obj, 'ip', f'task_{gi}')
+                all_per_task_rewards[task_name] = (
+                    cl_matrix.Rewards_current_task[local_i:local_i + 1]
+                    if hasattr(cl_matrix, 'Rewards_current_task')
+                    else []
+                )
+
+            # Save stream checkpoint
+            stream_ckpt = checkpoint_dir / f"stream_{topo_name}"
+            stream_agent.save(path=stream_ckpt)
+
+            stream_sr = stream_agent.eval_success_rate
+            stream_results[topo_name] = {
+                "agent": stream_agent,
+                "sr": stream_sr,
+                "cl_matrix": cl_matrix,
+                "num_tasks": len(stream_tasks),
+                "checkpoint": str(stream_ckpt),
+            }
+
+            logging.info(f"[Phase 3] Stream '{topo_name}': SR={stream_sr:.2%}")
+            stream_tb.close()
+
+        # ── Select best stream → θ_dual ──
+        best_topo = max(stream_results, key=lambda t: stream_results[t]["sr"])
+        self._theta_dual = stream_results[best_topo]["agent"]
+        self._stream_agents = {
+            t: d["agent"] for t, d in stream_results.items()
+        }
+        self._stream_results = stream_results
+
+        # Backward-compatible checkpoint mapping
+        self._tier_checkpoints = {
+            f"stream_{t}": d["checkpoint"] for t, d in stream_results.items()
+        }
+        self._dual_per_task_rewards = all_per_task_rewards
+
+        phase3_time = time.time() - t0
+
+        # Save final θ_dual model
+        phase3_model_dir = self.output_dir / "models" / "phase3_dual"
+        phase3_model_dir.mkdir(parents=True, exist_ok=True)
+        self._theta_dual.save(path=phase3_model_dir)
+
+        results = {
+            "mode": "intra_topology",
+            "num_streams": len(topology_streams),
+            "streams": {
+                t: {"sr": d["sr"], "num_tasks": d["num_tasks"],
+                    "checkpoint": d["checkpoint"]}
+                for t, d in stream_results.items()
+            },
+            "best_stream": best_topo,
+            "best_sr": stream_results[best_topo]["sr"],
+            "num_tasks": sum(d["num_tasks"] for d in stream_results.values()),
+            "train_time_s": round(phase3_time, 2),
+            "final_sr": self._theta_dual.eval_success_rate,
+            "final_reward": self._theta_dual.eval_rewards,
+            "model_dir": str(phase3_model_dir),
+        }
+        logging.info(f"[Phase 3] Complete: best='{best_topo}' "
+                     f"SR={results['best_sr']:.2%}, "
+                     f"time={results['train_time_s']}s")
+        return results
+
+    # ── Cross-Topology CRL (legacy) ──────────────────────────────────
+
+    def _phase3_cross_topology(self, eval_freq: int = 5) -> Dict[str, Any]:
+        """Phase 3 (legacy) — Cross-topology tier-grouped CRL.
 
         Training is split by tier groups (T1→T2→T3→T4) with a model
         checkpoint saved after each tier boundary.  Per-task episode
         rewards are collected for downstream learning-speed metrics.
         """
         logging.info("\n" + "=" * 60)
-        logging.info("[Phase 3] PenGym Fine-tuning → θ_dual")
+        logging.info("[Phase 3] Cross-Topology CRL Fine-tuning (legacy) → θ_dual")
         logging.info("=" * 60)
 
         if self._theta_dual is None:
@@ -626,6 +839,7 @@ class DualTrainer:
         self._dual_per_task_rewards = per_task_rewards
 
         results = {
+            "mode": "cross_topology",
             "num_tasks": len(self._pengym_tasks),
             "train_time_s": round(phase3_time, 2),
             "final_sr": self._theta_dual.eval_success_rate,
@@ -633,7 +847,7 @@ class DualTrainer:
             "model_dir": str(phase3_model_dir),
             "tier_checkpoints": tier_checkpoints,
         }
-        logging.info(f"[Phase 3] Complete: SR={results['final_sr']:.2%}, "
+        logging.info(f"[Phase 3] Complete (cross-topology): SR={results['final_sr']:.2%}, "
                       f"time={results['train_time_s']}s")
         return results
 
@@ -812,6 +1026,41 @@ class DualTrainer:
             logging.info(f"[Phase 4] F/Z summary: "
                          f"mean_F={fz['summary'].get('mean_forgetting', 'N/A')}, "
                          f"mean_Z={fz['summary'].get('mean_zero_shot_transfer', 'N/A')}")
+
+        # ── Per-stream evaluation (intra-topology mode) ──
+        stream_agents = getattr(self, '_stream_agents', {})
+        if stream_agents:
+            logging.info("[Phase 4] Evaluating per-stream agents...")
+            per_stream_results: Dict[str, Dict[str, Any]] = {}
+
+            for topo_name, stream_agent in stream_agents.items():
+                agent_key = f"stream_{topo_name}"
+
+                # Evaluate on OWN topology tasks only
+                own_scenarios = [
+                    sc for sc in self.pengym_scenarios
+                    if Path(sc).stem.startswith(topo_name)
+                ]
+                if own_scenarios:
+                    own_tasks = self._create_eval_tasks_from(own_scenarios)
+                    evaluator.register_agent(agent_key, stream_agent)
+                    own_eval = evaluator.evaluate_agent(
+                        agent_key, own_tasks, domain="pengym",
+                    )
+                    per_stream_results[topo_name] = {
+                        "own_topology": own_eval,
+                    }
+
+                # Evaluate on ALL PenGym tasks (cross-topology generalisation)
+                all_tasks = self._create_eval_tasks_from(self.pengym_scenarios)
+                cross_eval = evaluator.evaluate_agent(
+                    agent_key, all_tasks, domain="pengym",
+                )
+                per_stream_results.setdefault(topo_name, {})["cross_topology"] = cross_eval
+
+            results["per_stream"] = per_stream_results
+            logging.info(f"[Phase 4] Per-stream eval complete for "
+                         f"{len(per_stream_results)} topology streams.")
 
         # ── Learning-speed transfer (C) ──
         dual_rewards = getattr(self, '_dual_per_task_rewards', {})

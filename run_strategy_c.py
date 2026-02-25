@@ -132,6 +132,13 @@ def parse_args() -> argparse.Namespace:
              "or rules mode (regex patterns → episodes). "
              "See data/config/curriculum_episodes.json for format.",
     )
+    parser.add_argument(
+        "--training-mode", type=str, default="intra_topology",
+        choices=["intra_topology", "cross_topology"],
+        help="Phase 3 training mode: 'intra_topology' (per-topology CRL "
+             "streams, recommended) or 'cross_topology' (legacy "
+             "tier-grouped CRL). Default: intra_topology.",
+    )
 
     # ── Output ───────────────────────────────────────────────────────
     parser.add_argument(
@@ -161,6 +168,7 @@ def main():
     print(f"  Training:         {args.episodes} eps, {args.step_limit} steps, EWC λ={args.ewc_lambda}")
     print(f"  Seed:             {args.seed}")
     print(f"  Mode:             {'scratch-only (calibration)' if args.scratch_only else 'full pipeline'}")
+    print(f"  Training mode:    {args.training_mode}")
     print(f"  Episode config:   {args.episode_config or '(uniform ' + str(args.episodes) + ' eps)'}")
     print(f"  Output:           {args.output_dir}")
     print("=" * 70)
@@ -175,6 +183,13 @@ def main():
         # Strip description keys (comments)
         episode_config.pop("_description", None)
         print(f"  Loaded episode config: {list(episode_config.keys())}")
+
+    # Resolve training mode: CLI flag takes priority, then episode_config
+    training_mode = args.training_mode
+    if episode_config and "training_mode" in episode_config:
+        # CLI default can be overridden by config file
+        if args.training_mode == "intra_topology":  # unchanged from default
+            training_mode = episode_config["training_mode"]
 
     # Build DualTrainer
     trainer = DualTrainer(
@@ -196,6 +211,7 @@ def main():
         seed=args.seed,
         output_dir=args.output_dir,
         episode_config=episode_config,
+        training_mode=training_mode,
     )
 
     t0 = time.time()

@@ -50,5 +50,6 @@
     "T4": 3.0
   },
   "default_episodes": 1000,
-  "default_step_limit": 500
+  "default_step_limit": 500,
+  "training_mode": "intra_topology"
 }
