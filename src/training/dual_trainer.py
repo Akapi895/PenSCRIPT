@@ -208,6 +208,38 @@ class DualTrainer:
                          f"total={sum(schedule.values())} across {len(schedule)} tasks")
         return schedule if schedule else None
 
+    def _resolve_step_limit_schedule(self, scenario_paths: List[str]) -> Optional[Dict[int, int]]:
+        """Build a task_index → step_limit mapping from episode_config.
+
+        Reads ``base_step_limit`` from the config (keyed by base scenario name)
+        and falls back to ``default_step_limit`` or ``ppo_config.step_limit``.
+        Step limits are topology-dependent (not tier-dependent).
+
+        Returns None when no ``base_step_limit`` section exists.
+        """
+        if not self.episode_config:
+            return None
+
+        base_sl = self.episode_config.get("base_step_limit")
+        if not base_sl:
+            return None
+
+        import re
+        default_sl = self.episode_config.get("default_step_limit",
+                                              self.ppo_config.step_limit)
+        schedule: Dict[int, int] = {}
+        for idx, sc_path in enumerate(scenario_paths):
+            stem = Path(sc_path).stem
+            tier_match = re.search(r'_T(\d+)_', stem)
+            base_name = stem[:tier_match.start()] if tier_match else stem
+            schedule[idx] = base_sl.get(base_name, default_sl)
+
+        if schedule:
+            logging.info(f"[DualTrainer] Step-limit schedule: "
+                         f"min={min(schedule.values())}, max={max(schedule.values())} "
+                         f"across {len(schedule)} tasks")
+        return schedule if schedule else None
+
     # ==================================================================
     # Full Pipeline
     # ==================================================================
@@ -518,8 +550,9 @@ class DualTrainer:
 
         t0 = time.time()
 
-        # Resolve per-task episode schedule
+        # Resolve per-task episode & step-limit schedules
         episode_schedule = self._resolve_episode_schedule(self.pengym_scenarios)
+        step_limit_schedule = self._resolve_step_limit_schedule(self.pengym_scenarios)
 
         # ── Group tasks by tier for inter-tier checkpoints ──
         tier_groups: List[tuple] = []  # (tier_name, [global_task_indices])
@@ -538,13 +571,20 @@ class DualTrainer:
 
         for tier_name, task_indices in tier_groups:
             tier_tasks = [self._pengym_tasks[i] for i in task_indices]
-            # Build local episode schedule (0-indexed within this tier)
+            # Build local episode & step-limit schedules (0-indexed within this tier)
             tier_schedule = None
             if episode_schedule:
                 tier_schedule = {
                     local: episode_schedule[task_indices[local]]
                     for local in range(len(task_indices))
                     if task_indices[local] in episode_schedule
+                }
+            tier_sl_schedule = None
+            if step_limit_schedule:
+                tier_sl_schedule = {
+                    local: step_limit_schedule[task_indices[local]]
+                    for local in range(len(task_indices))
+                    if task_indices[local] in step_limit_schedule
                 }
 
             cl_matrix = self._theta_dual.train_continually(
@@ -553,6 +593,7 @@ class DualTrainer:
                 save_agent=False,
                 verbose=True,
                 episode_schedule=tier_schedule,
+                step_limit_schedule=tier_sl_schedule,
             )
 
             # Collect per-task episode rewards from CL_Train_matrix
@@ -988,12 +1029,14 @@ class DualTrainer:
 
         t0 = time.time()
         episode_schedule = self._resolve_episode_schedule(self.pengym_scenarios)
+        step_limit_schedule = self._resolve_step_limit_schedule(self.pengym_scenarios)
         cl_matrix = scratch_agent.train_continually(
             task_list=pengym_tasks,
             eval_freq=eval_freq,
             save_agent=False,
             verbose=True,
             episode_schedule=episode_schedule,
+            step_limit_schedule=step_limit_schedule,
         )
         train_time = time.time() - t0
 

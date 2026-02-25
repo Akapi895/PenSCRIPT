@@ -43,6 +43,7 @@ outputs/models/
 outputs/logs/
 outputs/tensorboard/
 outputs/strategy_c/
+outputs/sanity_check/
 runs/
 
 # ===========================

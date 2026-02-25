@@ -134,7 +134,8 @@ class Agent_CL():
                           eval_all_task=False,
                           save_agent=False,
                           verbose=False,
-                          episode_schedule=None):
+                          episode_schedule=None,
+                          step_limit_schedule=None):
 
         CL_Train_matrix = EasyDict({
             "signal": Matrix.Finished,
@@ -151,6 +152,14 @@ class Agent_CL():
         # for i in tqdm(range(len(target_list)), desc="Total", position=0):
         for i in range(len(task_list)):
             self.current_task_id = i
+
+            # ── Per-task step_limit override ──
+            if step_limit_schedule and i in step_limit_schedule:
+                sl = step_limit_schedule[i]
+                self.config.step_limit = sl
+                self.config.eval_step_limit = sl
+                logging.info(f"[CRL] Task {i}: step_limit={sl}")
+
             '''
             # ---------------------------------------------------------------------------- #
             #                               learn a new task                               #
