@@ -3,42 +3,45 @@
     "Per-scenario episode & step-limit configuration for curriculum training T1→T4.",
     "",
     "Multiplier mode: episodes = ceil(base_episodes[base] × tier_multiplier[T{n}]).",
-    "base_episodes derived from calibration (scratch-only, 2025-02-24).",
+    "base_episodes derived from calibration (scratch-only, 2025-02-24),",
+    "adjusted for 5.5 h CPU budget on 2026-02-25.",
+    "",
     "Tier multipliers account for overlay difficulty scaling:",
     "  T1 (prob≈0.99, cost=1) = easiest → 0.8× base",
     "  T2 (prob≈0.80, cost=2) = moderate → 1.0× base",
     "  T3 (prob≈0.60, cost=3) = hard    → 2.0× base",
     "  T4 (prob≈0.40, cost=4) = expert  → 3.0× base",
     "",
-    "base_step_limit: max steps per episode, scaled by topology complexity.",
-    "  tiny (3 hosts)      → 200 steps sufficient",
-    "  small (5-8 hosts)   → 300 steps for multi-hop paths",
-    "  medium (16 hosts)   → 500 steps for deep topologies",
+    "base_step_limit — CRITICAL for solvability:",
+    "  step_limit=200 proven for tiny (SR=100%).",
+    "  step_limit=200 FAILED for small (SR=2.5%) → raised to 500.",
+    "  medium-single-site (1 subnet, 16 hosts): 500 sufficient.",
+    "  medium/medium-multi-site (3+ subnets): 1000 for deep topologies.",
     "",
-    "medium & medium-multi-site: base SR=0.0 at 3000 eps standalone.",
-    "With T1 overlay (prob=0.99), topology is preserved but exploits trivialised",
-    "→ agent only needs to learn routing/path. Estimated 5000 base eps.",
-    "Curriculum transfer should reduce higher-tier requirements vs standalone."
+    "Time estimates (0.004 s/step worst-case, dual + scratch):",
+    "  6-scenario run (tiny + small-linear + med-ss × T1+T2): ~5.2 h",
+    "  medium/medium-multi-site excluded from first run:",
+    "    SR=0.0 in calibration, step_limit=1000 × 5000 eps too expensive."
   ],
   "base_episodes": {
     "tiny":               500,
     "tiny-hard":          500,
     "tiny-small":         500,
     "small-linear":       750,
-    "small-honeypot":    1500,
-    "medium-single-site": 2500,
-    "medium":             8000,
-    "medium-multi-site":  10000
+    "small-honeypot":    1000,
+    "medium-single-site": 1500,
+    "medium":             5000,
+    "medium-multi-site":  5000
   },
   "base_step_limit": {
     "tiny":               200,
     "tiny-hard":          200,
     "tiny-small":         200,
-    "small-linear":       300,
-    "small-honeypot":     300,
+    "small-linear":       500,
+    "small-honeypot":     500,
     "medium-single-site": 500,
-    "medium":             500,
-    "medium-multi-site":  500
+    "medium":            1000,
+    "medium-multi-site": 1000
   },
   "tier_multiplier": {
     "T1": 0.8,
@@ -47,5 +50,5 @@
     "T4": 3.0
   },
   "default_episodes": 1000,
-  "default_step_limit": 200
+  "default_step_limit": 500
 }

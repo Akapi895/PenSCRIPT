@@ -1,6 +1,6 @@
 # Tổng Hợp Sửa Đổi và Cải Tiến: Tích Hợp SCRIPT vào PenGym
 
-> **Cập nhật:** 2026-02-24  
+> **Cập nhật:** 2026-02-25  
 > **Phạm vi:** Toàn bộ cải tiến logic hệ thống và phương pháp trong quá trình tích hợp SCRIPT agent vào môi trường PenGym  
 > **Branch:** `strC_1`
 
@@ -26,6 +26,8 @@
   - [6. Domain Transfer Manager — Chuyển giao có kiểm soát qua pipeline 5 pha](#6-domain-transfer-manager--chuyển-giao-có-kiểm-soát-qua-pipeline-5-pha)
   - [7. CVE Pipeline — Mở rộng CVE và Curriculum Training](#7-cve-pipeline--mở-rộng-cve-và-curriculum-training)
   - [8. Hệ thống đánh giá đa chiều — Khắc phục ceiling/floor effect](#8-hệ-thống-đánh-giá-đa-chiều--khắc-phục-ceilingfloor-effect)
+  - [9. Per-Scenario Step Limit — Ngân sách bước tự động theo topology](#9-per-scenario-step-limit--ngân-sách-bước-tự-động-theo-topology)
+  - [10. TeeLogger — Lọc nhiễu console giữ nguyên log file](#10-teelogger--lọc-nhiễu-console-giữ-nguyên-log-file)
 - [III. Đánh giá mức độ hoàn thành](#iii-đánh-giá-mức-độ-hoàn-thành)
   - [1. Thành phần đã hoàn tất](#1-thành-phần-đã-hoàn-tất)
   - [2. Hạn chế còn tồn tại](#2-hạn-chế-còn-tồn-tại)
@@ -259,6 +261,8 @@ $$\text{episodes} = \lceil \text{base\_episodes}[\text{base\_name}] \times \text
 
 Base episodes xác định từ calibration (tiny=500, medium-single-site=2500), tier multiplier phản ánh độ khó (T1=0.8×, T2=1.0×, T3=2.0×, T4=3.0×). Scenario khó hơn được phân bổ nhiều episode hơn, scenario dễ không lãng phí budget.
 
+**Per-scenario step limit schedule**: Tương tự episode schedule, mỗi scenario có số bước tối đa riêng tuỳ topology (chi tiết tại §II.9).
+
 ### 8. Hệ thống đánh giá đa chiều — Khắc phục ceiling/floor effect
 
 Evaluator được thiết kế lại hoàn toàn để khắc phục các hạn chế ở Mục I.8:
@@ -303,30 +307,145 @@ Cho phân tích sâu khi BT outcome-level không đủ nhạy:
 
 Mỗi agent được eval trên **bộ adapter riêng** (cùng seed, cùng scenario) thay vì chia sẻ adapter. Giải quyết vấn đề NASim lưu dimension indices dưới dạng class attributes — khi scenario B load sau scenario A, class vars bị ghi đè corruption. Fresh adapter set per agent đảm bảo eval environment identically initialized.
 
+#### 8.7 Forgetting Matrix (F) và Zero-Shot Transfer Vector (Z)
+
+Đo catastrophic forgetting và khả năng zero-shot transfer xuyên curriculum:
+
+- **Forgetting Matrix $F$**: Ma trận $n \times m$ ($n$ tasks, $m$ tiers). $F_{i,j}$ đo mức NR suy giảm của task $i$ sau khi agent học tier $j$ so với ngay sau khi học chính task $i$:
+
+$$F_{i,j} = NR_{i}^{\text{after own tier}} - NR_{i}^{\text{after tier } j}, \quad j > \text{own tier}$$
+
+Giá trị dương = forgetting, giá trị âm = backward reinforcement.
+
+- **Zero-Shot Transfer Vector $Z$**: $Z_i = NR_{i}^{\text{before own tier}}$ — đo khả năng agent giải task $i$ **trước khi** được train trên task đó (chỉ dựa vào kiến thức từ các tier trước). $Z_i > 0$ nghĩa kiến thức curriculum tích luỹ đã giúp agent generalise.
+
+- **Summary statistics**: `mean_F`, `max_F`, `mean_Z`, `tasks_with_positive_Z` — tổng hợp nhanh mức forgetting và transfer hiệu quả.
+
+Implementation: `StrategyCEvaluator.compute_forgetting_matrix()` nhận kết quả eval tại mỗi tier checkpoint (do Phase 3 lưu sau mỗi tier group), tính ma trận $F$ và vector $Z$ từ NR values.
+
+#### 8.8 Learning-Speed Transfer (TTT + AUC)
+
+Đo tốc độ học — phân biệt agent đã biết giải nhanh (transfer hiệu quả) vs agent phải học lâu:
+
+- **Time-To-Threshold (TTT)**: Episode đầu tiên đạt reward > 0 (penetration thành công đầu tiên). TTT thấp hơn = transfer giúp agent "khởi động" nhanh hơn.
+- **AUC (Area Under Curve)**: Mean reward xuyên suốt training. AUC cao hơn = agent khai thác kiến thức transfer tốt hơn.
+
+So sánh giữa θ_dual và θ_scratch:
+
+$$\text{TTT speedup} = \frac{TTT_{\text{scratch}}}{TTT_{\text{dual}}}$$
+$$\text{AUC ratio} = \frac{AUC_{\text{dual}}}{AUC_{\text{scratch}}}$$
+
+TTT speedup > 1 nghĩa dual-trained agent bắt đầu exploit thành công sớm hơn. AUC ratio > 1 nghĩa dual-trained agent học hiệu quả hơn xuyên suốt quá trình training.
+
+Implementation: `StrategyCEvaluator.compute_learning_speed()` nhận per-episode rewards của cả hai agents (thu thập trong Phase 3).
+
+#### 8.9 MetricStore — Lưu trữ metric có cấu trúc
+
+Tất cả metric được lưu vào một file JSON duy nhất (`metric_store.json`) với cấu trúc:
+
+```json
+{
+  "metadata": { "seed": 42 },
+  "checkpoints": {
+    "after_T1": { "task_name": { "sr": 0.95, "nr": 0.87, "eta": 0.6 } },
+    "after_T2": { ... },
+    "final": { ... }
+  },
+  "training_curves": {
+    "task_name": { "episode_rewards": [...], "ttt": 15 }
+  },
+  "forgetting": { "F_matrix": [...], "Z_vector": [...] },
+  "transfer": { "FT_SR": 0.12, "BT_eta": -0.05, ... }
+}
+```
+
+MetricStore phục vụ ba mục đích: **(1)** reproducibility — toàn bộ metrics từ một experiment run được persist, không phụ thuộc log parsing; **(2)** downstream analysis — load lại bằng `MetricStore.load()` để so sánh cross-seed hoặc cross-config; **(3)** export — cung cấp dữ liệu cho FZComputer và CECurveGenerator.
+
+Implementation: `MetricStore` class trong `src/evaluation/metric_store.py`.
+
+#### 8.10 Continual Evaluation Curves (CE Curves)
+
+Đo performance trajectory xuyên suốt curriculum thay vì chỉ đo tại điểm cuối:
+
+Sau mỗi tier $T_j$, agent được eval trên **tất cả** tasks đã gặp. Tạo ra bảng tasks × checkpoints cho từng metric (SR, NR, η). CE curves cho thấy:
+
+- Task nào bị forgetting: NR giảm dần theo tier.
+- Task nào được reinforcement: NR tăng nhờ kiến thức cross-task.
+- Tốc độ adaptation: NR tại checkpoint đầu tiên vs cuối cùng.
+
+Export CSV: `CECurveGenerator.to_csv(curves, metric="nr")` → file `ce_curves_nr.csv` (tasks × checkpoints), sẵn sàng cho matplotlib/TensorBoard plotting.
+
+Implementation: `CECurveGenerator` class trong `src/evaluation/metric_store.py`. Curves được extract từ MetricStore data tại Phase 4.
+
+#### 8.11 Heldout Evaluation (Generalization Test)
+
+Ngoài eval trên training scenarios, hệ thống hỗ trợ đánh giá trên **heldout scenarios** — các PenGym scenario agent chưa từng train. Đo khả năng generalise của policy ra ngoài distribution đã thấy.
+
+CLI: `--heldout-scenarios scenario_A.yml scenario_B.yml`. Phase 4 tạo fresh adapters per agent cho heldout set, chạy multi-episode eval K=20, và tính riêng `heldout_transfer_metrics` (FT_SR, FT_NR, FT_eta) trên bộ heldout. Kết quả lưu riêng trong report JSON.
+
+#### 8.12 Export và Reporting
+
+Phase 4 tự động xuất ra:
+
+| Output file                   | Nội dung                                                       |
+| ----------------------------- | -------------------------------------------------------------- |
+| `strategy_c_eval_report.json` | Full evaluation report — per-agent, per-task, transfer metrics |
+| `metric_store.json`           | Structured metrics for reproducibility                         |
+| `forgetting_matrix.csv`       | F matrix + Z vector, import được vào Excel/pandas              |
+| `ce_curves_nr.csv`            | CE curves (NR) — tasks × checkpoints                           |
+| Console report                | Formatted table: Agent × Domain × SR/NR/η/Reward               |
+
+Console report format:
+
+```
+================================================================
+Strategy C — Agent Comparison Report
+================================================================
+Agent                     | Domain   |    SR |    NR |     η |   Reward | Tasks
+--------------------------------------------------------------------------------
+theta_sim_unified         | pengym   |  0.0% | -0.05 |   N/A |    -15.3 |     8
+theta_dual                | pengym   | 45.0% |  0.62 | 0.450 |    892.5 |     8
+theta_pengym_scratch      | pengym   | 35.0% |  0.48 | 0.320 |    650.1 |     8
+
+Transfer Metrics:
+  FT_SR: +0.1000
+  FT_NR: +0.1400
+  FT_eta: +0.1300
+  BT_SR: -0.0500
+  BT_KL: 0.023400
+```
+
 ---
 
 ## III. Đánh giá mức độ hoàn thành
 
 ### 1. Thành phần đã hoàn tất
 
-| #   | Cải tiến                           | Trạng thái              | Mô tả                                                                                                  |
-| --- | ---------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| 1   | Unified State Encoder (1540-dim)   | ✅ Hoàn chỉnh, tích hợp | SBERT encoding thống nhất + canonicalization, tích hợp xuyên suốt pipeline HOST → PenGym wrapper → PPO |
-| 2   | Hierarchical Action Space (16-dim) | ✅ Hoàn chỉnh, tích hợp | 2064 CVE → 16 nhóm, CVESelector 4 strategies, tích hợp vào HOST + PenGym                               |
-| 3   | SingleHostPenGymWrapper            | ✅ Hoàn chỉnh, tích hợp | Multi→single host, auto subnet scan, failure rotation, unified encoding                                |
-| 4   | PenGymHostAdapter                  | ✅ Hoàn chỉnh, tích hợp | Duck-typing HOST, factory method, lazy init, float reward                                              |
-| 5   | Unified Reward Normalizer          | ✅ Hoàn chỉnh, tích hợp | [-1,+1] cho cả sim và PenGym, tương thích Fisher cross-domain                                          |
-| 6   | Domain Transfer Manager            | ✅ Hoàn chỉnh, tích hợp | 3 strategies (conservative/aggressive/cautious), Fisher discount, warmup                               |
-| 7   | Pipeline Phase 0→4 (DualTrainer)   | ✅ Hoàn chỉnh, tích hợp | Validation → Sim CRL → Transfer → PenGym fine-tune → Eval                                              |
-| 8   | StrategyCEvaluator                 | ✅ Hoàn chỉnh, tích hợp | Multi-episode K=20, SR/NR/η/SE, FT/BT đa chiều, policy-level metrics                                   |
-| 9   | CVE Difficulty Grading             | ✅ Hoàn chỉnh           | 1985 CVE → 4 tiers, composite score                                                                    |
-| 10  | Template + Overlay Scenario        | ✅ Hoàn chỉnh           | 8 base topologies, 96+ compiled overlay scenarios                                                      |
-| 11  | Curriculum Training T1→T4          | ✅ Hoàn chỉnh, tích hợp | Per-task episode schedule, multiplier mode, JSON config                                                |
-| 12  | Policy-level BT metrics            | ✅ Hoàn chỉnh, tích hợp | BT_KL, BT_fisher_dist tích hợp vào Phase 4 evaluator                                                   |
-| 13  | CRL 5 trụ cột trên PenGym          | ✅ Hoạt động            | Teacher Guidance, KL Imitation, KD, Retrospection, EWC — chạy trên PenGym qua adapter                  |
-| 14  | EWC Fisher discount (β)            | ✅ Hoàn chỉnh, tích hợp | `discount_fisher(β)` nới lỏng Fisher constraint khi chuyển domain                                      |
-| 15  | Fresh eval adapters per agent      | ✅ Hoàn chỉnh           | Giải quyết NASim class-level state leakage trong Phase 4                                               |
-| 16  | Calibration framework              | ✅ Hoàn chỉnh           | 32 calibration runs, xác định base episodes và saturation point cho 8 scenarios                        |
+| #   | Cải tiến                             | Trạng thái              | Mô tả                                                                                                  |
+| --- | ------------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | Unified State Encoder (1540-dim)     | ✅ Hoàn chỉnh, tích hợp | SBERT encoding thống nhất + canonicalization, tích hợp xuyên suốt pipeline HOST → PenGym wrapper → PPO |
+| 2   | Hierarchical Action Space (16-dim)   | ✅ Hoàn chỉnh, tích hợp | 2064 CVE → 16 nhóm, CVESelector 4 strategies, tích hợp vào HOST + PenGym                               |
+| 3   | SingleHostPenGymWrapper              | ✅ Hoàn chỉnh, tích hợp | Multi→single host, auto subnet scan, failure rotation, unified encoding                                |
+| 4   | PenGymHostAdapter                    | ✅ Hoàn chỉnh, tích hợp | Duck-typing HOST, factory method, lazy init, float reward                                              |
+| 5   | Unified Reward Normalizer            | ✅ Hoàn chỉnh, tích hợp | [-1,+1] cho cả sim và PenGym, tương thích Fisher cross-domain                                          |
+| 6   | Domain Transfer Manager              | ✅ Hoàn chỉnh, tích hợp | 3 strategies (conservative/aggressive/cautious), Fisher discount, warmup                               |
+| 7   | Pipeline Phase 0→4 (DualTrainer)     | ✅ Hoàn chỉnh, tích hợp | Validation → Sim CRL → Transfer → PenGym fine-tune → Eval                                              |
+| 8   | StrategyCEvaluator                   | ✅ Hoàn chỉnh, tích hợp | Multi-episode K=20, SR/NR/η/SE, FT/BT đa chiều, policy-level metrics                                   |
+| 9   | CVE Difficulty Grading               | ✅ Hoàn chỉnh           | 1985 CVE → 4 tiers, composite score                                                                    |
+| 10  | Template + Overlay Scenario          | ✅ Hoàn chỉnh           | 8 base topologies, 96+ compiled overlay scenarios                                                      |
+| 11  | Curriculum Training T1→T4            | ✅ Hoàn chỉnh, tích hợp | Per-task episode + step_limit schedule, multiplier mode, JSON config                                   |
+| 12  | Policy-level BT metrics              | ✅ Hoàn chỉnh, tích hợp | BT_KL, BT_fisher_dist tích hợp vào Phase 4 evaluator                                                   |
+| 13  | CRL 5 trụ cột trên PenGym            | ✅ Hoạt động            | Teacher Guidance, KL Imitation, KD, Retrospection, EWC — chạy trên PenGym qua adapter                  |
+| 14  | EWC Fisher discount (β)              | ✅ Hoàn chỉnh, tích hợp | `discount_fisher(β)` nới lỏng Fisher constraint khi chuyển domain                                      |
+| 15  | Fresh eval adapters per agent        | ✅ Hoàn chỉnh           | Giải quyết NASim class-level state leakage trong Phase 4                                               |
+| 16  | Calibration framework                | ✅ Hoàn chỉnh           | 32 calibration runs, xác định base episodes và saturation point cho 8 scenarios                        |
+| 17  | Per-scenario step_limit              | ✅ Hoàn chỉnh, tích hợp | Step limit theo topology (tiny=200, small=300, medium=500), centralized JSON config                    |
+| 18  | TeeLogger console filtering          | ✅ Hoàn chỉnh, tích hợp | 6 regex patterns lọc env noise khỏi console, giữ nguyên trong log file                                 |
+| 19  | MetricStore (structured persistence) | ✅ Hoàn chỉnh, tích hợp | JSON store cho checkpoints, training curves, forgetting, transfer — `MetricStore.load()` cho analysis  |
+| 20  | FZComputer (F/Z matrix export)       | ✅ Hoàn chỉnh, tích hợp | Forgetting matrix + Zero-shot vector → CSV, summary text                                               |
+| 21  | CECurveGenerator (CE curves)         | ✅ Hoàn chỉnh, tích hợp | Continual Evaluation curves (NR/SR/η × checkpoints) → CSV cho plotting                                 |
+| 22  | Heldout evaluation                   | ✅ Hoàn chỉnh, tích hợp | Eval trên unseen scenarios, riêng biệt heldout FT metrics                                              |
+| 23  | Learning-speed transfer (TTT + AUC)  | ✅ Hoàn chỉnh, tích hợp | Time-To-Threshold speedup và AUC ratio giữa θ_dual vs θ_scratch                                        |
 
 ### 2. Hạn chế còn tồn tại
 
@@ -336,7 +455,7 @@ Mỗi agent được eval trên **bộ adapter riêng** (cùng seed, cùng scena
 `UnifiedNormalizer(source='pengym')` dùng `min_reward=-3.0` và `max_reward=100` cố định. Các scenario khác nhau có cost structure khác nhau — scenario với exploit cost=4 (tier T4) sẽ có min_reward thực tế thấp hơn -3. Ảnh hưởng: reward dương trung gian (scan thành công, pivot host compromised) bị co lại quá nhỏ so với reward âm → gradient dương yếu. Fisher information cho positive-reward parameters bị đánh giá thấp → EWC ít bảo vệ → dễ bị overwrite khi chuyển domain. Mức ảnh hưởng trung bình — chỉ đáng kể khi EWC lambda lớn.
 
 **b) Medium và medium-multi-site chưa solvable bằng standalone DQN:**
-Calibration cho thấy SR=0.0 tại mọi episode budget (500–3000) cho 2 scenario này. |A|=192 + multi-subnet quá khó cho exploration budget hiện tại. Curriculum T1→T4 (giảm exploit difficulty) được kỳ vọng giúp agent học routing/path ở T1 trước khi đối mặt exploit difficulty ở T3/T4, nhưng chưa có kết quả thực nghiệm xác nhận. Nếu curriculum vẫn không đủ, cần exploration bonus hoặc action masking.
+Calibration cho thấy SR=0.0 tại mọi episode budget (500–3000) cho 2 scenario này. |A|=192 + multi-subnet quá khó cho exploration budget hiện tại. Per-scenario step_limit (medium=500) giải quyết phần ngân sách bước, nhưng action space vẫn quá lớn. Curriculum T1→T4 (giảm exploit difficulty) được kỳ vọng giúp agent học routing/path ở T1 trước khi đối mặt exploit difficulty ở T3/T4, nhưng chưa có kết quả thực nghiệm xác nhận. Nếu curriculum vẫn không đủ, cần exploration bonus hoặc action masking.
 
 **c) Canonicalization có thể mất thông tin version:**
 Aggressive canonicalization (`Ubuntu 14.04 → linux`, `Ubuntu 22.04 → linux`) loại bỏ hoàn toàn thông tin phiên bản OS. Hai phiên bản này có vulnerability profile rất khác nhau nhưng cho cùng embedding → policy không phân biệt được. Trade-off hiện tại ưu tiên cross-domain consistency (giảm domain gap) trên thông tin version (chấp nhận mất granularity). Nếu performance thấp do OS confusion, cần thêm version granularity.
@@ -344,8 +463,17 @@ Aggressive canonicalization (`Ubuntu 14.04 → linux`, `Ubuntu 22.04 → linux`)
 **d) Kiểm chứng PenGym real execution (KVM) chưa thực hiện:**
 Toàn bộ pipeline đã chạy trên PenGym ở chế độ NASim simulation (xác suất). Chưa verify end-to-end trên CyRIS cyber range thực (KVM VMs + nmap + Metasploit RPC). Real execution có thêm failure modes (timeout, session loss, network issues) mà sim không mô phỏng. Đây là hạn chế ở tầng deployment, không ảnh hưởng đến phương pháp nhưng cần verify trước khi claim sim-to-real.
 
+**e) Thực nghiệm toàn diện chưa hoàn tất:**
+Pipeline đã chạy thành công end-to-end trên sanity checks (tiny, step_limit=200 → SR=100%, η=0.60). Thí nghiệm đầu tiên trên 8 scenarios (4 base × 2 tiers) thất bại do step_limit=100 quá thấp — đã khắc phục bằng per-scenario step_limit. Thí nghiệm diện rộng với step_limit tự động đang cần chạy lại để thu thập baseline metrics sạch.
+
 #### 2.2 Đánh giá tổng thể
 
-Hệ thống đã hoàn thành **đầy đủ pipeline end-to-end** cho bài toán cross-domain continual learning từ simulation sang PenGym: state unification (đã xác nhận cross-domain cosine = 1.0), action abstraction (16-dim, 100% coverage), domain transfer có kiểm soát (3 strategies), CRL 5 trụ cột hoạt động xuyên domain, curriculum training theo gradient độ khó, và hệ thống đánh giá đa chiều immune ceiling/floor effect.
+Hệ thống đã hoàn thành **đầy đủ pipeline end-to-end** cho bài toán cross-domain continual learning từ simulation sang PenGym:
 
-Khoảng cách còn lại tập trung ở hai chiều: **(1)** thực nghiệm quy mô lớn chưa hoàn tất (curriculum T1→T4 trên 6+ base scenarios đang chạy, medium/medium-multi-site cần chiến lược exploration bổ sung) và **(2)** một số hardcode trong reward normalizer cần adaptive hóa. Về mặt phương pháp và kiến trúc, hệ thống đã sẵn sàng cho thực nghiệm toàn diện.
+- **Representation**: State unification 1540-dim (cross-domain cosine = 1.0), action abstraction 16-dim (100% coverage)
+- **Training**: Curriculum T1→T4 với per-task episode + step_limit schedule, CRL 5 trụ cột hoạt động xuyên domain
+- **Transfer**: Domain Transfer Manager 3 strategies (conservative/aggressive/cautious), Fisher discount β
+- **Evaluation**: Hệ thống đánh giá đa chiều gồm 23 thành phần — multi-episode SR/NR/η, FT/BT 3 chiều, policy-level BT (KL + Fisher distance), Forgetting matrix + Zero-shot vector, Learning-speed transfer (TTT + AUC), CE curves, MetricStore persistence, heldout generalization, isolated eval environments
+- **Infrastructure**: TeeLogger console filtering, per-scenario step_limit, centralized JSON config
+
+Khoảng cách còn lại tập trung ở: **(1)** thực nghiệm diện rộng cần chạy lại với per-scenario step_limit (đang chuẩn bị), **(2)** medium/medium-multi-site có thể cần exploration bonus bổ sung, và **(3)** reward normalizer cần adaptive hoá cho extreme cost scenarios. Về mặt phương pháp và kiến trúc, hệ thống đã sẵn sàng cho thực nghiệm toàn diện.
