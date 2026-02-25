@@ -1,0 +1,15 @@
+task \ after_tier,T1,T2
+tiny_T1_000,,0.1864
+tiny_T2_000,,0.2328
+small-linear_T1_000,,0.0000
+small-linear_T2_000,,0.0000
+medium-single-site_T1_000,,0.1222
+medium-single-site_T2_000,,0.0000
+
+task,zero_shot_transfer
+tiny_T1_000,
+tiny_T2_000,
+small-linear_T1_000,
+small-linear_T2_000,
+medium-single-site_T1_000,
+medium-single-site_T2_000,
