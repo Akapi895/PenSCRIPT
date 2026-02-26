@@ -1,0 +1,137 @@
+{
+  "metadata": {
+    "seed": 42
+  },
+  "checkpoints": {
+    "after_stream_tiny": {
+      "tiny_T1_000": {
+        "sr": 0.0,
+        "nr": -0.33509401709605574,
+        "eta": null
+      },
+      "tiny_T2_000": {
+        "sr": 1.0,
+        "nr": -0.00010256405569549223,
+        "eta": 0.75
+      },
+      "tiny_T3_000": {
+        "sr": 0.0,
+        "nr": -0.3418803418803425,
+        "eta": null
+      },
+      "tiny_T4_000": {
+        "sr": 0.0,
+        "nr": -0.3410085468618287,
+        "eta": null
+      }
+    },
+    "final": {
+      "tiny_T1_000": {
+        "sr": 0.0,
+        "nr": -0.33509401709605574,
+        "eta": null
+      },
+      "tiny_T2_000": {
+        "sr": 1.0,
+        "nr": -0.00018803414116557777,
+        "eta": 0.7458333333333333
+      },
+      "tiny_T3_000": {
+        "sr": 0.0,
+        "nr": -0.3418803418803425,
+        "eta": null
+      },
+      "tiny_T4_000": {
+        "sr": 0.0,
+        "nr": -0.3423760682293501,
+        "eta": null
+      }
+    }
+  },
+  "training_curves": {
+    "tiny_T1_000": {
+      "episode_rewards": [
+        -0.019999990860620986
+      ],
+      "ttt": 1
+    },
+    "tiny_T2_000": {
+      "episode_rewards": [
+        -0.019999990860620986
+      ],
+      "ttt": 1
+    },
+    "tiny_T3_000": {
+      "episode_rewards": [
+        -66.6666666666668
+      ],
+      "ttt": 1
+    },
+    "tiny_T4_000": {
+      "episode_rewards": [
+        -67.36333330472324
+      ],
+      "ttt": 1
+    }
+  },
+  "forgetting": {
+    "F_matrix": [
+      [
+        NaN
+      ],
+      [
+        NaN
+      ],
+      [
+        NaN
+      ],
+      [
+        NaN
+      ]
+    ],
+    "Z_vector": [
+      NaN,
+      NaN,
+      NaN,
+      NaN
+    ],
+    "nr_after": [
+      [
+        -0.33509401709605574
+      ],
+      [
+        -0.00010256405569549223
+      ],
+      [
+        -0.3418803418803425
+      ],
+      [
+        -0.3410085468618287
+      ]
+    ],
+    "task_names": [
+      "tiny_T1_000",
+      "tiny_T2_000",
+      "tiny_T3_000",
+      "tiny_T4_000"
+    ],
+    "tier_names": [
+      "stream_tiny"
+    ],
+    "summary": {
+      "mean_forgetting": null,
+      "max_forgetting": null,
+      "mean_zero_shot_transfer": null,
+      "tasks_with_positive_transfer": 0
+    }
+  },
+  "transfer": {
+    "FT_SR": -0.5,
+    "transfer_ratio": 0.3333333333333333,
+    "FT_NR": 0.009239316190409241,
+    "FT_eta": 0.04328282828282837,
+    "FT_SR_significant": true,
+    "BT_SR": -0.16666666666666663,
+    "zero_shot_sr": 0.0
+  }
+}
