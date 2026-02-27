@@ -1,0 +1,36 @@
+{
+  "_description": [
+    "3× extended episode budget for scratch-only baseline (P0.2 — R11).",
+    "All base_episodes tripled from curriculum_episodes.json.",
+    "Step limits unchanged — we want to test if more training time helps scratch agent."
+  ],
+  "base_episodes": {
+    "tiny": 1500,
+    "tiny-hard": 1500,
+    "tiny-small": 1500,
+    "small-linear": 2250,
+    "small-honeypot": 3000,
+    "medium-single-site": 4500,
+    "medium": 15000,
+    "medium-multi-site": 15000
+  },
+  "base_step_limit": {
+    "tiny": 200,
+    "tiny-hard": 200,
+    "tiny-small": 200,
+    "small-linear": 500,
+    "small-honeypot": 500,
+    "medium-single-site": 500,
+    "medium": 1000,
+    "medium-multi-site": 1000
+  },
+  "tier_multiplier": {
+    "T1": 0.8,
+    "T2": 1.0,
+    "T3": 2.0,
+    "T4": 3.0
+  },
+  "default_episodes": 3000,
+  "default_step_limit": 500,
+  "training_mode": "intra_topology"
+}

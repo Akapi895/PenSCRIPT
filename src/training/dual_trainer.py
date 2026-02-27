@@ -293,12 +293,16 @@ class DualTrainer:
         self,
         skip_phase0: bool = False,
         eval_freq: int = 5,
+        resume_from: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Run the complete Phase 0→1→2→3→4 pipeline.
 
         Args:
             skip_phase0: Skip validation checks (not recommended).
             eval_freq: Evaluation frequency during training phases.
+            resume_from: Path to a previous output directory to resume
+                from.  Loads Phase 1 model, redoes Phase 2 (fast),
+                and skips already-saved stream checkpoints in Phase 3.
 
         Returns:
             Comprehensive results dict.
@@ -308,16 +312,49 @@ class DualTrainer:
         logging.info("Strategy C — Dual Training Pipeline")
         logging.info("=" * 70)
 
+        # ── Resume support ───────────────────────────────────────────
+        skip_streams: Optional[Dict[str, str]] = None
+        if resume_from:
+            resume_dir = Path(resume_from)
+            logging.info(f"[Resume] Resuming from {resume_dir}")
+
+            # Load Phase 1 model instead of retraining
+            phase1_model = resume_dir / "models" / "phase1_sim"
+            if not phase1_model.exists():
+                raise FileNotFoundError(
+                    f"Phase 1 model not found at {phase1_model}")
+            logging.info(f"[Resume] Loading Phase 1 model from {phase1_model}")
+
+            # Detect completed stream checkpoints
+            ckpt_dir = resume_dir / "models" / "stream_checkpoints"
+            skip_streams = {}
+            if ckpt_dir.exists():
+                for d in sorted(ckpt_dir.iterdir()):
+                    if d.is_dir() and d.name.startswith("stream_"):
+                        topo = d.name[len("stream_"):]
+                        if (d / "PPO-actor.pt").exists():
+                            skip_streams[topo] = str(d)
+                            logging.info(
+                                f"[Resume] Found completed stream: "
+                                f"{topo} → {d}")
+            logging.info(f"[Resume] Will skip {len(skip_streams)} "
+                         f"completed streams: {list(skip_streams.keys())}")
+
         # Phase 0: Validation
-        if not skip_phase0:
+        if not skip_phase0 and not resume_from:
             phase0_results = self.phase0_validation()
             self.results["phase0"] = phase0_results
         else:
-            logging.warning("[Phase 0] Skipped — running without validation")
+            reason = "resume" if resume_from else "user flag"
+            logging.warning(f"[Phase 0] Skipped ({reason})")
             self.results["phase0"] = {"skipped": True}
 
-        # Phase 1: Simulation training
-        phase1_results = self.phase1_sim_training(eval_freq=eval_freq)
+        # Phase 1: Simulation training (or load from resume)
+        if resume_from:
+            phase1_results = self._phase1_load_from_resume(
+                resume_dir, eval_freq=eval_freq)
+        else:
+            phase1_results = self.phase1_sim_training(eval_freq=eval_freq)
         self.results["phase1"] = phase1_results
 
         # Phase 2: Domain transfer
@@ -325,7 +362,8 @@ class DualTrainer:
         self.results["phase2"] = phase2_results
 
         # Phase 3: PenGym fine-tuning
-        phase3_results = self.phase3_pengym_finetuning(eval_freq=eval_freq)
+        phase3_results = self.phase3_pengym_finetuning(
+            eval_freq=eval_freq, skip_streams=skip_streams)
         self.results["phase3"] = phase3_results
 
         # Phase 4: Evaluation
@@ -423,6 +461,84 @@ class DualTrainer:
     # ==================================================================
     # Phase 1: Simulation Training
     # ==================================================================
+
+    def _phase1_load_from_resume(
+        self, resume_dir: Path, eval_freq: int = 5,
+    ) -> Dict[str, Any]:
+        """Load Phase 1 model from a previous run instead of retraining.
+
+        Builds sim_tasks (needed for Phase 4 BT eval) and loads the saved
+        model weights, avoiding the expensive Phase 1 CRL training.
+        """
+        logging.info("\n" + "=" * 60)
+        logging.info("[Phase 1] RESUME — Loading sim model from disk")
+        logging.info("=" * 60)
+
+        from src.agent.actions import Action
+
+        time_flag = datetime.now().strftime("%Y%m%d_%H%M%S")
+        sas = ServiceActionSpace(action_class=Action)
+
+        # Build sim tasks (still needed for Phase 4 BT eval)
+        sim_tasks = []
+        sim_reward_norm = UnifiedNormalizer(source='simulation')
+        for sc_path in self.sim_scenarios:
+            sc_path = Path(sc_path)
+            with open(sc_path, 'r', encoding='utf-8') as f:
+                env_data_list = json.load(f)
+            for host_data in env_data_list:
+                ip = host_data["ip"]
+                vul = host_data["vulnerability"][0]
+                if vul not in Action.Vul_cve_set:
+                    continue
+                t = HOST(ip, env_data=host_data, env_file=sc_path,
+                         service_action_space=sas,
+                         unified_encoder=self.unified_encoder,
+                         reward_normalizer=sim_reward_norm)
+                sim_tasks.append(t)
+        self._sim_tasks = sim_tasks
+        logging.info(f"  Sim tasks: {len(sim_tasks)} hosts (for Phase 4 eval)")
+
+        # Create agent and load weights
+        tb_phase1 = SummaryWriter(
+            log_dir=str(self.tb_dir / "phase1_sim"))
+        sim_agent = Agent_CL(
+            time_flag=time_flag,
+            logger=tb_phase1,
+            use_wandb=False,
+            method="script",
+            policy_name="PPO",
+            seed=self.seed,
+            config=copy.deepcopy(self.ppo_config),
+            cl_config=copy.deepcopy(self.script_config),
+        )
+
+        phase1_model_dir = resume_dir / "models" / "phase1_sim"
+        sim_agent.load(path=phase1_model_dir)
+        self._theta_sim_unified = sim_agent
+        logging.info(f"  Loaded model from {phase1_model_dir}")
+
+        # Copy model to new output dir (skip if same path)
+        new_model_dir = self.output_dir / "models" / "phase1_sim"
+        if new_model_dir.resolve() != phase1_model_dir.resolve():
+            new_model_dir.mkdir(parents=True, exist_ok=True)
+            import shutil
+            for f in phase1_model_dir.iterdir():
+                if f.is_file():
+                    shutil.copy2(f, new_model_dir / f.name)
+            logging.info(f"  Copied model → {new_model_dir}")
+        else:
+            logging.info(f"  Same output dir — no copy needed")
+
+        tb_phase1.close()
+
+        results = {
+            "num_tasks": len(sim_tasks),
+            "resumed_from": str(phase1_model_dir),
+            "model_dir": str(new_model_dir),
+        }
+        logging.info("[Phase 1] Resume complete")
+        return results
 
     def phase1_sim_training(self, eval_freq: int = 5) -> Dict[str, Any]:
         """Phase 1 — Train SCRIPT CRL on simulation with unified encoding → θ_uni.
@@ -571,7 +687,11 @@ class DualTrainer:
     # Phase 3: PenGym Fine-tuning
     # ==================================================================
 
-    def phase3_pengym_finetuning(self, eval_freq: int = 5) -> Dict[str, Any]:
+    def phase3_pengym_finetuning(
+        self,
+        eval_freq: int = 5,
+        skip_streams: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
         """Phase 3 — Dispatch to intra-topology or cross-topology CRL.
 
         The ``training_mode`` attribute (set from episode_config or CLI)
@@ -579,21 +699,35 @@ class DualTrainer:
 
         - ``intra_topology`` (default) — per-topology independent CRL streams.
         - ``cross_topology`` — legacy tier-grouped CRL across all topologies.
+
+        Args:
+            skip_streams: Mapping of topology name → checkpoint path for
+                streams that were already trained (resume mode).
         """
         mode = getattr(self, 'training_mode', 'intra_topology')
         if mode == 'cross_topology':
             return self._phase3_cross_topology(eval_freq=eval_freq)
-        return self._phase3_intra_topology(eval_freq=eval_freq)
+        return self._phase3_intra_topology(
+            eval_freq=eval_freq, skip_streams=skip_streams)
 
     # ── Intra-Topology CRL (default) ─────────────────────────────────
 
-    def _phase3_intra_topology(self, eval_freq: int = 5) -> Dict[str, Any]:
+    def _phase3_intra_topology(
+        self,
+        eval_freq: int = 5,
+        skip_streams: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
         """Phase 3 — Fine-tune via Intra-Topology CRL.
 
         Each topology gets an independent CRL stream forked from the
         Phase 2 transferred agent.  Tasks within a stream are ordered
         T1→T2→T3→T4 (intra-topology curriculum).  The best-performing
         stream's agent becomes θ_dual for Phase 4.
+
+        Args:
+            skip_streams: ``{topo_name: checkpoint_path}`` for already-
+                completed streams (resume mode).  These are loaded from
+                disk instead of retrained.
         """
         logging.info("\n" + "=" * 60)
         logging.info("[Phase 3] Intra-Topology CRL Fine-tuning → θ_dual")
@@ -626,11 +760,35 @@ class DualTrainer:
 
         # ── Sequential stream training ──
         for topo_name, stream_entries in topology_streams.items():
+            global_indices = [e[0] for e in stream_entries]
+
             logging.info(f"\n{'─' * 50}")
             logging.info(f"[Phase 3] Stream '{topo_name}': "
                          f"{len(stream_entries)} tasks "
                          f"({', '.join(e[1] for e in stream_entries)})")
             logging.info(f"{'─' * 50}")
+
+            # ── Resume: load completed stream from checkpoint ──
+            if skip_streams and topo_name in skip_streams:
+                ckpt_path = skip_streams[topo_name]
+                logging.info(f"[Phase 3] RESUME: loading stream '{topo_name}' "
+                             f"from {ckpt_path} (skipping training)")
+
+                stream_agent = copy.deepcopy(self._theta_dual)
+                stream_agent.load(path=ckpt_path)
+
+                stream_sr = stream_agent.eval_success_rate
+                stream_results[topo_name] = {
+                    "agent": stream_agent,
+                    "sr": stream_sr,
+                    "cl_matrix": None,
+                    "num_tasks": len(stream_entries),
+                    "checkpoint": ckpt_path,
+                    "resumed": True,
+                }
+                logging.info(f"[Phase 3] Stream '{topo_name}': SR={stream_sr:.2%} "
+                             f"(loaded from checkpoint)")
+                continue
 
             # Fork transferred agent for this stream
             stream_agent = copy.deepcopy(self._theta_dual)
@@ -640,7 +798,6 @@ class DualTrainer:
             stream_agent.tf_logger = stream_tb
 
             # Build local task list & schedules
-            global_indices = [e[0] for e in stream_entries]
             stream_tasks = [self._pengym_tasks[gi] for gi in global_indices]
 
             local_ep_schedule = None

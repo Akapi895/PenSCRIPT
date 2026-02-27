@@ -140,6 +140,14 @@ def parse_args() -> argparse.Namespace:
              "tier-grouped CRL). Default: intra_topology.",
     )
 
+    # ── Resume ───────────────────────────────────────────────────────
+    parser.add_argument(
+        "--resume-from", type=str, default=None,
+        help="Path to a previous (interrupted) output dir to resume from. "
+             "Skips Phase 0/1 (loads model), skips completed streams, "
+             "retrains only incomplete streams.",
+    )
+
     # ── Output ───────────────────────────────────────────────────────
     parser.add_argument(
         "--output-dir", type=str, default=str(STRATEGY_C_DIR),
@@ -169,6 +177,7 @@ def main():
     print(f"  Seed:             {args.seed}")
     print(f"  Mode:             {'scratch-only (calibration)' if args.scratch_only else 'full pipeline'}")
     print(f"  Training mode:    {args.training_mode}")
+    print(f"  Resume from:      {args.resume_from or '(none)'}")
     print(f"  Episode config:   {args.episode_config or '(uniform ' + str(args.episodes) + ' eps)'}")
     print(f"  Output:           {args.output_dir}")
     print("=" * 70)
@@ -227,6 +236,7 @@ def main():
         results = trainer.run_full_pipeline(
             skip_phase0=args.skip_phase0,
             eval_freq=args.eval_freq,
+            resume_from=args.resume_from,
         )
 
         # Optionally train scratch baseline

@@ -70,7 +70,7 @@ exploits:
     os: 'None'
     prob: 0.6
     cost: 3
-    access: user
+    access: root
 privilege_escalation:
   pe_overlayfs_priv_esc:
     process: overlayfs_priv_esc
