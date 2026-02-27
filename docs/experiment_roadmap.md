@@ -617,22 +617,22 @@ Song song với Máy A, Máy B chạy cross-topology cho cùng 5 seeds:
 # ── Máy B: R6 (seed=0, cross-topology) ──
 cd D:\NCKH\fusion\pentest
 
-python run_strategy_c.py ^
-  --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json ^
-  --pengym-scenarios ^
-    data/scenarios/generated/compiled/tiny_T1_000.yml ^
-    data/scenarios/generated/compiled/tiny_T2_000.yml ^
-    data/scenarios/generated/compiled/tiny_T3_000.yml ^
-    data/scenarios/generated/compiled/tiny_T4_000.yml ^
-    data/scenarios/generated/compiled/small-linear_T1_000.yml ^
-    data/scenarios/generated/compiled/small-linear_T2_000.yml ^
-    data/scenarios/generated/compiled/small-linear_T3_000.yml ^
-    data/scenarios/generated/compiled/small-linear_T4_000.yml ^
-  --episode-config data/config/curriculum_episodes.json ^
-  --training-mode cross_topology ^
-  --transfer-strategy conservative ^
-  --fisher-beta 0.3 ^
-  --seed 0 ^
+python run_strategy_c.py `
+  --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json `
+  --pengym-scenarios `
+    data/scenarios/generated/compiled/tiny_T1_000.yml `
+    data/scenarios/generated/compiled/tiny_T2_000.yml `
+    data/scenarios/generated/compiled/tiny_T3_000.yml `
+    data/scenarios/generated/compiled/tiny_T4_000.yml `
+    data/scenarios/generated/compiled/small-linear_T1_000.yml `
+    data/scenarios/generated/compiled/small-linear_T2_000.yml `
+    data/scenarios/generated/compiled/small-linear_T3_000.yml `
+    data/scenarios/generated/compiled/small-linear_T4_000.yml `
+  --episode-config data/config/curriculum_episodes.json `
+  --training-mode cross_topology `
+  --transfer-strategy conservative `
+  --fisher-beta 0.3 `
+  --seed 0 `
   --output-dir outputs/multiseed_cross/seed_0
 ```
 
