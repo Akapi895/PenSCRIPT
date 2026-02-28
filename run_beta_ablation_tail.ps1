@@ -1,49 +1,20 @@
-﻿# ============================================================
-# PenSCRIPT -- Phase 2 Máy A: Fisher β Ablation (R13–R17)
-# Chạy intra_topology với 5 giá trị β, seed=42
-# β=0.3 đã có từ R5 (outputs/multiseed/seed_42) -> skip
-# Usage:  .\run_beta_ablation.ps1
+# ============================================================
+# PenSCRIPT -- Phase 2 May A: Fisher beta Ablation (last 2, reversed)
+# Chay beta=1.0 truoc, roi beta=0.7
+# Usage:  .\run_beta_ablation_tail.ps1
 # ============================================================
 
 $ErrorActionPreference = "Stop"
 
-# -- Setup virtual environment --
-$VenvDir = Join-Path $PSScriptRoot "venv"
-$VenvActivate = Join-Path $VenvDir "Scripts\Activate.ps1"
-$RequirementsFile = Join-Path $PSScriptRoot "requirements.txt"
-
-if (-not (Test-Path $VenvDir)) {
-    Write-Host " Creating virtual environment: $VenvDir" -ForegroundColor Magenta
-    python -m venv $VenvDir
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host " ERROR: Failed to create virtual environment" -ForegroundColor Red
-        exit 1
-    }
-    Write-Host " Virtual environment created successfully" -ForegroundColor Green
-}
-
 # -- Activate virtual environment --
+$VenvActivate = Join-Path $PSScriptRoot "venv\Scripts\Activate.ps1"
 if (Test-Path $VenvActivate) {
     Write-Host " Activating venv: $VenvActivate" -ForegroundColor Magenta
     & $VenvActivate
 }
 else {
-    Write-Host " ERROR: venv activation script not found at $VenvActivate" -ForegroundColor Red
+    Write-Host " ERROR: venv not found at $VenvActivate" -ForegroundColor Red
     exit 1
-}
-
-# -- Install requirements --
-if (Test-Path $RequirementsFile) {
-    Write-Host " Installing requirements from: $RequirementsFile" -ForegroundColor Magenta
-    pip install -r $RequirementsFile
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host " ERROR: Failed to install requirements" -ForegroundColor Red
-        exit 1
-    }
-    Write-Host " Requirements installed successfully" -ForegroundColor Green
-}
-else {
-    Write-Host " WARNING: requirements.txt not found at $RequirementsFile" -ForegroundColor Yellow
 }
 
 # -- Common arguments --
@@ -63,8 +34,8 @@ $TrainingMode = "intra_topology"
 $TransferStrat = "conservative"
 $Seed = 42
 
-# -- β values to test (skip 0.3 -- already in outputs/multiseed/seed_42) --
-$BetaValues = @(0.0, 0.1, 0.5, 0.7, 1.0)
+# -- beta values: last 2 of [0.0, 0.1, 0.5, 0.7, 1.0] in reverse --
+$BetaValues = @(1.0, 0.7)
 
 # -- Tracking --
 $TotalRuns = $BetaValues.Count
@@ -72,9 +43,8 @@ $CurrentIdx = 0
 $StartTimeAll = Get-Date
 
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host " Fisher beta ablation: $($BetaValues -join ', ')" -ForegroundColor Cyan
+Write-Host " Fisher beta ablation (tail, reversed): $($BetaValues -join ', ')" -ForegroundColor Cyan
 Write-Host " Seed: $Seed  |  Mode: $TrainingMode" -ForegroundColor Cyan
-Write-Host " Note: beta=0.3 reused from outputs/multiseed/seed_42" -ForegroundColor Cyan
 Write-Host " Started at: $($StartTimeAll.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 
@@ -91,7 +61,6 @@ foreach ($beta in $BetaValues) {
     Write-Host " Start:  $($StartTime.ToString('HH:mm:ss'))" -ForegroundColor Yellow
     Write-Host "--------------------------------------------" -ForegroundColor Yellow
 
-    # Build and run the command
     $cmdArgs = @(
         "run_strategy_c.py",
         "--sim-scenarios", $SimScenarios,
@@ -125,14 +94,10 @@ foreach ($beta in $BetaValues) {
 $TotalElapsed = (Get-Date) - $StartTimeAll
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host " All beta ablation runs completed!" -ForegroundColor Cyan
+Write-Host " Tail beta ablation completed!" -ForegroundColor Cyan
 Write-Host " Total elapsed: $($TotalElapsed.ToString('hh\:mm\:ss'))" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host " Results summary:" -ForegroundColor Green
-Write-Host "   beta=0.0 -> outputs/ablation_beta/beta_0.0" -ForegroundColor Green
-Write-Host "   beta=0.1 -> outputs/ablation_beta/beta_0.1" -ForegroundColor Green
-Write-Host "   beta=0.3 -> outputs/multiseed/seed_42 (reuse)" -ForegroundColor Green
-Write-Host "   beta=0.5 -> outputs/ablation_beta/beta_0.5" -ForegroundColor Green
-Write-Host "   beta=0.7 -> outputs/ablation_beta/beta_0.7" -ForegroundColor Green
+Write-Host " Results:" -ForegroundColor Green
 Write-Host "   beta=1.0 -> outputs/ablation_beta/beta_1.0" -ForegroundColor Green
+Write-Host "   beta=0.7 -> outputs/ablation_beta/beta_0.7" -ForegroundColor Green

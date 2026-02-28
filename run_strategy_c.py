@@ -140,6 +140,12 @@ def parse_args() -> argparse.Namespace:
              "tier-grouped CRL). Default: intra_topology.",
     )
 
+    # ── Ablation ────────────────────────────────────────────────────
+    parser.add_argument(
+        "--no-canonicalization", action="store_true",
+        help="Disable cross-domain canonicalization maps (ablation study).",
+    )
+
     # ── Resume ───────────────────────────────────────────────────────
     parser.add_argument(
         "--resume-from", type=str, default=None,
@@ -221,6 +227,7 @@ def main():
         output_dir=args.output_dir,
         episode_config=episode_config,
         training_mode=training_mode,
+        use_canonicalization=not args.no_canonicalization,
     )
 
     t0 = time.time()

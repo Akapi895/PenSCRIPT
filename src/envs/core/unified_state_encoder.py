@@ -165,12 +165,16 @@ class UnifiedStateEncoder:
     SERVICE_OFFSET = PORT_OFFSET + SBERT_DIM                # 772
     AUX_OFFSET = SERVICE_OFFSET + SBERT_DIM                 # 1156
 
-    def __init__(self, encoder=None):
+    def __init__(self, encoder=None, use_canonicalization: bool = True):
         """
         Args:
             encoder: SBERT ``Encoder`` instance.  If ``None``, the global
                      singleton from ``src.agent.nlp.Encoder`` is imported.
+            use_canonicalization: If ``True`` (default), map raw OS/service
+                     strings to canonical forms before SBERT encoding.
+                     Set to ``False`` for ablation studies.
         """
+        self.use_canonicalization = use_canonicalization
         if encoder is None:
             from src.agent.nlp.Encoder import encoder as _enc
             self._encoder = _enc
@@ -277,10 +281,10 @@ class UnifiedStateEncoder:
 
         # --- OS SBERT (384-dim) ---
         if os:
-            canonical_os = self.canonicalize_os(os)
-            if canonical_os:
+            enc_os = self.canonicalize_os(os) if self.use_canonicalization else os
+            if enc_os:
                 state[self.OS_OFFSET:self.OS_OFFSET + self.SBERT_DIM] = \
-                    self._encode_sbert(canonical_os)
+                    self._encode_sbert(enc_os)
 
         # --- Port SBERT (384-dim) ---
         if ports:
@@ -290,9 +294,10 @@ class UnifiedStateEncoder:
 
         # --- Service SBERT (384-dim) ---
         if services:
-            canonical_services = self.canonicalize_services(services)
-            if canonical_services:
-                svc_str = ",".join(canonical_services)
+            enc_services = (self.canonicalize_services(services)
+                            if self.use_canonicalization else services)
+            if enc_services:
+                svc_str = ",".join(enc_services)
                 state[self.SERVICE_OFFSET:self.SERVICE_OFFSET + self.SBERT_DIM] = \
                     self._encode_sbert(svc_str)
 
@@ -355,10 +360,10 @@ class UnifiedStateEncoder:
 
         # --- OS SBERT (384-dim) ---
         if os:
-            canonical_os = self.canonicalize_os(os)
-            if canonical_os:
+            enc_os = self.canonicalize_os(os) if self.use_canonicalization else os
+            if enc_os:
                 state[self.OS_OFFSET:self.OS_OFFSET + self.SBERT_DIM] = \
-                    self._encode_sbert(canonical_os)
+                    self._encode_sbert(enc_os)
 
         # --- Port SBERT (384-dim) ---
         if ports:
@@ -368,9 +373,10 @@ class UnifiedStateEncoder:
 
         # --- Service SBERT (384-dim) ---
         if services:
-            canonical_services = self.canonicalize_services(services)
-            if canonical_services:
-                svc_str = ",".join(canonical_services)
+            enc_services = (self.canonicalize_services(services)
+                            if self.use_canonicalization else services)
+            if enc_services:
+                svc_str = ",".join(enc_services)
                 state[self.SERVICE_OFFSET:self.SERVICE_OFFSET + self.SBERT_DIM] = \
                     self._encode_sbert(svc_str)
 

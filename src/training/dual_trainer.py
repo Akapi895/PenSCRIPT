@@ -78,7 +78,9 @@ class DualTrainer:
         output_dir: str = "outputs/strategy_c",
         episode_config: Optional[Dict] = None,
         training_mode: str = "intra_topology",
+        use_canonicalization: bool = True,
     ):
+        self.use_canonicalization = use_canonicalization
         self.seed = seed
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -107,7 +109,9 @@ class DualTrainer:
         self.script_config = Script_Config(**script_args)
 
         # Unified encoder
-        self.unified_encoder = UnifiedStateEncoder()
+        self.unified_encoder = UnifiedStateEncoder(
+            use_canonicalization=self.use_canonicalization,
+        )
 
         # TensorBoard
         self.tb_dir = self.output_dir / "tensorboard"
