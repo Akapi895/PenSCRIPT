@@ -33,7 +33,7 @@ $TransferStrat = "conservative"
 $FisherBeta = "0.3"
 
 # ── Seeds to run ──
-$Seeds = @(2, 3, 42)
+$Seeds = @(3, 42)
 
 # ── Tracking ──
 $TotalSeeds = $Seeds.Count
