@@ -1,0 +1,208 @@
+{
+  "agents": {
+    "theta_sim_unified": {
+      "pengym": {
+        "agent": "theta_sim_unified",
+        "domain": "pengym",
+        "success_rate": 0.0,
+        "normalized_reward": -0.8726003490401415,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": -3333.3333333333403,
+        "per_task": [
+          {
+            "task": "medium-single-site_T1_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.8726003490401415,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 1,
+        "eval_episodes": 20
+      },
+      "sim": {
+        "agent": "theta_sim_unified",
+        "domain": "sim",
+        "success_rate": 1.0,
+        "normalized_reward": null,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": 150.8,
+        "per_task": [
+          {
+            "task": "192.168.1.25",
+            "sr": 1.0,
+            "mean_reward": 1.1900000000000002,
+            "std_reward": 2.220446049250313e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 4.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.27",
+            "sr": 1.0,
+            "mean_reward": 1.2899999999999998,
+            "std_reward": 2.220446049250313e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 5.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.3",
+            "sr": 1.0,
+            "mean_reward": 1.2899999999999998,
+            "std_reward": 2.220446049250313e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 5.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.17",
+            "sr": 1.0,
+            "mean_reward": 1.2899999999999998,
+            "std_reward": 2.220446049250313e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 5.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.33",
+            "sr": 1.0,
+            "mean_reward": 1.2899999999999998,
+            "std_reward": 2.220446049250313e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 5.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.32",
+            "sr": 1.0,
+            "mean_reward": 1.1900000000000002,
+            "std_reward": 2.220446049250313e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 4.0,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 6,
+        "eval_episodes": 20
+      }
+    },
+    "theta_dual": {
+      "pengym": {
+        "agent": "theta_dual",
+        "domain": "pengym",
+        "success_rate": 0.0,
+        "normalized_reward": -0.8656719023748649,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": -3306.866667071985,
+        "per_task": [
+          {
+            "task": "medium-single-site_T1_000",
+            "sr": 0.0,
+            "mean_reward": -165.3433333535992,
+            "std_reward": 2.842170943040401e-14,
+            "normalized_reward": -0.8656719023748649,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 1,
+        "eval_episodes": 20
+      },
+      "sim": {
+        "agent": "theta_dual",
+        "domain": "sim",
+        "success_rate": 0.0,
+        "normalized_reward": null,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": -120000.0,
+        "per_task": [
+          {
+            "task": "192.168.1.25",
+            "sr": 0.0,
+            "mean_reward": -1000.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.27",
+            "sr": 0.0,
+            "mean_reward": -1000.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.3",
+            "sr": 0.0,
+            "mean_reward": -1000.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.17",
+            "sr": 0.0,
+            "mean_reward": -1000.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.33",
+            "sr": 0.0,
+            "mean_reward": -1000.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.32",
+            "sr": 0.0,
+            "mean_reward": -1000.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 6,
+        "eval_episodes": 20
+      }
+    }
+  },
+  "metrics": {
+    "BT_SR": -1.0,
+    "zero_shot_sr": 0.0
+  },
+  "policy_metrics": {
+    "BT_KL": 9.964988566935062e-05,
+    "BT_fisher_dist": 0.0
+  }
+}

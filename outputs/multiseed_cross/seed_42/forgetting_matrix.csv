@@ -1,0 +1,19 @@
+task \ after_tier,T1,T2,T3,T4
+tiny_T1_000,,0.4702,0.5563,0.5113
+tiny_T2_000,,0.0000,0.0175,-0.1015
+tiny_T3_000,,0.0000,0.0000,0.6838
+tiny_T4_000,,0.0000,-0.3093,-0.3129
+small-linear_T1_000,,-0.0001,-0.0001,0.3146
+small-linear_T2_000,,0.0000,0.0000,-0.2011
+small-linear_T3_000,,0.0006,-1.2237,-1.7597
+small-linear_T4_000,,-0.0007,-1.2237,-0.9068
+
+task,zero_shot_transfer
+tiny_T1_000,
+tiny_T2_000,
+tiny_T3_000,
+tiny_T4_000,
+small-linear_T1_000,
+small-linear_T2_000,
+small-linear_T3_000,
+small-linear_T4_000,

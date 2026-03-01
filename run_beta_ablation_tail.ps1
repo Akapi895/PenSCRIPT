@@ -35,7 +35,7 @@ $TransferStrat = "conservative"
 $Seed = 42
 
 # -- beta values: last 2 of [0.0, 0.1, 0.5, 0.7, 1.0] in reverse --
-$BetaValues = @(1.0, 0.7)
+$BetaValues = @(0.7)
 
 # -- Tracking --
 $TotalRuns = $BetaValues.Count

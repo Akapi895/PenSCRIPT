@@ -1,8 +1,0 @@
-{
-  "scenario": "data\\scenarios\\small-linear.yml",
-  "model_dir": "outputs\\models_pengym\\small-linear_pengym",
-  "episodes": 10,
-  "max_steps": 300,
-  "seed": 42,
-  "success_rate": 1.0,
-  "total_reward": 

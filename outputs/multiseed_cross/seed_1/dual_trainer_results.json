@@ -1,0 +1,414 @@
+{
+  "phase0": {
+    "sbert_consistency": {
+      "cosine_similarities": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "all_above_0.99": true
+    },
+    "unified_dim": 1540,
+    "dim_check": true,
+    "canonicalization": {
+      "ubuntu_\u2192_linux": true,
+      "openssh_\u2192_ssh": true
+    },
+    "cross_domain_os_cosine": 1.0,
+    "pengym_loadable": [
+      {
+        "scenario": "data/scenarios/generated/compiled/tiny_T1_000.yml",
+        "ok": true,
+        "ip": "tiny_T1_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/tiny_T2_000.yml",
+        "ok": true,
+        "ip": "tiny_T2_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/tiny_T3_000.yml",
+        "ok": true,
+        "ip": "tiny_T3_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/tiny_T4_000.yml",
+        "ok": true,
+        "ip": "tiny_T4_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/small-linear_T1_000.yml",
+        "ok": true,
+        "ip": "small-linear_T1_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/small-linear_T2_000.yml",
+        "ok": true,
+        "ip": "small-linear_T2_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/small-linear_T3_000.yml",
+        "ok": true,
+        "ip": "small-linear_T3_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/small-linear_T4_000.yml",
+        "ok": true,
+        "ip": "small-linear_T4_000"
+      }
+    ]
+  },
+  "phase1": {
+    "num_tasks": 6,
+    "train_time_s": 418.91,
+    "final_sr": 1.0,
+    "final_reward": 1.09,
+    "model_dir": "outputs\\multiseed_cross\\seed_1\\models\\phase1_sim"
+  },
+  "phase2": {
+    "strategy": "conservative",
+    "norm_reset": true,
+    "fisher_discount": 0.3,
+    "lr_factor": 0.1,
+    "warmup_states": 408,
+    "num_pengym_tasks": 8
+  },
+  "phase3": {
+    "mode": "cross_topology",
+    "num_tasks": 8,
+    "train_time_s": 7645.12,
+    "final_sr": 1.0,
+    "final_reward": -119.99999999999937,
+    "model_dir": "outputs\\multiseed_cross\\seed_1\\models\\phase3_dual",
+    "tier_checkpoints": {
+      "T1": "outputs\\multiseed_cross\\seed_1\\models\\tier_checkpoints\\after_T1",
+      "T2": "outputs\\multiseed_cross\\seed_1\\models\\tier_checkpoints\\after_T2",
+      "T3": "outputs\\multiseed_cross\\seed_1\\models\\tier_checkpoints\\after_T3",
+      "T4": "outputs\\multiseed_cross\\seed_1\\models\\tier_checkpoints\\after_T4"
+    }
+  },
+  "phase4": {
+    "agents": {
+      "theta_sim_unified": {
+        "success_rate": 0.0125,
+        "normalized_reward": -1.0793571611029391,
+        "step_efficiency": 0.03083804143126177,
+        "total_rewards": -31484.926666617404,
+        "per_task": [
+          {
+            "task": "tiny_T1_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T2_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T3_000",
+            "sr": 0.0,
+            "mean_reward": -148.64633332093555,
+            "std_reward": 31.144053512560422,
+            "normalized_reward": -0.7622888888253105,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T4_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T1_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T2_000",
+            "sr": 0.0,
+            "mean_reward": -428.11666667660046,
+            "std_reward": 4.933192565559245,
+            "normalized_reward": -2.391713221656986,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T3_000",
+            "sr": 0.0,
+            "mean_reward": -169.6166666666671,
+            "std_reward": 0.5193478816961109,
+            "normalized_reward": -0.9475791433892017,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T4_000",
+            "sr": 0.1,
+            "mean_reward": -461.1999999999998,
+            "std_reward": 33.64296195177953,
+            "normalized_reward": -2.576536312849161,
+            "step_efficiency": 0.03083804143126177,
+            "mean_success_steps": 393.0,
+            "eval_episodes": 20
+          }
+        ],
+        "sim_success_rate": 1.0,
+        "sim_step_efficiency": null
+      },
+      "theta_dual": {
+        "success_rate": 0.60625,
+        "normalized_reward": -0.534874203204182,
+        "step_efficiency": 0.045010700078472285,
+        "total_rewards": -15854.883333603497,
+        "per_task": [
+          {
+            "task": "tiny_T1_000",
+            "sr": 0.85,
+            "mean_reward": -90.23466665943462,
+            "std_reward": 49.177211905072184,
+            "normalized_reward": -0.46274188030479296,
+            "step_efficiency": 0.0864347762241505,
+            "mean_success_steps": 90.76470588235294,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T2_000",
+            "sr": 0.0,
+            "mean_reward": -103.10950000087398,
+            "std_reward": 28.425559592685186,
+            "normalized_reward": -0.5287666666711486,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T3_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T4_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T1_000",
+            "sr": 1.0,
+            "mean_reward": -115.33333333333276,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.6443202979515796,
+            "step_efficiency": 0.03468208092485549,
+            "mean_success_steps": 346.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T2_000",
+            "sr": 1.0,
+            "mean_reward": -115.33333335320098,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.6443202980625753,
+            "step_efficiency": 0.03468208092485549,
+            "mean_success_steps": 346.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T3_000",
+            "sr": 1.0,
+            "mean_reward": -117.71666666666609,
+            "std_reward": 1.0449614559611344,
+            "normalized_reward": -0.6576350093109837,
+            "step_efficiency": 0.03462722421002022,
+            "mean_success_steps": 346.55,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T4_000",
+            "sr": 1.0,
+            "mean_reward": -117.68333333333274,
+            "std_reward": 1.3600449338982037,
+            "normalized_reward": -0.6574487895716913,
+            "step_efficiency": 0.03462733810847975,
+            "mean_success_steps": 346.55,
+            "eval_episodes": 20
+          }
+        ],
+        "sim_success_rate": 1.0,
+        "sim_step_efficiency": null
+      }
+    },
+    "transfer_metrics": {
+      "BT_SR": 0.0,
+      "zero_shot_sr": 0.0125
+    },
+    "forgetting_matrix": {
+      "F_matrix": [
+        [
+          NaN,
+          0.0,
+          -0.15647863252550173,
+          0.18864700850258448
+        ],
+        [
+          NaN,
+          0.0,
+          -0.341777777824647,
+          0.23534786325234475
+        ],
+        [
+          NaN,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          NaN,
+          0.0,
+          -0.3072136755071141,
+          0.0
+        ],
+        [
+          NaN,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          NaN,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          NaN,
+          0.002327746741154435,
+          -1.223184357541903,
+          -1.2211359404096869
+        ],
+        [
+          NaN,
+          -0.002513966480447216,
+          0.0,
+          -1.2236499068901339
+        ]
+      ],
+      "Z_vector": [
+        NaN,
+        NaN,
+        NaN,
+        NaN,
+        NaN,
+        NaN,
+        NaN,
+        NaN
+      ],
+      "nr_after": [
+        [
+          -0.3418803418803425,
+          -0.3418803418803425,
+          -0.18540170935484077,
+          -0.530527350382927
+        ],
+        [
+          -0.3418803418803425,
+          -0.3418803418803425,
+          -0.00010256405569549223,
+          -0.5772282051326872
+        ],
+        [
+          -0.3418803418803425,
+          -0.3418803418803425,
+          -0.3418803418803425,
+          -0.3418803418803425
+        ],
+        [
+          -0.3418803418803425,
+          -0.3418803418803425,
+          -0.03466666637322842,
+          -0.3418803418803425
+        ],
+        [
+          -0.6443202979515796,
+          -0.6443202979515796,
+          -0.6443202979515796,
+          -0.6443202979515796
+        ],
+        [
+          -0.6443202980625753,
+          -0.6443202980625753,
+          -0.6443202980625753,
+          -0.6443202980625753
+        ],
+        [
+          -1.8801675977653631,
+          -1.8824953445065176,
+          -0.6569832402234602,
+          -0.6590316573556763
+        ],
+        [
+          -1.8818435754189946,
+          -1.8793296089385474,
+          -1.8818435754189946,
+          -0.6581936685288607
+        ]
+      ],
+      "task_names": [
+        "tiny_T1_000",
+        "tiny_T2_000",
+        "tiny_T3_000",
+        "tiny_T4_000",
+        "small-linear_T1_000",
+        "small-linear_T2_000",
+        "small-linear_T3_000",
+        "small-linear_T4_000"
+      ],
+      "tier_names": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "summary": {
+        "mean_forgetting": -0.16873465161180623,
+        "max_forgetting": 0.23534786325234475,
+        "mean_zero_shot_transfer": null,
+        "tasks_with_positive_transfer": 0
+      }
+    }
+  },
+  "total_time_s": 8687.25
+}

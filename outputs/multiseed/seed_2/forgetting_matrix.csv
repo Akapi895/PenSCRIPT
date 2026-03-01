@@ -1,0 +1,19 @@
+task \ after_tier,stream_small-linear,stream_tiny
+tiny_T1_000,,-0.3557
+tiny_T2_000,,-0.5929
+tiny_T3_000,,0.0883
+tiny_T4_000,,-0.6809
+small-linear_T1_000,,1.3924
+small-linear_T2_000,,1.4858
+small-linear_T3_000,,-0.3311
+small-linear_T4_000,,-0.1516
+
+task,zero_shot_transfer
+tiny_T1_000,
+tiny_T2_000,
+tiny_T3_000,
+tiny_T4_000,
+small-linear_T1_000,
+small-linear_T2_000,
+small-linear_T3_000,
+small-linear_T4_000,

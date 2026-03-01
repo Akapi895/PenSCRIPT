@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "seed": 42
+  },
+  "checkpoints": {
+    "after_stream_medium-single-site": {
+      "medium-single-site_T1_000": {
+        "sr": 0.0,
+        "nr": -0.8726003490401415,
+        "eta": null
+      }
+    },
+    "final": {
+      "medium-single-site_T1_000": {
+        "sr": 0.0,
+        "nr": -0.8726003490401415,
+        "eta": null
+      }
+    }
+  },
+  "training_curves": {
+    "medium-single-site_T1_000": {
+      "episode_rewards": [
+        -166.66666666666703
+      ],
+      "ttt": 1
+    }
+  },
+  "forgetting": {
+    "F_matrix": [
+      [
+        NaN
+      ]
+    ],
+    "Z_vector": [
+      NaN
+    ],
+    "nr_after": [
+      [
+        -0.8726003490401415
+      ]
+    ],
+    "task_names": [
+      "medium-single-site_T1_000"
+    ],
+    "tier_names": [
+      "stream_medium-single-site"
+    ],
+    "summary": {
+      "mean_forgetting": null,
+      "max_forgetting": null,
+      "mean_zero_shot_transfer": null,
+      "tasks_with_positive_transfer": 0
+    }
+  },
+  "transfer": {
+    "BT_SR": -1.0,
+    "zero_shot_sr": 0.0
+  }
+}
