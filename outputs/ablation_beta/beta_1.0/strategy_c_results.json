@@ -1,0 +1,868 @@
+{
+  "phase0": {
+    "sbert_consistency": {
+      "cosine_similarities": [
+        1.0,
+        1.0,
+        1.0000001192092896,
+        1.0
+      ],
+      "all_above_0.99": true
+    },
+    "unified_dim": 1540,
+    "dim_check": true,
+    "canonicalization": {
+      "ubuntu_\u2192_linux": true,
+      "openssh_\u2192_ssh": true
+    },
+    "cross_domain_os_cosine": 1.0,
+    "pengym_loadable": [
+      {
+        "scenario": "data/scenarios/generated/compiled/tiny_T1_000.yml",
+        "ok": true,
+        "ip": "tiny_T1_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/tiny_T2_000.yml",
+        "ok": true,
+        "ip": "tiny_T2_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/tiny_T3_000.yml",
+        "ok": true,
+        "ip": "tiny_T3_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/tiny_T4_000.yml",
+        "ok": true,
+        "ip": "tiny_T4_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/small-linear_T1_000.yml",
+        "ok": true,
+        "ip": "small-linear_T1_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/small-linear_T2_000.yml",
+        "ok": true,
+        "ip": "small-linear_T2_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/small-linear_T3_000.yml",
+        "ok": true,
+        "ip": "small-linear_T3_000"
+      },
+      {
+        "scenario": "data/scenarios/generated/compiled/small-linear_T4_000.yml",
+        "ok": true,
+        "ip": "small-linear_T4_000"
+      }
+    ]
+  },
+  "phase1": {
+    "num_tasks": 6,
+    "train_time_s": 377.33,
+    "final_sr": 1.0,
+    "final_reward": 0.99,
+    "model_dir": "outputs/ablation_beta/beta_1.0/models/phase1_sim"
+  },
+  "phase2": {
+    "strategy": "conservative",
+    "norm_reset": true,
+    "fisher_discount": 1.0,
+    "lr_factor": 0.1,
+    "warmup_states": 408,
+    "num_pengym_tasks": 8
+  },
+  "phase3": {
+    "mode": "intra_topology",
+    "num_streams": 2,
+    "streams": {
+      "tiny": {
+        "sr": 0.75,
+        "num_tasks": 4,
+        "checkpoint": "outputs/ablation_beta/beta_1.0/models/stream_checkpoints/stream_tiny"
+      },
+      "small-linear": {
+        "sr": 0.0,
+        "num_tasks": 4,
+        "checkpoint": "outputs/ablation_beta/beta_1.0/models/stream_checkpoints/stream_small-linear"
+      }
+    },
+    "best_stream": "tiny",
+    "best_sr": 0.75,
+    "num_tasks": 8,
+    "train_time_s": 6953.29,
+    "final_sr": 0.75,
+    "final_reward": -0.019999990860620986,
+    "model_dir": "outputs/ablation_beta/beta_1.0/models/phase3_dual"
+  },
+  "phase4": {
+    "agents": {
+      "theta_sim_unified": {
+        "success_rate": 0.0,
+        "normalized_reward": -0.6708477790983646,
+        "step_efficiency": null,
+        "total_rewards": -19736.856666882868,
+        "per_task": [
+          {
+            "task": "tiny_T1_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T2_000",
+            "sr": 0.0,
+            "mean_reward": -119.17616666754077,
+            "std_reward": 28.41229495844136,
+            "normalized_reward": -0.6111598290643117,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T3_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T4_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T1_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T2_000",
+            "sr": 0.0,
+            "mean_reward": -166.6666666766012,
+            "std_reward": 5.684341886080802e-14,
+            "normalized_reward": -0.9310986965173252,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T3_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T4_000",
+            "sr": 0.0,
+            "mean_reward": -167.6666666666671,
+            "std_reward": 0.39440531887331887,
+            "normalized_reward": -0.9366852886405984,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "sim_success_rate": 1.0,
+        "sim_step_efficiency": null
+      },
+      "theta_dual": {
+        "success_rate": 0.4875,
+        "normalized_reward": -1.2622167412283836,
+        "step_efficiency": 0.36833044233840795,
+        "total_rewards": -36468.623331884526,
+        "per_task": [
+          {
+            "task": "tiny_T1_000",
+            "sr": 1.0,
+            "mean_reward": -0.03666665752728765,
+            "std_reward": 0.07264831572567787,
+            "normalized_reward": -0.0001880341411655777,
+            "step_efficiency": 0.7458333333333333,
+            "mean_success_steps": 8.05,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T2_000",
+            "sr": 1.0,
+            "mean_reward": -0.019999990860620986,
+            "std_reward": 0.0,
+            "normalized_reward": -0.00010256405569549223,
+            "step_efficiency": 0.75,
+            "mean_success_steps": 8.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T3_000",
+            "sr": 0.0,
+            "mean_reward": -187.4129999876022,
+            "std_reward": 3.7265297916963704,
+            "normalized_reward": -0.9610923076287292,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T4_000",
+            "sr": 1.0,
+            "mean_reward": -6.759999942779541,
+            "std_reward": 3.018277654557314,
+            "normalized_reward": -0.03466666637322842,
+            "step_efficiency": 0.5967650241914948,
+            "mean_success_steps": 10.7,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T1_000",
+            "sr": 0.15,
+            "mean_reward": -391.35049999952287,
+            "std_reward": 78.71587118972789,
+            "normalized_reward": -2.186315642455435,
+            "step_efficiency": 0.03943838874438138,
+            "mean_success_steps": 308.3333333333333,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T2_000",
+            "sr": 0.4,
+            "mean_reward": -361.48433334926744,
+            "std_reward": 93.62211922187213,
+            "normalized_reward": -2.0194655494372484,
+            "step_efficiency": 0.03974790762262963,
+            "mean_success_steps": 313.625,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T3_000",
+            "sr": 0.0,
+            "mean_reward": -462.0166666666666,
+            "std_reward": 4.771995855451335,
+            "normalized_reward": -2.5810986964618245,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T4_000",
+            "sr": 0.35,
+            "mean_reward": -414.34999999999974,
+            "std_reward": 85.13704475073625,
+            "normalized_reward": -2.3148044692737417,
+            "step_efficiency": 0.03819800013860853,
+            "mean_success_steps": 330.7142857142857,
+            "eval_episodes": 20
+          }
+        ],
+        "sim_success_rate": 0.0,
+        "sim_step_efficiency": null
+      },
+      "theta_pengym_scratch": {
+        "success_rate": 0.0,
+        "normalized_reward": -0.6364895191710848,
+        "step_efficiency": null,
+        "total_rewards": -18666.666666666708,
+        "per_task": [
+          {
+            "task": "tiny_T1_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T2_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T3_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T4_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T1_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T2_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T3_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T4_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "sim_success_rate": 0.0,
+        "sim_step_efficiency": null
+      }
+    },
+    "transfer_metrics": {
+      "FT_SR": 0.4875,
+      "transfer_ratio": 48750000.0,
+      "FT_NR": -0.6257272220572988,
+      "FT_SR_significant": true,
+      "BT_SR": -1.0,
+      "zero_shot_sr": 0.0
+    },
+    "forgetting_matrix": {
+      "F_matrix": [
+        [
+          NaN,
+          0.0
+        ],
+        [
+          NaN,
+          -0.33490598295489016
+        ],
+        [
+          NaN,
+          0.621620512742262
+        ],
+        [
+          NaN,
+          -0.3100341883276269
+        ],
+        [
+          NaN,
+          1.1430167597765335
+        ],
+        [
+          NaN,
+          1.1823175047196464
+        ],
+        [
+          NaN,
+          1.412019553064631
+        ],
+        [
+          NaN,
+          -0.2600558659217893
+        ]
+      ],
+      "Z_vector": [
+        NaN,
+        NaN,
+        NaN,
+        NaN,
+        NaN,
+        NaN,
+        NaN,
+        NaN
+      ],
+      "nr_after": [
+        [
+          -0.0001880341411655777,
+          -0.0001880341411655777
+        ],
+        [
+          -0.33509401709605574,
+          -0.0001880341411655777
+        ],
+        [
+          -0.3418803418803425,
+          -0.9635008546226046
+        ],
+        [
+          -0.3418803418803425,
+          -0.0318461535527156
+        ],
+        [
+          -0.931098696461827,
+          -2.0741154562383604
+        ],
+        [
+          -0.931098696461827,
+          -2.113416201181473
+        ],
+        [
+          -0.949720670391064,
+          -2.361740223455695
+        ],
+        [
+          -2.793296089385475,
+          -2.5332402234636855
+        ]
+      ],
+      "task_names": [
+        "tiny_T1_000",
+        "tiny_T2_000",
+        "tiny_T3_000",
+        "tiny_T4_000",
+        "small-linear_T1_000",
+        "small-linear_T2_000",
+        "small-linear_T3_000",
+        "small-linear_T4_000"
+      ],
+      "tier_names": [
+        "stream_small-linear",
+        "stream_tiny"
+      ],
+      "summary": {
+        "mean_forgetting": 0.4317472866373458,
+        "max_forgetting": 1.412019553064631,
+        "mean_zero_shot_transfer": null,
+        "tasks_with_positive_transfer": 0
+      }
+    },
+    "per_stream": {
+      "tiny": {
+        "own_topology": {
+          "agent": "stream_tiny",
+          "domain": "pengym",
+          "success_rate": 0.75,
+          "normalized_reward": -0.24704529903383338,
+          "step_efficiency": 0.7062684537684537,
+          "standard_error": 0.04841229182759271,
+          "total_rewards": -3853.9066649278006,
+          "per_task": [
+            {
+              "task": "tiny_T1_000",
+              "sr": 1.0,
+              "mean_reward": -0.019999990860620986,
+              "std_reward": 0.0,
+              "normalized_reward": -0.00010256405569549223,
+              "step_efficiency": 0.75,
+              "mean_success_steps": 8.0,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T2_000",
+              "sr": 1.0,
+              "mean_reward": -0.03666665752728765,
+              "std_reward": 0.07264831572567787,
+              "normalized_reward": -0.0001880341411655777,
+              "step_efficiency": 0.7458333333333333,
+              "mean_success_steps": 8.05,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T3_000",
+              "sr": 0.0,
+              "mean_reward": -186.72866665522258,
+              "std_reward": 4.460313436876931,
+              "normalized_reward": -0.9575829059242184,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T4_000",
+              "sr": 1.0,
+              "mean_reward": -5.909999942779541,
+              "std_reward": 1.5256146302392357,
+              "normalized_reward": -0.030307692014254053,
+              "step_efficiency": 0.6229720279720279,
+              "mean_success_steps": 9.85,
+              "eval_episodes": 20
+            }
+          ],
+          "num_tasks": 4,
+          "eval_episodes": 20
+        },
+        "cross_topology": {
+          "agent": "stream_tiny",
+          "domain": "pengym",
+          "success_rate": 0.4875,
+          "normalized_reward": -1.2710189370670348,
+          "step_efficiency": 0.3211290293931762,
+          "standard_error": 0.039516116174290204,
+          "total_rewards": -36717.653331816175,
+          "per_task": [
+            {
+              "task": "tiny_T1_000",
+              "sr": 1.0,
+              "mean_reward": -0.03666665752728765,
+              "std_reward": 0.07264831572567787,
+              "normalized_reward": -0.0001880341411655777,
+              "step_efficiency": 0.7458333333333333,
+              "mean_success_steps": 8.05,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T2_000",
+              "sr": 1.0,
+              "mean_reward": -0.03666665752728766,
+              "std_reward": 0.07264831572567793,
+              "normalized_reward": -0.00018803414116557777,
+              "step_efficiency": 0.7458333333333333,
+              "mean_success_steps": 8.05,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T3_000",
+              "sr": 0.0,
+              "mean_reward": -186.1286666552226,
+              "std_reward": 4.392255352238291,
+              "normalized_reward": -0.9545059828472954,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T4_000",
+              "sr": 1.0,
+              "mean_reward": -6.159999942779541,
+              "std_reward": 1.6703293088490065,
+              "normalized_reward": -0.03158974329630534,
+              "step_efficiency": 0.6104720279720279,
+              "mean_success_steps": 10.1,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T1_000",
+              "sr": 0.15,
+              "mean_reward": -389.34999999999957,
+              "std_reward": 78.68117627488789,
+              "normalized_reward": -2.1751396648044667,
+              "step_efficiency": 0.039640552684030946,
+              "mean_success_steps": 312.0,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T2_000",
+              "sr": 0.35,
+              "mean_reward": -378.73433334678396,
+              "std_reward": 80.51544701677201,
+              "normalized_reward": -2.115834264507173,
+              "step_efficiency": 0.035827648868350125,
+              "mean_success_steps": 341.7142857142857,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T3_000",
+              "sr": 0.15,
+              "mean_reward": -440.318166665236,
+              "std_reward": 55.733053567957,
+              "normalized_reward": -2.459878026062771,
+              "step_efficiency": 0.03622056513136746,
+              "mean_success_steps": 345.6666666666667,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T4_000",
+              "sr": 0.25,
+              "mean_reward": -435.1181666657327,
+              "std_reward": 61.90035068595805,
+              "normalized_reward": -2.430827746735937,
+              "step_efficiency": 0.0340757444297903,
+              "mean_success_steps": 356.6,
+              "eval_episodes": 20
+            }
+          ],
+          "num_tasks": 8,
+          "eval_episodes": 20
+        }
+      },
+      "small-linear": {
+        "own_topology": {
+          "agent": "stream_small-linear",
+          "domain": "pengym",
+          "success_rate": 0.0,
+          "normalized_reward": -1.401303538175048,
+          "step_efficiency": null,
+          "standard_error": 0.0,
+          "total_rewards": -20066.66666666669,
+          "per_task": [
+            {
+              "task": "small-linear_T1_000",
+              "sr": 0.0,
+              "mean_reward": -166.66666666666703,
+              "std_reward": 0.0,
+              "normalized_reward": -0.931098696461827,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T2_000",
+              "sr": 0.0,
+              "mean_reward": -166.66666666666703,
+              "std_reward": 0.0,
+              "normalized_reward": -0.931098696461827,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T3_000",
+              "sr": 0.0,
+              "mean_reward": -170.00000000000045,
+              "std_reward": 0.0,
+              "normalized_reward": -0.949720670391064,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T4_000",
+              "sr": 0.0,
+              "mean_reward": -500.0,
+              "std_reward": 0.0,
+              "normalized_reward": -2.793296089385475,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            }
+          ],
+          "num_tasks": 4,
+          "eval_episodes": 20
+        },
+        "cross_topology": {
+          "agent": "stream_small-linear",
+          "domain": "pengym",
+          "success_rate": 0.125,
+          "normalized_reward": -0.8280214272015787,
+          "step_efficiency": 0.75,
+          "standard_error": 0.02614562582918986,
+          "total_rewards": -24040.59999982519,
+          "per_task": [
+            {
+              "task": "tiny_T1_000",
+              "sr": 1.0,
+              "mean_reward": -0.019999990860620986,
+              "std_reward": 0.0,
+              "normalized_reward": -0.00010256405569549223,
+              "step_efficiency": 0.75,
+              "mean_success_steps": 8.0,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T2_000",
+              "sr": 0.0,
+              "mean_reward": -65.34333333373087,
+              "std_reward": 1.4210854715202004e-14,
+              "normalized_reward": -0.33509401709605574,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T3_000",
+              "sr": 0.0,
+              "mean_reward": -66.66666666666679,
+              "std_reward": 1.4210854715202004e-14,
+              "normalized_reward": -0.3418803418803425,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "tiny_T4_000",
+              "sr": 0.0,
+              "mean_reward": -66.66666666666679,
+              "std_reward": 1.4210854715202004e-14,
+              "normalized_reward": -0.3418803418803425,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T1_000",
+              "sr": 0.0,
+              "mean_reward": -166.66666666666703,
+              "std_reward": 0.0,
+              "normalized_reward": -0.931098696461827,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T2_000",
+              "sr": 0.0,
+              "mean_reward": -166.66666666666703,
+              "std_reward": 0.0,
+              "normalized_reward": -0.931098696461827,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T3_000",
+              "sr": 0.0,
+              "mean_reward": -170.00000000000045,
+              "std_reward": 0.0,
+              "normalized_reward": -0.949720670391064,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            },
+            {
+              "task": "small-linear_T4_000",
+              "sr": 0.0,
+              "mean_reward": -500.0,
+              "std_reward": 0.0,
+              "normalized_reward": -2.793296089385475,
+              "step_efficiency": null,
+              "mean_success_steps": null,
+              "eval_episodes": 20
+            }
+          ],
+          "num_tasks": 8,
+          "eval_episodes": 20
+        }
+      }
+    },
+    "learning_speed": {
+      "per_task": [
+        {
+          "task": "tiny_T1_000",
+          "dual_ttt": 1,
+          "scratch_ttt": 1,
+          "ttt_speedup": 1.0,
+          "dual_auc": -0.019999990860620986,
+          "scratch_auc": -0.019999990860620986,
+          "auc_ratio": -1.0
+        },
+        {
+          "task": "tiny_T2_000",
+          "dual_ttt": 1,
+          "scratch_ttt": 1,
+          "ttt_speedup": 1.0,
+          "dual_auc": -0.019999990860620986,
+          "scratch_auc": -0.019999990860620986,
+          "auc_ratio": -1.0
+        },
+        {
+          "task": "tiny_T3_000",
+          "dual_ttt": 1,
+          "scratch_ttt": 1,
+          "ttt_speedup": 1.0,
+          "dual_auc": -178.35333331425988,
+          "scratch_auc": -66.6666666666668,
+          "auc_ratio": -2.675299999713893
+        },
+        {
+          "task": "tiny_T4_000",
+          "dual_ttt": 1,
+          "scratch_ttt": 1,
+          "ttt_speedup": 1.0,
+          "dual_auc": -4.059999942779541,
+          "scratch_auc": -6.059999942779541,
+          "auc_ratio": -0.6699669935833927
+        },
+        {
+          "task": "small-linear_T1_000",
+          "dual_ttt": 1,
+          "scratch_ttt": 1,
+          "ttt_speedup": 1.0,
+          "dual_auc": -116.33333333333276,
+          "scratch_auc": -137.66666666666623,
+          "auc_ratio": -0.8450363196125893
+        },
+        {
+          "task": "small-linear_T2_000",
+          "dual_ttt": 1,
+          "scratch_ttt": 1,
+          "ttt_speedup": 1.0,
+          "dual_auc": -166.66666666666703,
+          "scratch_auc": -163.33333335320168,
+          "auc_ratio": -1.0204081631411828
+        },
+        {
+          "task": "small-linear_T3_000",
+          "dual_ttt": 1,
+          "scratch_ttt": 1,
+          "ttt_speedup": 1.0,
+          "dual_auc": -170.00000000000045,
+          "scratch_auc": -166.66666666666703,
+          "auc_ratio": -1.0200000000000005
+        },
+        {
+          "task": "small-linear_T4_000",
+          "dual_ttt": 1,
+          "scratch_ttt": 1,
+          "ttt_speedup": 1.0,
+          "dual_auc": -500.0,
+          "scratch_auc": -166.66666666666703,
+          "auc_ratio": -2.9999999999999933
+        }
+      ],
+      "aggregate": {
+        "mean_ttt_speedup": 1.0,
+        "mean_auc_ratio": -1.4038389345063815
+      }
+    }
+  },
+  "total_time_s": 7669.6,
+  "scratch": {
+    "num_tasks": 8,
+    "train_time_s": 10131.17,
+    "final_sr": 0.0,
+    "final_reward": -166.66666666666703,
+    "model_dir": "outputs/ablation_beta/beta_1.0/models/pengym_scratch"
+  }
+}

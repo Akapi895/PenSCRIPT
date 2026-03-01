@@ -1,0 +1,520 @@
+{
+  "agents": {
+    "theta_sim_unified": {
+      "pengym": {
+        "agent": "theta_sim_unified",
+        "domain": "pengym",
+        "success_rate": 0.0,
+        "normalized_reward": -0.663584731779133,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": -19510.19000020627,
+        "per_task": [
+          {
+            "task": "tiny_T1_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T2_000",
+            "sr": 0.0,
+            "mean_reward": -107.80950000037743,
+            "std_reward": 29.394281837582707,
+            "normalized_reward": -0.5528692307711663,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T3_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T4_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T1_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T2_000",
+            "sr": 0.0,
+            "mean_reward": -166.6666666766012,
+            "std_reward": 5.684341886080802e-14,
+            "normalized_reward": -0.9310986965173252,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T3_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T4_000",
+            "sr": 0.0,
+            "mean_reward": -167.70000000000041,
+            "std_reward": 0.49328828623163884,
+            "normalized_reward": -0.9368715083798906,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 8,
+        "eval_episodes": 20
+      },
+      "sim": {
+        "agent": "theta_sim_unified",
+        "domain": "sim",
+        "success_rate": 1.0,
+        "normalized_reward": null,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": 118.8,
+        "per_task": [
+          {
+            "task": "192.168.1.25",
+            "sr": 1.0,
+            "mean_reward": 0.9899999999999997,
+            "std_reward": 3.3306690738754696e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 2.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.27",
+            "sr": 1.0,
+            "mean_reward": 0.9899999999999997,
+            "std_reward": 3.3306690738754696e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 2.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.3",
+            "sr": 1.0,
+            "mean_reward": 0.9899999999999997,
+            "std_reward": 3.3306690738754696e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 2.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.17",
+            "sr": 1.0,
+            "mean_reward": 0.9899999999999997,
+            "std_reward": 3.3306690738754696e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 2.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.33",
+            "sr": 1.0,
+            "mean_reward": 0.9899999999999997,
+            "std_reward": 3.3306690738754696e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 2.0,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.32",
+            "sr": 1.0,
+            "mean_reward": 0.9899999999999997,
+            "std_reward": 3.3306690738754696e-16,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": 2.0,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 6,
+        "eval_episodes": 20
+      }
+    },
+    "theta_dual": {
+      "pengym": {
+        "agent": "theta_dual",
+        "domain": "pengym",
+        "success_rate": 0.525,
+        "normalized_reward": -1.1685205647061547,
+        "step_efficiency": 0.3238673736462586,
+        "standard_error": 0.03947902924338439,
+        "total_rewards": -33585.40333203473,
+        "per_task": [
+          {
+            "task": "tiny_T1_000",
+            "sr": 1.0,
+            "mean_reward": -0.03666665752728765,
+            "std_reward": 0.07264831572567787,
+            "normalized_reward": -0.0001880341411655777,
+            "step_efficiency": 0.7458333333333333,
+            "mean_success_steps": 8.05,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T2_000",
+            "sr": 1.0,
+            "mean_reward": -0.03666665752728766,
+            "std_reward": 0.07264831572567793,
+            "normalized_reward": -0.00018803414116557777,
+            "step_efficiency": 0.7458333333333333,
+            "mean_success_steps": 8.05,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T3_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T4_000",
+            "sr": 1.0,
+            "mean_reward": -5.759999942779541,
+            "std_reward": 1.1874342087037917,
+            "normalized_reward": -0.02953846124502329,
+            "step_efficiency": 0.6276515151515151,
+            "mean_success_steps": 9.7,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T1_000",
+            "sr": 0.55,
+            "mean_reward": -336.34999999999985,
+            "std_reward": 90.14534405922188,
+            "normalized_reward": -1.8790502793296082,
+            "step_efficiency": 0.039000785051539644,
+            "mean_success_steps": 325.09090909090907,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T2_000",
+            "sr": 0.2,
+            "mean_reward": -396.5338333462672,
+            "std_reward": 84.74782280638287,
+            "normalized_reward": -2.2152728119903196,
+            "step_efficiency": 0.041111605857943614,
+            "mean_success_steps": 312.75,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T3_000",
+            "sr": 0.2,
+            "mean_reward": -433.4014999985693,
+            "std_reward": 59.39628363695964,
+            "normalized_reward": -2.421237430159605,
+            "step_efficiency": 0.035650851241539175,
+            "mean_success_steps": 340.25,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T4_000",
+            "sr": 0.25,
+            "mean_reward": -440.48483333239926,
+            "std_reward": 50.08262931951885,
+            "normalized_reward": -2.460809124762007,
+            "step_efficiency": 0.03199019155460635,
+            "mean_success_steps": 375.4,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 8,
+        "eval_episodes": 20
+      },
+      "sim": {
+        "agent": "theta_dual",
+        "domain": "sim",
+        "success_rate": 0.0,
+        "normalized_reward": null,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": -12000.0,
+        "per_task": [
+          {
+            "task": "192.168.1.25",
+            "sr": 0.0,
+            "mean_reward": -100.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.27",
+            "sr": 0.0,
+            "mean_reward": -100.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.3",
+            "sr": 0.0,
+            "mean_reward": -100.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.17",
+            "sr": 0.0,
+            "mean_reward": -100.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.33",
+            "sr": 0.0,
+            "mean_reward": -100.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.32",
+            "sr": 0.0,
+            "mean_reward": -100.0,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 6,
+        "eval_episodes": 20
+      }
+    },
+    "theta_pengym_scratch": {
+      "pengym": {
+        "agent": "theta_pengym_scratch",
+        "domain": "pengym",
+        "success_rate": 0.0,
+        "normalized_reward": -0.6364895191710848,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": -18666.666666666708,
+        "per_task": [
+          {
+            "task": "tiny_T1_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T2_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T3_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "tiny_T4_000",
+            "sr": 0.0,
+            "mean_reward": -66.66666666666679,
+            "std_reward": 1.4210854715202004e-14,
+            "normalized_reward": -0.3418803418803425,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T1_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T2_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T3_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "small-linear_T4_000",
+            "sr": 0.0,
+            "mean_reward": -166.66666666666703,
+            "std_reward": 0.0,
+            "normalized_reward": -0.931098696461827,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 8,
+        "eval_episodes": 20
+      },
+      "sim": {
+        "agent": "theta_pengym_scratch",
+        "domain": "sim",
+        "success_rate": 0.0,
+        "normalized_reward": null,
+        "step_efficiency": null,
+        "standard_error": 0.0,
+        "total_rewards": -5940.0,
+        "per_task": [
+          {
+            "task": "192.168.1.25",
+            "sr": 0.0,
+            "mean_reward": -49.5,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.27",
+            "sr": 0.0,
+            "mean_reward": -49.5,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.3",
+            "sr": 0.0,
+            "mean_reward": -49.5,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.17",
+            "sr": 0.0,
+            "mean_reward": -49.5,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.33",
+            "sr": 0.0,
+            "mean_reward": -49.5,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          },
+          {
+            "task": "192.168.1.32",
+            "sr": 0.0,
+            "mean_reward": -49.5,
+            "std_reward": 0.0,
+            "normalized_reward": null,
+            "step_efficiency": null,
+            "mean_success_steps": null,
+            "eval_episodes": 20
+          }
+        ],
+        "num_tasks": 6,
+        "eval_episodes": 20
+      }
+    }
+  },
+  "metrics": {
+    "FT_SR": 0.525,
+    "transfer_ratio": 52500000.0,
+    "FT_NR": -0.53203104553507,
+    "FT_SR_significant": true,
+    "BT_SR": -1.0,
+    "zero_shot_sr": 0.0
+  },
+  "policy_metrics": {
+    "BT_KL": 0.00044546712888404727,
+    "BT_fisher_dist": 0.0
+  }
+}
