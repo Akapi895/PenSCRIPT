@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-run.py — CLI entry point for Strategy C dual training pipeline.
+run.py — CLI entry point for PenSCRIPT dual training pipeline.
 
-Strategy C trains a SCRIPT CRL agent on simulation first, then transfers
+PenSCRIPT trains a SCRIPT CRL agent on simulation first, then transfers
 the policy to PenGym via controlled domain transfer and fine-tunes with
 EWC constraints.
 
@@ -48,12 +48,12 @@ from src.utils.logging import TeeLogger, ENV_NOISE_PATTERNS
 
 # ── Paths ────────────────────────────────────────────────────────────
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
-STRATEGY_C_DIR = OUTPUTS_DIR / "strategy_c"
+PENSCRIPT_DIR = OUTPUTS_DIR / "penscript"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Strategy C — Dual Training Pipeline (Sim → Transfer → PenGym)",
+        description="PenSCRIPT — Dual Training Pipeline (Sim → Transfer → PenGym)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -156,7 +156,7 @@ def parse_args() -> argparse.Namespace:
 
     # ── Output ───────────────────────────────────────────────────────
     parser.add_argument(
-        "--output-dir", type=str, default=str(STRATEGY_C_DIR),
+        "--output-dir", type=str, default=str(PENSCRIPT_DIR),
         help="Output directory for logs, models, and results.",
     )
 
@@ -169,11 +169,11 @@ def main():
     # Set up logging
     log_dir = Path(args.output_dir) / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    tee = TeeLogger(str(log_dir / "strategy_c.log"),
+    tee = TeeLogger(str(log_dir / "penscript.log"),
                      console_suppress=ENV_NOISE_PATTERNS)
 
     print("=" * 70)
-    print("  Strategy C — Dual Training Pipeline")
+    print("  PenSCRIPT — Dual Training Pipeline")
     print("=" * 70)
     print(f"  Sim scenarios:    {args.sim_scenarios}")
     print(f"  PenGym scenarios: {args.pengym_scenarios}")
@@ -262,7 +262,7 @@ def main():
 
     # Print summary
     print("\n" + "=" * 70)
-    print("  Strategy C — Pipeline Complete")
+    print("  PenSCRIPT — Pipeline Complete")
     print("=" * 70)
     print(f"  Total time: {elapsed:.1f}s")
 
@@ -294,7 +294,7 @@ def main():
                     print(f"  {key}: {val:.6f}")
 
     # Save final results
-    results_path = Path(args.output_dir) / "strategy_c_results.json"
+    results_path = Path(args.output_dir) / "penscript_results.json"
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2, default=str)
     print(f"\n  Results saved → {results_path}")

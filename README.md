@@ -1,4 +1,4 @@
-# 🛡️ PenSCRIPT — Strategy C: Sim-to-Real Dual Training for RL Pentesting
+# 🛡️ PenSCRIPT — Sim-to-Real Dual Training for RL Pentesting
 
 A Continual Reinforcement Learning agent (PPO + SCRIPT) that learns penetration testing in **simulation first**, then **transfers to realistic PenGym environments** via controlled domain transfer with EWC constraints.
 
@@ -8,7 +8,7 @@ A Continual Reinforcement Learning agent (PPO + SCRIPT) that learns penetration 
 
 ```
 PenSCRIPT/
-├── run.py                       # Main entry point — Strategy C pipeline
+├── run.py                       # Main entry point — Dual training pipeline
 ├── run_benchmark.py             # Benchmark suite (baselines comparison)
 ├── test_integration.py          # Integration smoke test
 ├── requirements.txt
@@ -31,7 +31,7 @@ PenSCRIPT/
 │   │   ├── pengym_trainer.py    # PenGym PPO training loop
 │   │   └── pengym_script_trainer.py  # SCRIPT CRL over PenGym
 │   ├── evaluation/              # Evaluation & metrics
-│   │   ├── strategy_c_eval.py   # 4-agent evaluation (Phase 4)
+│   │   ├── strategy_c_eval.py   # 4-agent comparative evaluation (Phase 4)
 │   │   └── metric_store.py      # MetricStore, FZ transfer metrics
 │   ├── pipeline/                # Scenario tools & curriculum
 │   │   ├── scenario_compiler.py # Template → PenGym YAML compiler
@@ -48,7 +48,7 @@ PenSCRIPT/
 │       ├── templates/           # Scenario templates
 │       └── *.yml                # PenGym base scenarios (YAML)
 └── outputs/                     # Training outputs (gitignored)
-    ├── strategy_c/              # Strategy C results
+    ├── penscript/               # Pipeline results
     ├── models/                  # Saved checkpoints
     ├── logs/                    # Training logs
     └── tensorboard/             # TensorBoard events
@@ -56,7 +56,7 @@ PenSCRIPT/
 
 ---
 
-## 🔬 Strategy C Pipeline
+## 🔬 Training Pipeline
 
 ```
 Phase 0  →  Validation (SBERT, PenGym stability checks)
@@ -113,7 +113,7 @@ python run.py \
 python run.py \
     --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
     --pengym-scenarios data/scenarios/tiny.yml \
-    --resume-from outputs/strategy_c/previous_run
+    --resume-from outputs/penscript/previous_run
 ```
 
 ---
@@ -158,7 +158,7 @@ python run.py \
 | `--scratch-only` | Only scratch baseline (calibration mode) |
 | `--no-canonicalization` | Disable canonicalization maps (ablation) |
 | `--resume-from PATH` | Resume from interrupted run |
-| `--output-dir` | Output directory (default: `outputs/strategy_c`) |
+| `--output-dir` | Output directory (default: `outputs/penscript`) |
 
 ---
 
@@ -167,18 +167,19 @@ python run.py \
 ### TensorBoard
 
 ```bash
-tensorboard --logdir outputs/strategy_c/tensorboard --host localhost --port 6006
+tensorboard --logdir outputs/penscript/tensorboard --host localhost --port 6006
 ```
 
 ### Phase 4 Output
 
-Sau khi pipeline hoàn thành, kết quả so sánh 4 agents được lưu tại `outputs/strategy_c/strategy_c_results.json`:
+Sau khi pipeline hoàn thành, kết quả so sánh 4 agents được lưu tại `outputs/penscript/penscript_results.json`:
+
 
 | Agent | Mô tả |
 |---|---|
 | θ_sim_baseline | Trained trên sim, KHÔNG unified encoding |
 | θ_sim_unified | Trained trên sim VỚI unified encoding |
-| θ_dual | **Strategy C** — transferred + fine-tuned trên PenGym |
+| θ_dual | **PenSCRIPT** — transferred + fine-tuned trên PenGym |
 | θ_pengym_scratch | Trained từ đầu trên PenGym (baseline) |
 
 Key metrics: **SR** (Success Rate), **NR** (Normalized Reward), **η** (Step Efficiency), **FT/BT** (Forward/Backward Transfer).
