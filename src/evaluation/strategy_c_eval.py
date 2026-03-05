@@ -1,7 +1,7 @@
 """
-Strategy C Evaluator — 4-agent comparison matrix and transfer metrics.
+PenSCRIPT Evaluator — 4-agent comparison matrix and transfer metrics.
 
-Strategy C §6.1 specifies comparison of four agents:
+PenSCRIPT §6.1 specifies comparison of four agents:
 
 1. θ_sim_baseline  — SCRIPT trained on sim with original 1538-dim encoding
 2. θ_sim_unified   — SCRIPT retrained on sim with 1540-dim unified encoding
@@ -298,7 +298,7 @@ class StrategyCEvaluator:
     # ------------------------------------------------------------------
 
     def _compute_transfer_metrics(self, results: Dict) -> Dict[str, Any]:
-        """Compute Strategy C transfer metrics from evaluation results.
+        """Compute PenSCRIPT transfer metrics from evaluation results.
 
         Forward Transfer (PenGym): FT_SR, FT_NR, FT_eta
         Backward Transfer (sim):   BT_SR, BT_NR, BT_eta
@@ -365,7 +365,7 @@ class StrategyCEvaluator:
         """Print a formatted comparison table."""
         lines = []
         lines.append("\n" + "=" * 80)
-        lines.append("Strategy C — Agent Comparison Report")
+        lines.append("PenSCRIPT — Agent Comparison Report")
         lines.append("=" * 80)
 
         header = f"{'Agent':<25} | {'Domain':<8} | {'SR':>6} | {'NR':>6} | {'η':>6} | {'Reward':>8} | {'Tasks':>5}"

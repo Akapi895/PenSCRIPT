@@ -1,4 +1,4 @@
-"""Evaluation package for Strategy C."""
+"""Evaluation package for PenSCRIPT."""
 from src.evaluation.strategy_c_eval import StrategyCEvaluator
 from src.evaluation.metric_store import MetricStore, FZComputer, CECurveGenerator
 

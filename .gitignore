@@ -42,7 +42,7 @@ desktop.ini
 outputs/models/
 outputs/logs/
 outputs/tensorboard/
-# outputs/
+outputs/
 runs/
 
 # ===========================

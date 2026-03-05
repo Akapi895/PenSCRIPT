@@ -1,198 +1,194 @@
-# 🛡️ Fusion Pentest – RL-based Automated Penetration Testing
+# 🛡️ PenSCRIPT — Sim-to-Real Dual Training for RL Pentesting
 
-An RL (Reinforcement Learning) agent trained via PPO to autonomously plan and execute multi-step penetration testing attacks against network environments. Supports **Sim-to-Real** execution via NASim (simulation) and PenGym (real-world).
+A Continual Reinforcement Learning agent (PPO + SCRIPT) that learns penetration testing in **simulation first**, then **transfers to realistic PenGym environments** via controlled domain transfer with EWC constraints.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-pentest/
-├── run.py                   # Main entry point (train / eval / demo)
-├── setup_and_run.py         # One-click setup + run automation
-├── requirements.txt         # Python dependencies
+PenSCRIPT/
+├── run.py                       # Main entry point — Dual training pipeline
+├── run_benchmark.py             # Benchmark suite (baselines comparison)
+├── test_integration.py          # Integration smoke test
+├── requirements.txt
 ├── src/
-│   ├── agent/               # RL agent (PPO, NLP encoder, actions, continual learning)
-│   │   ├── agent.py         # Agent class (training & evaluation loops)
-│   │   ├── host.py          # HOST environment wrapper per target
-│   │   ├── actions/         # Action space definitions (CVE-based exploits)
-│   │   ├── nlp/             # NLP Encoder (Sentence-BERT embeddings)
-│   │   ├── policy/          # PPO policy, replay buffers, configs
-│   │   ├── continual/       # Continual learning methods (Script, Finetune, EWC)
-│   │   └── config.ini       # Agent configuration
-│   └── envs/                # PenGym environment (Sim-to-Real)
-│       ├── mode.py          # Execution mode switcher (sim/real/dual)
-│       └── core/            # Host vectors, network logic
-├── data/scenarios/          # Attack scenarios (JSON + YAML)
-│   ├── chain/               # Multi-target chain scenarios (JSON)
-│   ├── msfexp_vul/          # Single-CVE scenarios (JSON)
-│   └── *.yml                # PenGym YAML scenarios
-└── outputs/
-    ├── logs/                # TensorBoard logs
-    └── models/              # Saved model checkpoints
+│   ├── agent/                   # RL agent (PPO, SCRIPT CRL, NLP encoder)
+│   │   ├── agent.py             # Base Agent (training & eval loops)
+│   │   ├── agent_continual.py   # Continual Learning agent
+│   │   ├── host.py              # HOST target wrapper + StateEncoder
+│   │   ├── actions/             # Action space (CVE exploits, service-level)
+│   │   ├── nlp/                 # NLP Encoder (Sentence-BERT)
+│   │   ├── policy/              # PPO policy, configs
+│   │   └── continual/           # CL methods (Script, Finetune, EWC)
+│   ├── envs/                    # Environment layer
+│   │   ├── core/                # UnifiedStateEncoder, host vectors, network
+│   │   ├── adapters/            # PenGym ↔ SCRIPT adapters
+│   │   └── wrappers/            # SingleHostWrapper, reward normalizer
+│   ├── training/                # Training orchestration
+│   │   ├── dual_trainer.py      # DualTrainer — Phase 0→4 orchestrator
+│   │   ├── domain_transfer.py   # Sim→PenGym policy transfer
+│   │   ├── pengym_trainer.py    # PenGym PPO training loop
+│   │   └── pengym_script_trainer.py  # SCRIPT CRL over PenGym
+│   ├── evaluation/              # Evaluation & metrics
+│   │   ├── strategy_c_eval.py   # 4-agent comparative evaluation (Phase 4)
+│   │   └── metric_store.py      # MetricStore, FZ transfer metrics
+│   ├── pipeline/                # Scenario tools & curriculum
+│   │   ├── scenario_compiler.py # Template → PenGym YAML compiler
+│   │   ├── curriculum_controller.py
+│   │   └── cve_classifier.py    # CVE difficulty grading
+│   └── utils/
+│       └── logging.py           # TeeLogger (console + file)
+├── data/
+│   ├── CVE/                     # CVE dataset + service registry
+│   ├── config/                  # Training configs (YAML/JSON)
+│   └── scenarios/               # Attack scenarios
+│       ├── chain/               # Sim scenarios (JSON)
+│       ├── msfexp_vul/          # Single-CVE scenarios (JSON)
+│       ├── templates/           # Scenario templates
+│       └── *.yml                # PenGym base scenarios (YAML)
+└── outputs/                     # Training outputs (gitignored)
+    ├── penscript/               # Pipeline results
+    ├── models/                  # Saved checkpoints
+    ├── logs/                    # Training logs
+    └── tensorboard/             # TensorBoard events
+```
+
+---
+
+## 🔬 Training Pipeline
+
+```
+Phase 0  →  Validation (SBERT, PenGym stability checks)
+Phase 1  →  Train SCRIPT CRL on simulation (JSON) → θ_unified
+Phase 2  →  Domain transfer: reset normalizer, discount Fisher, reduce LR
+Phase 3  →  Fine-tune on PenGym (YAML) with EWC constraints → θ_dual
+Phase 4  →  Evaluate 4 agents: θ_baseline, θ_unified, θ_dual, θ_scratch
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Setup (one-time)
+### 1. Setup
 
 ```bash
-cd pentest
-python setup_and_run.py --setup-only
-```
-
-Hoặc manual:
-```bash
-python -m venv venv
-venv\Scripts\activate        # Windows
+python -m venv .venv
+source .venv/bin/activate        # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### 2. Train
+### 2. Full Pipeline
 
 ```bash
-# Train cơ bản (6 targets, 500 episodes)
-python run.py --mode train --scenario chain/chain-msfexp_vul-sample-6_envs-seed_0.json --episodes 500
-
-# Train nhanh để test (10 episodes)
-python run.py --mode train --scenario chain/chain-msfexp_vul-sample-6_envs-seed_0.json --episodes 10
-
-# Train với full 40 targets
-python run.py --mode train --scenario chain/chain-msfexp_vul-sample-40_envs-seed_0.json --episodes 1000
-
-# Train 1 CVE cụ thể
-python run.py --mode train --scenario msfexp_vul/env-CVE-2021-44228.json --episodes 200
+# Train simulation → transfer → fine-tune on PenGym → evaluate
+python run.py \
+    --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
+    --pengym-scenarios data/scenarios/tiny.yml data/scenarios/small-linear.yml \
+    --train-scratch
 ```
 
-### 3. Evaluate
+### 3. With Transfer Strategy
 
 ```bash
-python run.py --mode eval \
-    --scenario chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
-    --model-path outputs/models/chain/chain-msfexp_vul-sample-6_envs-seed_0
+python run.py \
+    --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
+    --pengym-scenarios data/scenarios/tiny.yml \
+    --transfer-strategy cautious \
+    --fisher-beta 0.3
 ```
 
-### 4. Demo
+### 4. Calibration Mode (scratch-only)
 
 ```bash
-python run.py --mode demo --scenario chain/chain-msfexp_vul-sample-6_envs-seed_0.json
+python run.py \
+    --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
+    --pengym-scenarios data/scenarios/tiny.yml \
+    --scratch-only
+```
+
+### 5. Resume Interrupted Run
+
+```bash
+python run.py \
+    --sim-scenarios data/scenarios/chain/chain-msfexp_vul-sample-6_envs-seed_0.json \
+    --pengym-scenarios data/scenarios/tiny.yml \
+    --resume-from outputs/penscript/previous_run
 ```
 
 ---
 
 ## ⚙️ Command-line Arguments
 
+### Scenarios
+
 | Argument | Default | Mô tả |
 |---|---|---|
-| `--mode` | `train` | Chế độ: `train`, `eval`, `demo` |
-| `--scenario` | `tiny.yml` | File scenario trong `data/scenarios/` |
-| `--episodes` | `1000` | Số episodes training |
-| `--max-steps` | `100` | Số bước tối đa mỗi episode |
-| `--seed` | `42` | Random seed |
-| `--device` | `cuda` | `cuda` hoặc `cpu` |
-| `--env-type` | `simulation` | `simulation` (Script) hoặc `pengym` |
-| `--execution-mode` | `sim` | `sim`, `real`, `dual` (cho PenGym) |
-| `--model-path` | `None` | Đường dẫn model cho eval |
-| `--log-dir` | auto | Thư mục TensorBoard logs |
+| `--sim-scenarios` | *(required)* | Simulation scenario JSON files (Phase 1) |
+| `--pengym-scenarios` | *(required)* | PenGym scenario YAML files (Phase 3) |
+| `--heldout-scenarios` | `None` | Heldout scenarios for generalization eval |
 
----
+### Transfer
 
-## 📊 Xem Kết quả với TensorBoard
-
-### Khởi động TensorBoard
-
-```bash
-# Xem logs của 1 lần train cụ thể
-tensorboard --logdir outputs/logs --host localhost --port 6006
-
-# Sau đó mở trình duyệt tại:
-# http://localhost:6006
-```
-
-### Các metrics cần theo dõi
-
-| Metric | Ý nghĩa | Mục tiêu |
+| Argument | Default | Mô tả |
 |---|---|---|
-| `Train_Episode_Rewards` | Tổng reward mỗi episode | **Tăng dần** → agent đang học |
-| `Train_Episode_Steps` | Số bước mỗi episode | **Giảm dần** → agent tìm ra đường ngắn hơn |
-| `Train_Success_Rate` | Tỷ lệ thành công (0.0 – 1.0) | **Tiến đến 1.0** |
-| `Eval_Episode_Rewards` | Reward khi đánh giá | **Cao & ổn định** |
-| `Eval_Success_Rate` | Tỷ lệ thành công khi eval | **≥ 0.9 là tốt** |
-| `loss/actor_loss` | Actor (policy) loss | **Giảm & ổn định** |
-| `loss/critic_loss` | Critic (value) loss | **Giảm & ổn định** |
+| `--transfer-strategy` | `conservative` | `aggressive` / `conservative` / `cautious` |
+| `--fisher-beta` | `0.3` | Fisher discount factor β |
+| `--lr-factor` | `0.1` | Learning rate multiplier sau transfer |
+| `--warmup-episodes` | `10` | Normalizer warmup episodes trên PenGym |
 
-### Cách đọc kết quả Training Output
+### Training
 
-```
-'Training': 100%|█| 500/500 [05:23, rate_e='95.0%', rate_t='100.0%', re_e='600', re_t='600/600']
-                                    ^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^
-                                    │                │                │           │
-                                    │                │                │           └─ Reward train / Best reward
-                                    │                │                └─ Eval reward
-                                    │                └─ Train success rate (100% = penetrated all targets)
-                                    └─ Eval success rate (95% = 95% targets successfully penetrated)
-```
+| Argument | Default | Mô tả |
+|---|---|---|
+| `--episodes` | `500` | Episodes per task |
+| `--step-limit` | `100` | Max steps per episode |
+| `--eval-freq` | `5` | Evaluate every N episodes |
+| `--ewc-lambda` | `2000` | EWC regularisation strength |
+| `--seed` | `42` | Random seed |
+| `--episode-config` | `None` | JSON file for per-scenario episode config |
+| `--training-mode` | `intra_topology` | `intra_topology` / `cross_topology` |
 
-**Lần train 10 episodes của bạn:**
-- `rate_t='0.0%'` → Chưa penetrate được target nào ← **Bình thường**, cần nhiều episodes hơn
-- `re_t='-5990/-5990'` → Reward âm ← Agent đang random actions
-- 10 episodes quá ít để PPO hội tụ, thử **500–1000 episodes**
+### Pipeline Control
 
----
-
-## 📈 Training Tips
-
-### Episodes mà agent cần để học
-
-| Scenario | Targets | Episodes khuyến nghị | Thời gian ước tính |
-|---|---|---|---|
-| `msfexp_vul/env-CVE-*.json` | 1 | 200–500 | 1–3 phút |
-| `chain/...-6_envs-seed_0.json` | 6 | 500–1000 | 5–15 phút |
-| `chain/...-40_envs-seed_0.json` | 40 | 1000–3000 | 30–60 phút |
-
-### Dấu hiệu training thành công
-
-1. ✅ **Success rate > 0** sau ~50–100 episodes (agent bắt đầu tìm ra exploit đúng)
-2. ✅ **Success rate → 1.0** sau ~300–500 episodes
-3. ✅ **Episode steps giảm** (agent tối ưu hóa attack path)
-4. ✅ **Reward tăng & ổn định** (không dao động mạnh)
-
-### Dấu hiệu có vấn đề
-
-1. ❌ Success rate luôn 0.0 sau 500+ episodes → Kiểm tra scenario file
-2. ❌ Reward không thay đổi → Learning rate quá nhỏ hoặc quá lớn
-3. ❌ Reward dao động mạnh → Giảm `policy_clip`, tăng `batch_size`
+| Argument | Mô tả |
+|---|---|
+| `--skip-phase0` | Skip Phase 0 validation |
+| `--train-scratch` | Also train θ_pengym_scratch (full 4-agent comparison) |
+| `--scratch-only` | Only scratch baseline (calibration mode) |
+| `--no-canonicalization` | Disable canonicalization maps (ablation) |
+| `--resume-from PATH` | Resume from interrupted run |
+| `--output-dir` | Output directory (default: `outputs/penscript`) |
 
 ---
 
-## 🔧 Tuning Hyperparameters
+## 📊 Xem Kết quả
 
-Chỉnh hyperparameters qua code (file `src/agent/policy/config.py`):
+### TensorBoard
 
-```python
-class PPO_Config:
-    batch_size = 512          # Tăng nếu training không ổn định
-    mini_batch_size = 64      # Thường = batch_size / 8
-    gamma = 0.99              # Discount factor
-    actor_lr = 1e-4           # Learning rate actor
-    critic_lr = 5e-5          # Learning rate critic
-    hidden_sizes = [512, 512] # Network architecture
-    entropy_coef = 0.02       # Exploration coefficient
-    ppo_update_time = 8       # PPO epochs per update
-```
-
-Hoặc qua `run.py` args:
 ```bash
-python run.py --mode train --episodes 1000 --max-steps 50 --seed 0
+tensorboard --logdir outputs/penscript/tensorboard --host localhost --port 6006
 ```
+
+### Phase 4 Output
+
+Sau khi pipeline hoàn thành, kết quả so sánh 4 agents được lưu tại `outputs/penscript/penscript_results.json`:
+
+
+| Agent | Mô tả |
+|---|---|
+| θ_sim_baseline | Trained trên sim, KHÔNG unified encoding |
+| θ_sim_unified | Trained trên sim VỚI unified encoding |
+| θ_dual | **PenSCRIPT** — transferred + fine-tuned trên PenGym |
+| θ_pengym_scratch | Trained từ đầu trên PenGym (baseline) |
+
+Key metrics: **SR** (Success Rate), **NR** (Normalized Reward), **η** (Step Efficiency), **FT/BT** (Forward/Backward Transfer).
 
 ---
 
 ## 📂 Available Scenarios
 
-### JSON Scenarios (cho `--env-type simulation`)
+### Simulation (JSON) — Phase 1
 
 | File | Targets | Mô tả |
 |---|---|---|
@@ -201,49 +197,30 @@ python run.py --mode train --episodes 1000 --max-steps 50 --seed 0
 | `chain/all_scenario_msf-41-seed_4.json` | 41 | Full scenario |
 | `msfexp_vul/env-CVE-*.json` | 1 each | 45 CVE riêng lẻ |
 
-### YAML Scenarios (cho `--env-type pengym`)
+### PenGym (YAML) — Phase 3
 
-| File | Mô tả |
+| File | Hosts | Services | Mô tả |
+|---|---|---|---|
+| `tiny.yml` | 3 | 1 (SSH) | Nhỏ nhất, smoke test |
+| `tiny-small.yml` / `tiny-hard.yml` | 3–4 | 1 | Biến thể tiny |
+| `small-linear.yml` | 8 | 3 | Linear topology |
+| `small-honeypot.yml` | 8 | 3 | Có honeypot |
+| `medium.yml` | 16 | 5 | Multi-vuln, multi-service |
+| `medium-single-site.yml` | 16 | 5 | Single subnet |
+| `medium-multi-site.yml` | 16 | 5 | Multi-subnet |
+
+---
+
+## 🧠 Continual Learning Methods
+
+| Method | Mô tả |
 |---|---|
-| `tiny.yml` | Mạng nhỏ nhất (2-3 hosts) |
-| `tiny-small.yml` / `tiny-hard.yml` | Biến thể tiny |
-| `small-linear.yml` / `small-honeypot.yml` | Mạng nhỏ |
-| `medium.yml` / `medium-single-site.yml` / `medium-multi-site.yml` | Mạng trung bình |
-
-> ⚠️ YAML scenarios yêu cầu PenGym (`--env-type pengym`) và các tools: nmap, metasploit.
-
----
-
-## 🔄 Sim-to-Real (PenGym)
-
-```bash
-# Simulation only (NASim)
-python run.py --env-type pengym --execution-mode sim --scenario tiny.yml
-
-# Real-world execution (requires nmap + metasploit)
-python run.py --env-type pengym --execution-mode real --scenario tiny.yml
-
-# Dual mode (both sim + real)
-python run.py --env-type pengym --execution-mode dual --scenario tiny.yml
-```
-
-> ⚠️ Real/Dual mode yêu cầu: `nmap`, `metasploit-framework`, và mạng target đang chạy.
-
----
-
-## 🧠 Continual Learning
-
-Project hỗ trợ các phương pháp Continual Learning (trong `src/agent/continual/`):
-
-- **Finetune** – Fine-tuning trực tiếp trên tasks mới
-- **Script** – Knowledge consolidation + curriculum-guided imitation
-- **Policy Distillation** – Transfer knowledge giữa các policies
-- **EWC** – Elastic Weight Consolidation
-
-> CL methods hiện chỉ sử dụng qua `Bot` class API trực tiếp.
+| **SCRIPT** | Knowledge consolidation + curriculum-guided imitation + EWC |
+| **Finetune** | Fine-tuning trực tiếp trên tasks mới |
+| **EWC** | Elastic Weight Consolidation (chống catastrophic forgetting) |
 
 ---
 
 ## 📝 License
 
-Research project – NCKH 2026.
+Research project — NCKH 2026.

@@ -1,7 +1,7 @@
 """
-DualTrainer — Phase 0→1→2→3→4 orchestrator for Strategy C dual training.
+DualTrainer — Phase 0→1→2→3→4 orchestrator for PenSCRIPT dual training.
 
-Strategy C's core contribution: train on simulation first, then transfer
+PenSCRIPT's core contribution: train on simulation first, then transfer
 the policy to PenGym via controlled domain transfer, and fine-tune with
 CRL constraints.
 
@@ -49,7 +49,7 @@ from src.agent.actions.service_action_space import ServiceActionSpace
 
 
 class DualTrainer:
-    """Orchestrate the full Strategy C dual-training pipeline.
+    """Orchestrate the full PenSCRIPT dual-training pipeline.
 
     Parameters
     ----------
@@ -75,7 +75,7 @@ class DualTrainer:
         ppo_kwargs: Optional[Dict] = None,
         script_kwargs: Optional[Dict] = None,
         seed: int = 42,
-        output_dir: str = "outputs/strategy_c",
+        output_dir: str = "outputs/penscript",
         episode_config: Optional[Dict] = None,
         training_mode: str = "intra_topology",
         use_canonicalization: bool = True,
@@ -313,7 +313,7 @@ class DualTrainer:
         """
         t0 = time.time()
         logging.info("=" * 70)
-        logging.info("Strategy C — Dual Training Pipeline")
+        logging.info("PenSCRIPT — Dual Training Pipeline")
         logging.info("=" * 70)
 
         # ── Resume support ───────────────────────────────────────────
@@ -1108,7 +1108,7 @@ class DualTrainer:
         evaluator.print_report(report)
 
         # Save detailed evaluation report
-        eval_report_path = self.output_dir / "strategy_c_eval_report.json"
+        eval_report_path = self.output_dir / "penscript_eval_report.json"
         evaluator.save_report(report, str(eval_report_path))
 
         # Flatten for backward-compatible results format
